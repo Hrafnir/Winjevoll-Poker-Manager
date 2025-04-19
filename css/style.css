@@ -1,9 +1,9 @@
 /* === 01: GENERAL BODY & LAYOUT SECTION START === */
 :root { --primary-color: #007bff; --secondary-color: #6c757d; --success-color: #28a745; --danger-color: #dc3545; --warning-color: #ffc107; --info-color: #17a2b8; --light-color: #f8f9fa; --dark-color: #343a40; --text-color: #212529; --border-color: #dee2e6; --background-color: #f0f2f5; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; background-color: var(--background-color); font-size: 16px; color: var(--text-color); }
-main { padding: 0; flex-grow: 1; display: flex; flex-direction: column; } /* Fjern padding for full bredde layout */
+main { padding: 0; flex-grow: 1; display: flex; flex-direction: column; }
 h1, h2, h3, h4 { color: var(--dark-color); margin: 1.2em 0 0.6em 0; }
-h1 { font-size: 1.8em; } h2 { font-size: 1.5em; } h3 { font-size: 1.25em; } h4 { font-size: 1.1em; margin-bottom: 8px;}
+h1 { font-size: 1.8em; } h2 { font-size: 1.5em; } h3 { font-size: 1.2em; } h4 { font-size: 1.05em; margin-bottom: 8px;}
 button { padding: 8px 15px; font-size: 0.95em; border-radius: 4px; border: 1px solid #ccc; background-color: #e9e9e9; cursor: pointer; transition: all 0.2s ease; margin: 2px; vertical-align: middle; line-height: 1.4; text-align: center; }
 button:hover:not(:disabled) { background-color: #dcdcdc; border-color: #bbb; transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 button:disabled { cursor: not-allowed; opacity: 0.6; }
@@ -24,12 +24,11 @@ small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin
 .active-indicator { font-weight: bold; color: var(--success-color); margin-left: 10px; font-style: italic;}
 /* === 01: GENERAL BODY & LAYOUT SECTION END === */
 
-
 /* === 02: HEADER & FOOTER SECTION START === */
-header, footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-header.banner { /* Specific style for the top banner */ padding: 15px 20px; } /* Slightly taller banner */
+header, footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; /* Ensure header/footer are above other content */ }
+header.banner { padding: 15px 20px; }
 header .logo { height: 40px; margin-right: 15px; content: url('placeholder-logo.png'); background-color: #555; object-fit: contain; }
-header h1 { color: white; margin: 0; font-size: 1.6em; /* Slightly larger banner title */ text-align: center; flex-grow: 1; /* Allow title to center */ }
+header h1 { color: white; margin: 0; font-size: 1.6em; text-align: center; flex-grow: 1; }
 header .header-right { display: flex; align-items: center; gap: 8px; }
 header .header-right p { margin: 0; white-space: nowrap;}
 header .header-right button { background-color: var(--secondary-color); border-color: var(--secondary-color); color: white; }
@@ -37,12 +36,11 @@ header .header-right button:hover:not(:disabled) { background-color: #5a6268; bo
 footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer div { display: flex; gap: 10px;}
 /* === 02: HEADER & FOOTER SECTION END === */
 
-
 /* === 03: START PAGE SECTION START === */
-.start-page { text-align: left; max-width: 900px; margin: 15px auto; /* Add top/bottom margin */ }
+.start-page { text-align: left; max-width: 900px; margin: 15px auto; }
 .start-section { background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .start-section h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;}
-#btn-new-tournament-setup { padding: 12px 25px; font-size: 1.1em; margin-bottom: 15px; } /* Uses primary */
+#btn-new-tournament-setup { padding: 12px 25px; font-size: 1.1em; margin-bottom: 15px; }
 .item-list { list-style: none; padding: 0; margin: 10px 0 0 0; max-height: 300px; overflow-y: auto; border-top: 1px solid #eee;}
 .item-list li { border-bottom: 1px solid #eee; padding: 10px 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;}
 .item-list li:last-child { border-bottom: none; }
@@ -51,7 +49,6 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .list-actions { flex-shrink: 0; } .list-actions button { margin-left: 5px; }
 #btn-clear-all-data { margin-top: 10px; }
 /* === 03: START PAGE SECTION END === */
-
 
 /* === 04: SETUP PAGE SECTION START === */
 .setup-page { max-width: 800px; margin: 15px auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
@@ -65,68 +62,62 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 #btn-back-to-main { background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); }
 .blind-structure-controls { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap;}
 .blind-table-container { max-height: 400px; overflow-y: auto; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px;}
-/* Shared table styles */
 #blind-structure-table, #edit-blind-structure-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
 #blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: center; vertical-align: middle; }
 #blind-structure-table th, #edit-blind-structure-table th { background-color: #e9ecef; position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; font-weight: 600;}
 #blind-structure-table td:last-child, #blind-structure-table th:last-child, #edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
 #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0; border-color: #ccc; text-align: center; }
-#blind-structure-table input:invalid, #edit-blind-structure-table input:invalid { border-color: red !important; box-shadow: 0 0 3px red; }
+#blind-structure-table input.invalid, #edit-blind-structure-table input.invalid { border-color: red !important; box-shadow: 0 0 3px red; }
 #blind-structure-table input:disabled, #edit-blind-structure-table input:disabled { background-color: #eee; cursor: not-allowed;}
 #blind-structure-table .pause-duration-input, #edit-blind-structure-table .pause-duration-input { width: 60px; }
 #blind-structure-table .btn-remove-level, #edit-blind-structure-table .btn-remove-level { padding: 3px 8px; font-size: 1.1em; background-color: transparent; border: none; color: var(--danger-color); font-weight: bold; line-height: 1;}
 #blind-structure-table .btn-remove-level:hover, #edit-blind-structure-table .btn-remove-level:hover { background-color: var(--danger-color); color: white; border-radius: 3px;}
 /* === 04: SETUP PAGE SECTION END === */
 
-
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION START === */
-.tournament-live { display: flex; flex-direction: column; flex-grow: 1; padding: 0; /* Remove padding for edge-to-edge */ }
+.tournament-live { display: flex; flex-direction: column; flex-grow: 1; padding: 0; }
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION END === */
 
-
 /* === 06: TOURNAMENT LIVE PAGE - NEW SPLIT LAYOUT START === */
-.live-split-container { display: flex; flex-grow: 1; min-height: 45vh; /* Litt mer høyde */ background-color: #1c1c1c; color: white; flex-shrink: 0; }
-.live-left-column { flex-basis: 60%; /* Mer plass til timer */ display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; border-right: 1px solid #444; }
-.live-right-column { flex-basis: 40%; /* Mindre plass totalt */ display: flex; flex-direction: column; padding: 0; }
-.right-col-logo-area { flex-basis: 40%; /* Redusert høydeandel */ display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; overflow: hidden; min-height: 100px; /* Minimum høyde for logo */ }
-.right-col-logo-area .logo { max-width: 100%; max-height: 100%; /* La logoen fylle plassen */ height: auto; object-fit: contain; display: block; }
-.right-col-blinds-area { flex-basis: 40%; /* Økt høydeandel */ display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; border-top: 1px solid #444; border-bottom: 1px solid #444; box-sizing: border-box; text-align: center; }
+.live-split-container { display: flex; flex-grow: 1; min-height: 50vh; /* Increased min-height */ background-color: #1c1c1c; color: white; flex-shrink: 0; }
+.live-left-column { flex-basis: 60%; /* More space for timer */ display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; /* Removed border */ }
+.live-right-column { flex-basis: 40%; display: flex; flex-direction: column; padding: 0; border-left: 1px solid #444; } /* Add border here */
+.right-col-logo-area { flex-basis: 35%; /* Adjusted height */ display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; overflow: hidden; min-height: 80px; }
+.right-col-logo-area .logo { max-width: 100%; max-height: 100%; height: auto; object-fit: contain; display: block; }
+.right-col-blinds-area { flex-basis: 40%; /* Increased height */ display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; border-top: 1px solid #444; border-bottom: 1px solid #444; box-sizing: border-box; text-align: center; }
 .right-col-blinds-area h3 { color: #b0b0b0; margin: 0 0 10px 0; font-size: 1.4em; text-transform: uppercase; font-weight: normal; }
-#blinds-display { font-size: 5.5em; /* Økt størrelse */ font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
+#blinds-display { font-size: 6em; /* Increased size */ font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
 #blinds-display .value { margin: 0 8px; } #blinds-display .label { font-size: 0.3em; margin-right: 4px; color: #ccc; font-weight: normal; vertical-align: middle; } #blinds-display .break-text { font-size: 0.5em; color: #FFEB3B; }
-.right-col-info-area { flex-basis: 20%; /* Balansen av høyde */ display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; padding: 10px 15px; box-sizing: border-box; font-size: 0.95em; background-color: #2a2a2a; color: #ddd; }
-.right-col-info-area p { margin: 2px 8px; white-space: nowrap; }
+.right-col-info-area { flex-basis: 25%; /* Adjusted height */ display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; padding: 10px 15px; box-sizing: border-box; font-size: 1em; /* Slightly larger */ background-color: #2a2a2a; color: #ddd; }
+.right-col-info-area p { margin: 3px 10px; white-space: nowrap; }
 #prize-summary { font-weight: bold; color: var(--warning-color);}
 .timer-section { text-align: center; width: 100%; }
 .timer-section h2 { font-size: 1.8em; margin: 0 0 10px 0; color: #b0b0b0; text-transform: uppercase; font-weight: normal; }
-#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 13em; /* Enda større timer */ font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 15em; /* INCREASED */ font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
 #break-info { font-size: 6em; color: #FFEB3B; font-weight: bold; margin-top: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 /* === 06: TOURNAMENT LIVE PAGE - NEW SPLIT LAYOUT END === */
 
 /* === 07: TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION START === */
-.live-info-secondary { display: flex; justify-content: space-around; flex-wrap: wrap; padding: 10px 20px; background-color: #e9ecef; margin: 15px 0; font-size: 1.1em; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+.live-info-secondary { display: flex; justify-content: space-around; flex-wrap: wrap; padding: 10px 20px; background-color: #e9ecef; margin: 15px; font-size: 1.1em; border: none; /* REMOVED BORDER */ border-radius: 4px; flex-shrink: 0; }
 .live-info-secondary p { margin: 3px 10px; white-space: nowrap;}
 /* === 07: TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION END === */
 
-
 /* === 08: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION START === */
-.live-info-prizes { padding: 10px 20px; background-color: var(--light-color); border-bottom: 1px solid var(--border-color); margin-bottom: 15px; flex-shrink: 0; }
+.live-info-prizes { padding: 10px 20px; background-color: var(--light-color); border: none; /* REMOVED BORDER */ border-radius: 4px; margin: 0 15px 15px 15px; flex-shrink: 0; }
 .live-info-prizes h3 { margin-top: 0; margin-bottom: 8px; font-size: 1.1em; color: #495057; }
 .live-info-prizes ol { margin: 0; padding-left: 25px; } .live-info-prizes li { margin-bottom: 4px; font-size: 0.95em; }
 .live-info-prizes p { font-style: italic; color: var(--secondary-color); margin: 5px 0; }
 /* === 08: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION END === */
 
-
 /* === 09: TOURNAMENT LIVE PAGE - CONTROLS SECTION START === */
-.controls { text-align: center; margin-bottom: 20px; padding: 10px 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background-color: #fff; } /* Add background */
+.controls { text-align: center; margin-bottom: 15px; padding: 10px 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background-color: #fff; }
 .controls button { margin: 5px 8px; }
 /* === 09: TOURNAMENT LIVE PAGE - CONTROLS SECTION END === */
 
-
 /* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION START === */
-.player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; padding: 0 15px 15px 15px; /* Padding on container */}
-.player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; padding: 0 10px 10px 10px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #ffffff; }
-.player-column h2 { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0 5px 0; margin: 0 0 10px 0; border-bottom: 1px solid #ccc; z-index: 1; font-size: 1.2em; }
+.player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; padding: 0 15px 15px 15px; }
+.player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; padding: 0; /* Remove padding */ border: 1px solid var(--border-color); border-radius: 4px; background-color: #ffffff; }
+.player-column h2 { position: sticky; top: 0; background-color: #ffffff; padding: 10px; margin: 0; border-bottom: 1px solid #ccc; z-index: 1; font-size: 1.2em; }
 .player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
 .player-list-live li { border-bottom: 1px solid #eee; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; }
 .player-list-live li:last-child { border-bottom: none; }
@@ -138,48 +129,15 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .btn-eliminate { background-color: #f8d7da; border-color: #f5c2c7;} .btn-eliminate:hover { background-color: #f5c2c7;}
 .btn-restore { background-color: #fff3cd; border-color: #ffeeba;} .btn-restore:hover { background-color: #ffeeba;}
 .player-details { font-size: 0.85em; color: var(--secondary-color); margin-left: 8px; }
-/* Removed add player section styles */
 /* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION END === */
 
 /* === 10b: ACTIVITY LOG SECTION START === */
-#activity-log-container {
-    margin: 15px; /* Match margin for secondary info etc. */
-    padding: 15px;
-    background-color: #fff;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    flex-shrink: 0; /* Ikke la loggen krympe for mye */
-}
-#activity-log-container h3 {
-    margin-top: 0;
-    font-size: 1.1em;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-    margin-bottom: 10px;
-}
-#activity-log-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 150px; /* Begrenset høyde med scroll */
-    overflow-y: auto;
-    font-size: 0.9em;
-    color: #333;
-}
-#activity-log-list li {
-    padding: 4px 0;
-    border-bottom: 1px dotted #eee;
-}
-#activity-log-list li:last-child {
-    border-bottom: none;
-}
-#activity-log-list .log-time {
-    color: #888;
-    margin-right: 8px;
-    font-size: 0.9em;
-}
+#activity-log-container { margin: 0 15px 15px 15px; padding: 15px; background-color: #fff; border: 1px solid var(--border-color); border-radius: 4px; flex-shrink: 0; }
+#activity-log-container h3 { margin-top: 0; font-size: 1.1em; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
+#activity-log-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; font-size: 0.9em; color: #333; }
+#activity-log-list li { padding: 4px 0; border-bottom: 1px dotted #eee; } #activity-log-list li:last-child { border-bottom: none; }
+#activity-log-list .log-time { color: #888; margin-right: 8px; font-size: 0.9em; }
 /* === 10b: ACTIVITY LOG SECTION END === */
-
 
 /* === 11: MODAL STYLES SECTION START === */
 .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
@@ -190,40 +148,39 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .modal-content #edit-blinds-section .blind-table-container { flex-grow: 1; min-height: 150px; }
 .close-button { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; line-height: 1; }
 .close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
-.modal-actions { margin-top: 20px; text-align: right; flex-shrink: 0; }
-.modal-actions button { margin-left: 10px; }
+.modal-actions { margin-top: 20px; text-align: right; flex-shrink: 0; } .modal-actions button { margin-left: 10px; }
 /* === 11: MODAL STYLES SECTION END === */
-
 
 /* === 12: UTILITY & RESPONSIVE SECTION START === */
 @media (max-width: 992px) {
-    #timer-display { font-size: 9em; } #blinds-display { font-size: 6em; }
-    .live-split-container { min-height: 30vh;} /* Less height on smaller screens */
-    .player-management { flex-direction: column; overflow: visible; }
+    #timer-display { font-size: 11em; } #blinds-display { font-size: 5em; } /* Adjust sizes */
+    .live-split-container { min-height: 40vh;}
+    .player-management { flex-direction: column; overflow: visible; padding: 10px; }
     .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;}
     .player-column .player-list-live { overflow-y: auto; }
     .modal-content { width: 90%; }
     #blind-structure-table, #edit-blind-structure-table { font-size: 0.85em; }
 }
 @media (max-width: 768px) {
-     .live-split-container { flex-direction: column; min-height: 0; /* Let content decide height */}
+     .live-split-container { flex-direction: column; min-height: 0; }
      .live-left-column, .live-right-column { flex-basis: auto; width: 100%; }
      .live-left-column { border-right: none; border-bottom: 1px solid #444; min-height: 25vh; padding: 15px;}
-     .live-right-column { flex-direction: row; /* Side by side for logo/blinds/info */ flex-wrap: wrap;}
+     .live-right-column { flex-direction: row; flex-wrap: wrap; border-left: none;} /* Remove border */
      .right-col-logo-area { flex-basis: 40%; flex-grow: 1; border-bottom: 1px solid #444; min-height: 15vh; padding: 10px;}
      .right-col-blinds-area { flex-basis: 60%; flex-grow: 1; border-top: none; border-left: 1px solid #444; border-bottom: 1px solid #444;}
      .right-col-info-area { flex-basis: 100%; flex-grow: 1; border-top: 1px solid #444;}
      #timer-display { font-size: 8em; } #blinds-display { font-size: 4em; }
-     .live-info-secondary { font-size: 1em; padding: 8px 10px; margin: 0; border-radius: 0;}
+     .live-info-secondary { font-size: 1em; padding: 8px 10px; margin: 10px; border-radius: 4px;}
      .controls { margin-bottom: 10px; padding: 8px 10px;}
      .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;}
      .player-column { max-height: none; }
      header .header-right p { display: none;}
      .player-management { padding: 10px; gap: 10px;}
+     #activity-log-container { margin: 10px;} /* Adjust log margin */
 }
 @media (max-width: 480px) {
      body { font-size: 14px; } header h1 {font-size: 1.1em;} header .logo {height: 30px;}
-     #timer-display { font-size: 6em; } #blinds-display { font-size: 3em; }
+     #timer-display { font-size: 6em; } #blinds-display { font-size: 3.5em; }
      #blinds-display .value { margin: 0 5px; }
      .live-info-secondary { font-size: 0.9em; }
      .player-list-live li { flex-direction: column; align-items: flex-start; }
@@ -232,7 +189,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
      #blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { padding: 4px; }
      #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 60px; }
      .form-actions { justify-content: center;}
-     .live-right-column { flex-direction: column;} /* Stack right col on very small screens */
+     .live-right-column { flex-direction: column;}
      .right-col-logo-area, .right-col-blinds-area, .right-col-info-area { flex-basis: auto; border-left: none; border-bottom: 1px solid #444;}
 }
 /* === 12: UTILITY & RESPONSIVE SECTION END === */
