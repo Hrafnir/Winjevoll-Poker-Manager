@@ -1,52 +1,77 @@
-const TOURNAMENT_STORAGE_KEY = 'winjevollActiveTournament_v1'; // Versjonsnummer i nøkkel
+// === CONSTANTS SECTION START ===
+const TOURNAMENT_STORAGE_KEY = 'winjevollActiveTournament_v1'; // Versjonsnummer i nøkkel for å unngå konflikt med gamle data
+// === CONSTANTS SECTION END ===
 
+
+// === SAVE FUNCTION SECTION START ===
 function saveTournamentState(state) {
     try {
+        // Basic validation before saving
+        if (!state || typeof state !== 'object' || !state.config || !state.live) {
+             console.error("Attempted to save invalid state:", state);
+             throw new Error("Invalid state object provided for saving.");
+        }
         localStorage.setItem(TOURNAMENT_STORAGE_KEY, JSON.stringify(state));
-        // console.log("State saved:", state); // For debugging
+        console.log("Tournament state saved successfully."); // Mer informativ logg
     } catch (e) {
         console.error("Error saving state to localStorage:", e);
-        alert("Kunne ikke lagre turneringsstatus! Sjekk om localStorage er aktivert og har plass.");
+        // Prøv å gi en mer spesifikk feilmelding hvis mulig
+        if (e.name === 'QuotaExceededError') {
+             alert("Kunne ikke lagre turneringsstatus! Nettleserens lagringsplass er full. Prøv å slette gamle data eller øke kvoten.");
+        } else {
+             alert("En ukjent feil oppstod under lagring av turneringsstatus!");
+        }
     }
 }
+// === SAVE FUNCTION SECTION END ===
 
+
+// === LOAD FUNCTION SECTION START ===
 function loadTournamentState() {
     try {
         const stateJSON = localStorage.getItem(TOURNAMENT_STORAGE_KEY);
         if (stateJSON) {
             const state = JSON.parse(stateJSON);
-            // console.log("State loaded:", state); // For debugging
+            // Basic validation of loaded state
+             if (!state || typeof state !== 'object' || !state.config || !state.live) {
+                 console.error("Loaded state from localStorage is invalid:", state);
+                 throw new Error("Invalid state format loaded.");
+             }
+            console.log("Tournament state loaded successfully."); // Mer informativ logg
             return state;
         }
         return null; // Ingen lagret state
     } catch (e) {
         console.error("Error loading state from localStorage:", e);
-        alert("Kunne ikke laste turneringsstatus! Lagret data kan være korrupt.");
-        localStorage.removeItem(TOURNAMENT_STORAGE_KEY); // Prøv å fjerne korrupt data
+        alert("Kunne ikke laste turneringsstatus! Lagret data kan være korrupt eller i feil format. Prøver å fjerne den.");
+        clearTournamentState(); // Prøv å fjerne korrupt data
         return null;
     }
 }
+// === LOAD FUNCTION SECTION END ===
 
+
+// === CLEAR FUNCTION SECTION START ===
 function clearTournamentState() {
-    localStorage.removeItem(TOURNAMENT_STORAGE_KEY);
-    console.log("Active tournament state cleared.");
-}
-
-// Hjelpefunksjon for unik ID (enkel versjon)
-let nextIdCounter = Date.now(); // Start med noe unikt
-function generateUniqueId() {
-    // Bruker en kombinasjon av tid og en teller for å øke unikheten
-    // Enkel nok for lokal bruk hvor samtidige kall er usannsynlig.
-    const timestamp = Date.now();
-    if (timestamp <= nextIdCounter) {
-         // Hvis tiden ikke har gått videre (eller gikk bakover?), inkrementer bare telleren
-         nextIdCounter++;
-    } else {
-         // Hvis tiden har gått videre, bruk den nye tiden
-         nextIdCounter = timestamp;
+    try {
+        localStorage.removeItem(TOURNAMENT_STORAGE_KEY);
+        console.log("Active tournament state cleared from localStorage.");
+    } catch (e) {
+        console.error("Error clearing tournament state from localStorage:", e);
+        alert("Kunne ikke slette lagret turneringsstatus!");
     }
-    // Kombinerer tid og en liten teller/tilfeldighet for ekstra sikkerhet
-    // return `player-${nextIdCounter}-${Math.random().toString(36).substring(2, 7)}`;
-    // Enklere versjon:
-     return nextIdCounter++; // Bare inkrementer for enkel unikhet i denne økten
 }
+// === CLEAR FUNCTION SECTION END ===
+
+
+// === UNIQUE ID GENERATOR SECTION START ===
+// Enkel teller-basert ID, tilstrekkelig for lokal bruk i én økt.
+// Persisterer ikke mellom sideinnlastinger, men det gjør ikke noe
+// siden spillere får permanente IDer når turneringen lagres.
+let nextIdCounter = Date.now(); // Start med noe (relativt) unikt for økten
+
+function generateUniqueId() {
+    // Bruker en teller for å sikre unikhet innenfor denne sideinnlastingen.
+    return nextIdCounter++;
+}
+// === UNIQUE ID GENERATOR SECTION END ===
