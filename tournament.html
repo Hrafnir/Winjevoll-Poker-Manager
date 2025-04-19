@@ -1,50 +1,66 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
+    <!-- === HEAD SECTION START === -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Turnering - Winjevoll</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- === HEAD SECTION END === -->
 </head>
 <body>
+    <!-- === HEADER SECTION START === -->
     <header class="tournament-header">
         <div class="header-left">
             <img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo">
-            <h1 id="tournament-name-display">Turneringsnavn</h1>
+            <h1 id="tournament-name-display">Laster turnering...</h1>
         </div>
         <div class="header-right">
              <p>Klokke: <span id="current-time">--:--:--</span></p>
         </div>
     </header>
+    <!-- === HEADER SECTION END === -->
 
+    <!-- === MAIN CONTENT SECTION START === -->
     <main class="tournament-live">
+        <!-- === LIVE INFO TOP (TIMER/BLINDS) SECTION START === -->
         <div class="live-info-top">
             <div class="timer-section">
                 <h2>Tid Igjen</h2>
                 <div id="timer-display">--:--</div>
                 <div class="blinds-info">
-                    <p>Nivå: <span id="current-level">1</span></p>
-                    <p>Neste Blinds: <span id="next-blinds">SB / BB (Ante)</span></p>
+                    <p>Nivå: <span id="current-level">--</span></p>
+                    <p>Neste: <span id="next-blinds">-- / -- (--)</span></p>
                 </div>
             </div>
             <div class="blinds-section">
                 <h2>Blinds</h2>
                 <div id="blinds-display">
-                    <span class="blind-label">SB:</span><span id="current-sb">--</span>
-                    <span class="blind-label">BB:</span><span id="current-bb">--</span>
-                    <span class="blind-label">Ante:</span><span id="current-ante">--</span>
+                    <!-- Content managed by JS -->
+                     <span>--</span> / <span>--</span> Ante: <span>--</span>
                 </div>
                  <p id="break-info" class="hidden">PAUSE</p>
             </div>
         </div>
+         <!-- === LIVE INFO TOP (TIMER/BLINDS) SECTION END === -->
 
+        <!-- === LIVE INFO SECONDARY SECTION START === -->
         <div class="live-info-secondary">
              <p>Spillere: <span id="players-remaining">--</span> / <span id="players-started">--</span> (<span id="total-entries">--</span> entries)</p>
              <p>Snitt Stack: <span id="average-stack">--</span></p>
              <p>Total Pott: <span id="total-pot">--</span> kr</p>
              <p id="late-reg-status">Late Reg: --</p>
         </div>
+         <!-- === LIVE INFO SECONDARY SECTION END === -->
 
+        <!-- === LIVE PRIZE DISPLAY SECTION START === -->
+        <div id="prize-display-live" class="live-info-prizes">
+            <h3>Premier (Estimat)</h3>
+            <p>Beregner...</p>
+        </div>
+        <!-- === LIVE PRIZE DISPLAY SECTION END === -->
+
+        <!-- === CONTROLS SECTION START === -->
         <div class="controls">
             <button id="btn-start-pause">Start</button>
             <button id="btn-prev-level"><< Forrige Nivå</button>
@@ -53,45 +69,40 @@
             <button id="btn-adjust-time-plus">+1 min</button>
             <button id="btn-late-reg" disabled>Registrer Late Reg</button>
         </div>
+         <!-- === CONTROLS SECTION END === -->
 
+         <!-- === PLAYER MANAGEMENT SECTION START === -->
          <div class="player-management">
-            <h2>Aktive Spillere (<span id="active-player-count">--</span>)</h2>
-             <p id="table-balance-info" class="warning hidden">Ubalanserte bord! Vurder å flytte spillere.</p>
-            <ul id="player-list">
-                <!-- Spillere listes opp av JS -->
-                <!-- Eksempel:
-                <li>
-                    <span>Ola Nordmann (Bord 1, Sete 3)</span>
-                    <div class="player-actions">
-                        <button class="btn-rebuy" data-player-id="1">Rebuy</button>
-                        <button class="btn-addon" data-player-id="1">Addon</button>
-                        <button class="btn-eliminate" data-player-id="1">Eliminer</button>
-                    </div>
-                </li>
-                 -->
-            </ul>
-
-            <h2>Eliminerte Spillere (<span id="eliminated-player-count">--</span>)</h2>
-            <ul id="eliminated-player-list">
-                 <!-- Eliminerte spillere listes opp her -->
-                 <!-- Eksempel:
-                 <li>
-                    <span>Pelle Hansen (Plass: 10)</span>
-                    <button class="btn-restore" data-player-id="2">Gjenopprett</button>
-                 </li>
-                 -->
-            </ul>
+            <div class="player-column">
+                <h2>Aktive Spillere (<span id="active-player-count">--</span>)</h2>
+                <p id="table-balance-info" class="warning hidden">Ubalanserte bord! Balansering kan skje.</p>
+                <ul id="player-list">
+                    <!-- Spillere listes opp av JS -->
+                    <li>Laster spillere...</li>
+                </ul>
+            </div>
+            <div class="player-column">
+                <h2>Eliminerte Spillere (<span id="eliminated-player-count">--</span>)</h2>
+                <ul id="eliminated-player-list">
+                    <!-- Eliminerte spillere listes opp her -->
+                </ul>
+            </div>
         </div>
+        <!-- === PLAYER MANAGEMENT SECTION END === -->
 
     </main>
+     <!-- === MAIN CONTENT SECTION END === -->
 
+    <!-- === FOOTER SECTION START === -->
     <footer>
         <p>© 2024 Winjevoll Pokerklubb</p>
-        <button id="btn-end-tournament" style="float: right; margin: 5px; background-color: darkred; color: white;">Avslutt Turnering (Sletter Data)</button>
-
+        <button id="btn-end-tournament" class="danger-button">Avslutt Turnering (Sletter Data)</button>
     </footer>
+    <!-- === FOOTER SECTION END === -->
 
+    <!-- === SCRIPTS SECTION START === -->
     <script src="js/storage.js"></script>
     <script src="js/tournament.js"></script>
+     <!-- === SCRIPTS SECTION END === -->
 </body>
 </html>
