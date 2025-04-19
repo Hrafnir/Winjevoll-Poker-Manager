@@ -76,6 +76,11 @@ input[type="text"], input[type="number"], select, textarea {
     max-width: 450px; /* Apply max width */
     box-sizing: border-box;
 }
+/* Make number inputs slightly less wide by default */
+input[type="number"] { max-width: 120px; }
+/* Override for specific cases */
+#tournament-name, #prize-distribution, #player-names, #add-player-name-live { max-width: 450px; }
+
 textarea { min-height: 60px; vertical-align: top; }
 label { display: block; margin-bottom: 4px; font-weight: 500; }
 small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin-bottom: 10px; }
@@ -86,27 +91,19 @@ small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin
 
 
 /* === 02: HEADER & FOOTER SECTION START === */
-header, footer {
-    background-color: var(--dark-color); color: white; padding: 10px 20px;
-    display: flex; justify-content: space-between; align-items: center;
-    flex-shrink: 0;
-}
-header .logo {
-    height: 40px; margin-right: 15px;
-    /* Replace with actual logo URL or keep placeholder */
-    content: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23555"/><text x="50%" y="50%" fill="white" font-size="12" text-anchor="middle" dy=".3em">WPK</text></svg>'); /* Simpler Placeholder */
-}
+header, footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+header .logo { height: 40px; margin-right: 15px; content: url('placeholder-logo.png'); /* Use the actual file */ background-color: #555; /* Fallback color */ object-fit: contain; /* Ensure logo fits */}
 header h1 { color: white; margin: 0; font-size: 1.5em; }
-header .header-right { display: flex; align-items: center; gap: 8px; } /* Use gap for spacing */
+header .header-right { display: flex; align-items: center; gap: 8px; }
 header .header-right p { margin: 0; white-space: nowrap;}
 header .header-right button { background-color: var(--secondary-color); border-color: var(--secondary-color); color: white; }
 header .header-right button:hover:not(:disabled) { background-color: #5a6268; border-color: #545b62; }
-footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer div { display: flex; gap: 10px;} /* Group footer buttons */
+footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer div { display: flex; gap: 10px;}
 /* === 02: HEADER & FOOTER SECTION END === */
 
 
 /* === 03: START PAGE SECTION START === */
-.start-page { text-align: left; max-width: 900px; margin: 0 auto; } /* Center content */
+.start-page { text-align: left; max-width: 900px; margin: 0 auto; }
 .start-section { background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .start-section h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;}
 #btn-new-tournament-setup { padding: 12px 25px; font-size: 1.1em; margin-bottom: 15px; } /* Uses primary */
@@ -115,8 +112,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .item-list li:last-child { border-bottom: none; }
 .item-name { font-weight: 500; flex-grow: 1; margin-right: 10px; }
 .item-status { font-size: 0.9em; color: var(--secondary-color); white-space: nowrap;}
-.list-actions { flex-shrink: 0; }
-.list-actions button { margin-left: 5px; }
+.list-actions { flex-shrink: 0; } .list-actions button { margin-left: 5px; }
 #btn-clear-all-data { margin-top: 10px; }
 /* === 03: START PAGE SECTION END === */
 
@@ -126,7 +122,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .setup-page form h2, .setup-page form h3 { margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
 .setup-page form h2:first-of-type { margin-top: 0; }
 .config-section { border-left: 3px solid var(--primary-color); padding-left: 15px; margin: 15px 0; }
-.form-actions { margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;} /* Align buttons right */
+.form-actions { margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;}
 .form-actions button { padding: 12px 25px; font-size: 1.1em; }
 #btn-save-template { background-color: var(--info-color); color: white; border-color: var(--info-color); }
 #btn-start-tournament { background-color: var(--success-color); color: white; border-color: var(--success-color); }
@@ -136,16 +132,16 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 /* Shared table styles */
 #blind-structure-table, #edit-blind-structure-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
 #blind-structure-table th, #blind-structure-table td,
-#edit-blind-structure-table th, #edit-blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: left; vertical-align: middle; }
-#blind-structure-table th, #edit-blind-structure-table th { background-color: #e9ecef; position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; }
+#edit-blind-structure-table th, #edit-blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: center; vertical-align: middle; } /* Centered text in table */
+#blind-structure-table th, #edit-blind-structure-table th { background-color: #e9ecef; position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; font-weight: 600;}
 #blind-structure-table td:last-child, #blind-structure-table th:last-child,
 #edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
-#blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0; border-color: #ccc; }
-#blind-structure-table input:invalid, #edit-blind-structure-table input:invalid { border-color: red !important; box-shadow: 0 0 3px red; } /* Highlight invalid */
+#blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0; border-color: #ccc; text-align: center; }
+#blind-structure-table input:invalid, #edit-blind-structure-table input:invalid { border-color: red !important; box-shadow: 0 0 3px red; }
 #blind-structure-table input:disabled, #edit-blind-structure-table input:disabled { background-color: #eee; cursor: not-allowed;}
-#blind-structure-table input[type="checkbox"], #edit-blind-structure-table input[type="checkbox"] { width: auto; margin-right: 5px; vertical-align: middle; }
+#blind-structure-table .pause-duration-input, #edit-blind-structure-table .pause-duration-input { width: 60px; } /* Narrower pause input */
 #blind-structure-table .btn-remove-level, #edit-blind-structure-table .btn-remove-level { padding: 3px 8px; font-size: 1.1em; background-color: transparent; border: none; color: var(--danger-color); font-weight: bold; line-height: 1;}
-#blind-structure-table .btn-remove-level:hover, #edit-blind-structure-table .btn-remove-level:hover { background-color: var(--danger-color); color: white; }
+#blind-structure-table .btn-remove-level:hover, #edit-blind-structure-table .btn-remove-level:hover { background-color: var(--danger-color); color: white; border-radius: 3px;}
 /* === 04: SETUP PAGE SECTION END === */
 
 
@@ -159,7 +155,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .live-info-top { display: flex; justify-content: space-around; background-color: #1c1c1c; color: white; padding: 25px 10px; min-height: 35vh; align-items: center; flex-shrink: 0; }
 .timer-section, .blinds-section { text-align: center; flex-basis: 48%; display: flex; flex-direction: column; justify-content: center; }
 .timer-section h2, .blinds-section h2 { font-size: 1.8em; margin: 0 0 10px 0; color: #b0b0b0; text-transform: uppercase; font-weight: normal; }
-#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 11em; font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); } /* Added monospace fallback */
+#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 11em; font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
 #blinds-display { font-size: 7.5em; font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); white-space: nowrap; }
 #blinds-display .value { margin: 0 10px; } #blinds-display .label { font-size: 0.3em; margin-right: 5px; color: #ccc; font-weight: normal; vertical-align: middle; }
 #blinds-display .break-text { font-size: 0.5em; color: #FFEB3B; }
@@ -177,8 +173,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 /* === 08: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION START === */
 .live-info-prizes { padding: 10px 20px; background-color: var(--light-color); border-bottom: 1px solid var(--border-color); margin-bottom: 15px; flex-shrink: 0; }
 .live-info-prizes h3 { margin-top: 0; margin-bottom: 8px; font-size: 1.1em; color: #495057; }
-.live-info-prizes ol { margin: 0; padding-left: 25px; }
-.live-info-prizes li { margin-bottom: 4px; font-size: 0.95em; }
+.live-info-prizes ol { margin: 0; padding-left: 25px; } .live-info-prizes li { margin-bottom: 4px; font-size: 0.95em; }
 .live-info-prizes p { font-style: italic; color: var(--secondary-color); margin: 5px 0; }
 /* === 08: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION END === */
 
@@ -191,23 +186,23 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 
 /* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION START === */
 .player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; }
-.player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; /* Hide overflow here */ padding: 0 10px 10px 10px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #ffffff; }
+.player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; padding: 0 10px 10px 10px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #ffffff; }
 .player-column h2 { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0 5px 0; margin: 0 0 10px 0; border-bottom: 1px solid #ccc; z-index: 1; font-size: 1.2em; }
-.player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; /* Scroll only the list */ }
+.player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; } /* Scroll only the list */
 .player-list-live li { border-bottom: 1px solid #eee; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; }
 .player-list-live li:last-child { border-bottom: none; }
-.player-actions { white-space: nowrap; flex-shrink: 0; margin-left: 10px; }
-.player-actions button { margin-left: 4px; cursor: pointer; padding: 3px 8px; font-size: 0.9em; border-radius: 3px; }
+.player-actions { white-space: nowrap; flex-shrink: 0; margin-left: 10px; display: flex; gap: 4px;} /* Use gap for button spacing */
+.player-actions button { margin-left: 0; cursor: pointer; padding: 3px 8px; font-size: 0.9em; border-radius: 3px; }
 .btn-edit-player { background-color: #e2e3e5; border-color: #d6d8db;} .btn-edit-player:hover { background-color: #d6d8db;}
 .btn-rebuy { background-color: #cfe2ff; border-color: #b6d4fe;} .btn-rebuy:hover { background-color: #b6d4fe;}
 .btn-addon { background-color: #d1e7dd; border-color: #badbcc;} .btn-addon:hover { background-color: #badbcc;}
 .btn-eliminate { background-color: #f8d7da; border-color: #f5c2c7;} .btn-eliminate:hover { background-color: #f5c2c7;}
 .btn-restore { background-color: #fff3cd; border-color: #ffeeba;} .btn-restore:hover { background-color: #ffeeba;}
 .player-details { font-size: 0.85em; color: var(--secondary-color); margin-left: 8px; }
-.add-player-live-section { margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;} /* Column layout for add player */
+.add-player-live-section { margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;}
 .add-player-live-section h4 {margin: 0;}
 .add-player-live-section input[type="text"] { margin-bottom: 0; max-width: none; width: 100%;}
-.add-player-live-section div { display: flex; gap: 10px; align-items: center;} /* Group buttons/input */
+.add-player-live-section div { display: flex; gap: 10px; align-items: center;}
 .add-player-live-section button { flex-shrink: 0; }
 .add-player-live-section small { margin: 0; padding-left: 0; }
 /* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION END === */
@@ -219,7 +214,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .modal-content h2 { margin-top: 0;}
 .modal-content div[id^="edit-"] { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; flex-shrink: 0; }
 .modal-content div[id^="edit-"]:last-of-type { border-bottom: none; }
-.modal-content #edit-blinds-section .blind-table-container { flex-grow: 1; min-height: 150px; } /* Table scroll */
+.modal-content #edit-blinds-section .blind-table-container { flex-grow: 1; min-height: 150px; }
 .close-button { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; line-height: 1; }
 .close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
 .modal-actions { margin-top: 20px; text-align: right; flex-shrink: 0; }
@@ -231,9 +226,10 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 @media (max-width: 992px) {
     #timer-display { font-size: 9em; } #blinds-display { font-size: 6em; }
     .player-management { flex-direction: column; overflow: visible; }
-    .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;} /* Hide overflow for column itself */
-    .player-column .player-list-live { overflow-y: auto; /* Allow list to scroll */}
+    .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;}
+    .player-column .player-list-live { overflow-y: auto; }
     .modal-content { width: 90%; }
+    #blind-structure-table, #edit-blind-structure-table { font-size: 0.85em; } /* Smaller font in table on smaller screens */
 }
 @media (max-width: 768px) {
     .live-info-top { flex-direction: column; align-items: center; padding: 15px 5px; min-height: 0; }
@@ -241,18 +237,24 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
     #timer-display { font-size: 7em; } #blinds-display { font-size: 5em; }
     .live-info-secondary { font-size: 1em; padding: 8px 10px; } .live-info-secondary p { margin: 2px 5px;}
     .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;}
-    .player-column { max-height: none; } /* Remove height limit */
+    .player-column { max-height: none; }
+    .add-player-live-section { flex-direction: column; align-items: stretch;}
+    .add-player-live-section div { flex-direction: column; align-items: stretch; gap: 5px;}
+    .add-player-live-section small { padding-left: 0; text-align: center; margin-top: 5px;}
+    header .header-right { gap: 4px;} /* Tighter header buttons */
+    header .header-right p { display: none;} /* Hide wall clock on small screens */
 }
 @media (max-width: 480px) {
-     body { font-size: 14px; } header h1 {font-size: 1.2em;}
+     body { font-size: 14px; } header h1 {font-size: 1.1em;} header .logo {height: 30px;}
      #timer-display { font-size: 5em; } #blinds-display { font-size: 3.5em; }
      #blinds-display .value { margin: 0 5px; }
      .live-info-secondary { font-size: 0.9em; }
-     .player-list-live li { flex-direction: column; align-items: flex-start; } /* Stack name/buttons */
+     .player-list-live li { flex-direction: column; align-items: flex-start; }
      .player-actions { margin-left: 0; margin-top: 5px; } .player-actions button { margin-left: 0; margin-right: 4px; }
      .modal-content { width: 95%; padding: 15px; }
-     .add-player-live-section { flex-direction: column; align-items: stretch;} /* Stack add player elements */
-     .add-player-live-section div { flex-direction: column; align-items: stretch;}
-     .add-player-live-section small { padding-left: 0; text-align: center; margin-top: 5px;}
+     #blind-structure-table th, #blind-structure-table td,
+     #edit-blind-structure-table th, #edit-blind-structure-table td { padding: 4px; } /* Tighter table padding */
+     #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 60px; } /* Even smaller inputs */
+     .form-actions { justify-content: center;} /* Center form buttons */
 }
 /* === 12: UTILITY & RESPONSIVE SECTION END === */
