@@ -11,13 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 02: STATE VARIABLES END ===
 
 
-    // === 03: DOM REFERENCES START ===
-    // *** MOVED INSIDE DOMContentLoaded FOR ROBUSTNESS ***
+        // === 03: DOM REFERENCES START ===
     const nameDisplay = document.getElementById('tournament-name-display'); const currentTimeDisplay = document.getElementById('current-time');
     const btnEditSettings = document.getElementById('btn-edit-settings'); const btnBackToMainLive = document.getElementById('btn-back-to-main-live');
     const timerDisplay = document.getElementById('timer-display'); const currentLevelDisplay = document.getElementById('current-level');
     const nextBlindsDisplay = document.getElementById('next-blinds'); const blindsDisplay = document.getElementById('blinds-display'); const breakInfo = document.getElementById('break-info');
-    const playersRemainingDisplay = document.getElementById('players-remaining'); const totalEntriesDisplay = document.getElementById('total-entries'); // <--- THIS ONE WAS THE PROBLEM
+    const playersRemainingDisplay = document.getElementById('players-remaining'); const totalEntriesDisplay = document.getElementById('total-entries');
     const averageStackDisplay = document.getElementById('average-stack'); const totalPotDisplay = document.getElementById('total-pot'); const lateRegStatusDisplay = document.getElementById('late-reg-status');
     const prizeDisplayLive = document.getElementById('prize-display-live'); const prizeSummarySpan = document.getElementById('prize-summary');
     const startPauseButton = document.getElementById('btn-start-pause'); const prevLevelButton = document.getElementById('btn-prev-level'); const nextLevelButton = document.getElementById('btn-next-level');
@@ -25,13 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const lateRegButton = document.getElementById('btn-late-reg'); const playerListUl = document.getElementById('player-list');
     const eliminatedPlayerListUl = document.getElementById('eliminated-player-list'); const activePlayerCountSpan = document.getElementById('active-player-count');
     const eliminatedPlayerCountSpan = document.getElementById('eliminated-player-count'); const tableBalanceInfo = document.getElementById('table-balance-info');
-    /* Removed refs for generic add player */
+    /* Removed refs for generic add player input/button */
     const btnForceSave = document.getElementById('btn-force-save'); const endTournamentButton = document.getElementById('btn-end-tournament');
     const modal = document.getElementById('edit-settings-modal'); const closeModalButton = document.getElementById('close-modal-button');
     const editBlindStructureBody = document.getElementById('edit-blind-structure-body'); const btnAddEditLevel = document.getElementById('btn-add-edit-level');
     const editPaidPlacesInput = document.getElementById('edit-paid-places'); const editPrizeDistTextarea = document.getElementById('edit-prize-distribution');
     const btnGenerateEditPayout = document.getElementById('btn-generate-edit-payout'); const btnSaveEditedSettings = document.getElementById('btn-save-edited-settings');
     const btnCancelEditSettings = document.getElementById('btn-cancel-edit-settings');
+    // New Reference for Activity Log
+    const activityLogUl = document.getElementById('activity-log-list');
     // === 03: DOM REFERENCES END ===
 
 
@@ -60,59 +61,98 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 06: HELPER FUNCTIONS - CALCULATIONS END ===
 
 
-    // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT START ===
-    function assignTableSeat(player) { const tables = {}; let minTableNum = -1; state.live.players.forEach(p => { if (p.id !== player.id) { tables[p.table] = (tables[p.table] || 0) + 1; } }); const sortedTables = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).sort((a, b) => a.count - b.count); for (const tableInfo of sortedTables) { if (tableInfo.count < state.config.playersPerTable) { minTableNum = tableInfo.tableNum; break; } } if (minTableNum === -1) { const existingTableNumbers = Object.keys(tables).map(Number); minTableNum = existingTableNumbers.length > 0 ? Math.max(...existingTableNumbers) + 1 : 1; player.table = minTableNum; player.seat = 1; } else { const occupiedSeats = state.live.players.filter(p => p.table === minTableNum).map(p => p.seat); let seatNum = 1; while (occupiedSeats.includes(seatNum)) { seatNum++; } if (seatNum > state.config.playersPerTable) { console.error(`ERROR: No seat on table ${minTableNum}`); seatNum = occupiedSeats.length + 1; } player.table = minTableNum; player.seat = seatNum; } console.log(`Assigned ${player.name} to T${player.table} S${player.seat}`); }
-    function balanceTables() { if (state.live.status === 'finished' || state.live.players.length <= state.config.playersPerTable) { tableBalanceInfo.classList.add('hidden'); return false; } let balancingPerformed = false; while (true) { const tables = {}; state.live.players.forEach(p => { tables[p.table] = (tables[p.table] || 0) + 1; }); const tableCounts = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).filter(tc => tc.count > 0); if (tableCounts.length < 2) { tableBalanceInfo.classList.add('hidden'); break; } tableCounts.sort((a, b) => a.count - b.count); const minTable = tableCounts[0]; const maxTable = tableCounts[tableCounts.length - 1]; if (maxTable.count - minTable.count < 2) { tableBalanceInfo.classList.add('hidden'); break; } balancingPerformed = true; tableBalanceInfo.classList.remove('hidden'); console.log(`Balancing: Max T${maxTable.tableNum}(${maxTable.count}), Min T${minTable.tableNum}(${minTable.count})`); const playersOnMaxTable = state.live.players.filter(p => p.table === maxTable.tableNum); if (playersOnMaxTable.length === 0) { console.error("Balancing Error!"); break; } const playerToMove = playersOnMaxTable[Math.floor(Math.random() * playersOnMaxTable.length)]; const occupiedSeatsMin = state.live.players.filter(p => p.table === minTable.tableNum).map(p => p.seat); let newSeat = 1; while (occupiedSeatsMin.includes(newSeat)) { newSeat++; } if (newSeat > state.config.playersPerTable) { console.error(`Balancing Error: No seat on sparse table ${minTable.tableNum}.`); alert(`Balanseringsfeil bord ${minTable.tableNum}.`); break; } const oldTable = playerToMove.table; const oldSeat = playerToMove.seat; playerToMove.table = minTable.tableNum; playerToMove.seat = newSeat; const message = `Balansering: ${playerToMove.name} flyttes fra B${oldTable} S${oldSeat} til B${minTable.tableNum} S${newSeat}.`; console.log(message); alert(message); } if (balancingPerformed) { console.log("Balancing changes applied."); state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); return true; } return false; }
+        // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT START ===
+    function assignTableSeat(player) { /* ... (No changes needed) ... */ const tables = {}; let minTableNum = -1; state.live.players.forEach(p => { if (p.id !== player.id) { tables[p.table] = (tables[p.table] || 0) + 1; } }); const sortedTables = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).sort((a, b) => a.count - b.count); for (const tableInfo of sortedTables) { if (tableInfo.count < state.config.playersPerTable) { minTableNum = tableInfo.tableNum; break; } } if (minTableNum === -1) { const existingTableNumbers = Object.keys(tables).map(Number); minTableNum = existingTableNumbers.length > 0 ? Math.max(...existingTableNumbers) + 1 : 1; player.table = minTableNum; player.seat = 1; } else { const occupiedSeats = state.live.players.filter(p => p.table === minTableNum).map(p => p.seat); let seatNum = 1; while (occupiedSeats.includes(seatNum)) { seatNum++; } if (seatNum > state.config.playersPerTable) { console.error(`ERROR: No seat on table ${minTableNum}`); seatNum = occupiedSeats.length + 1; } player.table = minTableNum; player.seat = seatNum; } console.log(`Assigned ${player.name} to T${player.table} S${player.seat}`); }
+    function balanceTables() {
+         if (state.live.status === 'finished' || state.live.players.length <= state.config.playersPerTable) { tableBalanceInfo.classList.add('hidden'); return false; }
+         let balancingPerformed = false;
+         while (true) {
+             const tables = {}; state.live.players.forEach(p => { tables[p.table] = (tables[p.table] || 0) + 1; });
+             const tableCounts = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).filter(tc => tc.count > 0);
+             if (tableCounts.length < 2) { tableBalanceInfo.classList.add('hidden'); break; }
+             tableCounts.sort((a, b) => a.count - b.count); const minTable = tableCounts[0]; const maxTable = tableCounts[tableCounts.length - 1];
+             if (maxTable.count - minTable.count < 2) { tableBalanceInfo.classList.add('hidden'); break; }
+             balancingPerformed = true; tableBalanceInfo.classList.remove('hidden'); console.log(`Balancing: Max T${maxTable.tableNum}(${maxTable.count}), Min T${minTable.tableNum}(${minTable.count})`);
+             const playersOnMaxTable = state.live.players.filter(p => p.table === maxTable.tableNum); if (playersOnMaxTable.length === 0) { console.error("Balancing Error!"); break; }
+             const playerToMove = playersOnMaxTable[Math.floor(Math.random() * playersOnMaxTable.length)];
+             const occupiedSeatsMin = state.live.players.filter(p => p.table === minTable.tableNum).map(p => p.seat); let newSeat = 1; while (occupiedSeatsMin.includes(newSeat)) { newSeat++; }
+             if (newSeat > state.config.playersPerTable) { console.error(`Balancing Error: No seat on sparse table ${minTable.tableNum}.`); alert(`Balanseringsfeil bord ${minTable.tableNum}.`); break; }
+             const oldTable = playerToMove.table; const oldSeat = playerToMove.seat;
+             const message = `Balansering: ${playerToMove.name} flyttes fra B${oldTable} S${oldSeat} til B${minTable.tableNum} S${newSeat}.`;
+             logActivity(state.live.activityLog, message); // Log the move *before* alert
+             // **** UI BUG FIX: Update UI *before* blocking alert ****
+             playerToMove.table = minTable.tableNum; playerToMove.seat = newSeat; // Make the move in state first
+             updateUI(); // Update the UI now
+             alert(message); // Show the blocking alert *after* UI update
+             // Note: Save happens after the loop if balancingPerformed is true
+         }
+         if (balancingPerformed) {
+             console.log("Balancing changes applied.");
+             state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table);
+             // Save state *after* loop completes if changes were made
+             saveTournamentState(currentTournamentId, state);
+             return true;
+        }
+         return false;
+     }
     // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT END ===
 
+        // === 07b: HELPER FUNCTIONS - LOGGING START ===
+    function logActivity(logArray, message) {
+        if (!logArray) logArray = []; // Initialize if missing
+        const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit'});
+        logArray.unshift({ timestamp, message }); // Add to beginning of array
 
-    // === 08: UI UPDATE FUNCTIONS START ===
-function renderPlayerList() { /* ... (renderPlayerList function remains the same as before) ... */ playerListUl.innerHTML = ''; eliminatedPlayerListUl.innerHTML = ''; const currentLevelNum = state.live.currentLevelIndex + 1; const isRebuyActive = state.config.type === 'rebuy' && currentLevelNum <= state.config.rebuyLevels; const isAddonActive = state.config.type === 'rebuy' && currentLevelNum > state.config.rebuyLevels; const canEdit = state.live.status !== 'finished'; state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table).forEach(player => { const li = document.createElement('li'); let playerInfo = `${player.name} <span class="player-details">(B${player.table} S${player.seat})</span>`; if (player.rebuys > 0) playerInfo += ` <span class="player-details">[${player.rebuys}R]</span>`; if (player.addon) playerInfo += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && player.knockouts > 0) playerInfo += ` <span class="player-details">(KOs: ${player.knockouts})</span>`; let actions = ''; if (canEdit) { actions += `<button class="btn-edit-player small-button" data-player-id="${player.id}" title="Rediger Navn">✏️</button>`; if (isRebuyActive) actions += `<button class="btn-rebuy small-button" data-player-id="${player.id}" title="Registrer Rebuy">R</button>`; if (isAddonActive && !player.addon) actions += `<button class="btn-addon small-button" data-player-id="${player.id}" title="Registrer Addon">A</button>`; actions += `<button class="btn-eliminate small-button danger-button" data-player-id="${player.id}" title="Eliminer Spiller">X</button>`; } li.innerHTML = `<span class="item-name">${playerInfo}</span><div class="list-actions player-actions">${actions}</div>`; playerListUl.appendChild(li); }); state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity)).forEach(player => { const li = document.createElement('li'); let elimInfo = `${player.place ?? '?'}. ${player.name}`; if (player.rebuys > 0) elimInfo += ` <span class="player-details">[${player.rebuys}R]</span>`; if (player.addon) elimInfo += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && player.knockouts > 0) elimInfo += ` <span class="player-details">(KOs: ${player.knockouts})</span>`; if (player.eliminatedBy) elimInfo += ` <span class="player-details">(av ${getPlayerNameById(player.eliminatedBy)})</span>`; li.innerHTML = `<span class="item-name">${elimInfo}</span><div class="list-actions player-actions">${canEdit ? `<button class="btn-restore small-button warning-button" data-player-id="${player.id}" title="Gjenopprett Spiller">↩️</button>` : ''}</div>`; eliminatedPlayerListUl.appendChild(li); }); activePlayerCountSpan.textContent = state.live.players.length; eliminatedPlayerCountSpan.textContent = state.live.eliminatedPlayers.length; playerListUl.querySelectorAll('.btn-edit-player').forEach(btn => btn.onclick = handleEditPlayer); playerListUl.querySelectorAll('.btn-rebuy').forEach(btn => btn.onclick = handleRebuy); playerListUl.querySelectorAll('.btn-addon').forEach(btn => btn.onclick = handleAddon); playerListUl.querySelectorAll('.btn-eliminate').forEach(btn => btn.onclick = handleEliminate); eliminatedPlayerListUl.querySelectorAll('.btn-restore').forEach(btn => btn.onclick = handleRestore); }
-function displayPrizes() { /* ... (displayPrizes function remains the same as before) ... */ if (!prizeDisplayLive) return; const prizeData = calculatePrizes(); prizeDisplayLive.innerHTML = '<h3>Premiefordeling (Estimat)</h3>'; let summaryText = "N/A"; if (prizeData.length > 0) { const ol = document.createElement('ol'); prizeData.forEach(p => { const li = document.createElement('li'); li.textContent = `${p.place}. Plass: ${p.amount.toLocaleString('nb-NO')} kr (${p.percentage}%)`; ol.appendChild(li); }); prizeDisplayLive.appendChild(ol); summaryText = `${prizeData.length} plasser betalt`; if (prizeData[0]) summaryText += `, 1.: ${prizeData[0].amount.toLocaleString('nb-NO')} kr`; } else { const potForPrizes = state.live.totalPot - (state.config.type === 'knockout' ? state.live.totalEntries * (state.config.bountyAmount || 0) : 0); if (potForPrizes > 0 && (!state.config.prizeDistribution || state.config.prizeDistribution.length === 0)) { prizeDisplayLive.innerHTML += '<p>Premiefordeling ikke definert.</p>'; } else if (potForPrizes <= 0) { prizeDisplayLive.innerHTML += '<p>Ingen premiepott å fordele ennå.</p>'; } else { prizeDisplayLive.innerHTML += '<p>Beregner...</p>'; } } if(prizeSummarySpan) prizeSummarySpan.textContent = summaryText; }
-
-function updateUI() {
-    // --- NEW DETAILED ELEMENT CHECK START ---
-    const elementsToCheck = {
-        nameDisplay, currentTimeDisplay, timerDisplay, currentLevelDisplay, nextBlindsDisplay,
-        blindsDisplay, breakInfo, playersRemainingDisplay, totalEntriesDisplay, averageStackDisplay,
-        totalPotDisplay, lateRegStatusDisplay, lateRegButton, startPauseButton, prevLevelButton,
-        nextLevelButton, adjustTimeMinusButton, adjustTimePlusButton, btnEditSettings,
-        endTournamentButton, prizeDisplayLive, prizeSummarySpan, // Added prizeSummarySpan
-        playerListUl, eliminatedPlayerListUl, activePlayerCountSpan, eliminatedPlayerCountSpan, tableBalanceInfo // Player mgmt elements
-    };
-    let missingElement = null;
-    for (const key in elementsToCheck) {
-        if (!elementsToCheck[key]) {
-            missingElement = key;
-            break;
+        // Keep log length manageable (e.g., last 50 entries)
+        const MAX_LOG_ENTRIES = 50;
+        if (logArray.length > MAX_LOG_ENTRIES) {
+            logArray.pop(); // Remove oldest entry
         }
+        renderActivityLog(); // Update UI
     }
-    if (missingElement) {
-        console.error(`CRITICAL ERROR: UI element reference "${missingElement}" is null or undefined in updateUI. Aborting update. Check HTML ID and JS getElementById.`);
-        if(timerInterval) clearInterval(timerInterval); if(realTimeInterval) clearInterval(realTimeInterval);
-        document.body.innerHTML = `<h1 style="color:red; text-align:center; margin-top: 50px;">Kritisk UI Feil! Element "${missingElement}" mangler. Last siden på nytt.</h1>`;
-        return; // Stop execution
+
+    function renderActivityLog() {
+        if (!activityLogUl) return; // Exit if log element doesn't exist
+        activityLogUl.innerHTML = ''; // Clear current log display
+        if (!state || !state.live || !state.live.activityLog || state.live.activityLog.length === 0) {
+            activityLogUl.innerHTML = '<li>Loggen er tom.</li>';
+            return;
+        }
+        state.live.activityLog.forEach(entry => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span class="log-time">[${entry.timestamp}]</span> ${entry.message}`;
+            activityLogUl.appendChild(li);
+        });
     }
-    // --- NEW DETAILED ELEMENT CHECK END ---
+    // === 07b: HELPER FUNCTIONS - LOGGING END ===
 
 
-     // --- Rest of updateUI function (No logical changes needed here) ---
-     nameDisplay.textContent = state.config.name; currentTimeDisplay.textContent = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-     const currentLevelIndex = state.live.currentLevelIndex; const currentLevel = state.config.blindLevels[currentLevelIndex]; const nextLevel = state.config.blindLevels[currentLevelIndex + 1]; const upcomingPauseMinutes = currentLevel?.pauseMinutes || 0; const nextLevelIsBreak = upcomingPauseMinutes > 0;
-     currentLevelDisplay.textContent = currentLevel ? currentLevel.level : 'N/A'; nextBlindsDisplay.textContent = formatNextBlindsText(nextLevel, nextLevelIsBreak, upcomingPauseMinutes);
-     if (state.live.isOnBreak) { timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak); blindsDisplay.innerHTML = ''; blindsDisplay.classList.add('hidden'); breakInfo.classList.remove('hidden'); breakInfo.textContent = `PAUSE (${formatTime(state.live.timeRemainingInBreak)})`; }
-     else { timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel); blindsDisplay.classList.remove('hidden'); breakInfo.classList.add('hidden'); blindsDisplay.innerHTML = formatBlindsHTML(currentLevel); }
-     const activePlayersCount = state.live.players.length; playersRemainingDisplay.textContent = activePlayersCount; totalEntriesDisplay.textContent = state.live.totalEntries; averageStackDisplay.textContent = calculateAverageStack().toLocaleString('nb-NO'); totalPotDisplay.textContent = state.live.totalPot.toLocaleString('nb-NO');
-     const currentLevelNum = currentLevelIndex + 1; const lateRegOpen = currentLevelNum <= state.config.lateRegLevel && state.config.lateRegLevel > 0 && state.live.status !== 'finished';
-     if (state.config.lateRegLevel > 0) { lateRegStatusDisplay.textContent = `Late Reg: ${lateRegOpen ? `Åpen t.o.m. nivå ${state.config.lateRegLevel}` : 'Stengt'}`; } else { lateRegStatusDisplay.textContent = 'Late Reg: Ikke tilgjengelig'; }
-     lateRegButton.disabled = !lateRegOpen || state.live.status !== 'running';
-     startPauseButton.textContent = state.live.status === 'running' ? 'Pause Klokke' : 'Start Klokke'; startPauseButton.disabled = state.live.status === 'finished';
-     prevLevelButton.disabled = currentLevelIndex <= 0 || state.live.status === 'finished'; nextLevelButton.disabled = currentLevelIndex >= state.config.blindLevels.length - 1 || state.live.status === 'finished';
-     adjustTimeMinusButton.disabled = state.live.status === 'finished'; adjustTimePlusButton.disabled = state.live.status === 'finished';
-     btnEditSettings.disabled = state.live.status === 'finished'; endTournamentButton.disabled = state.live.status === 'finished';
-     renderPlayerList(); displayPrizes();
- }
-// === 08: UI UPDATE FUNCTIONS END ===
+        // === 08: UI UPDATE FUNCTIONS START ===
+    function renderPlayerList() { /* ... (No logical changes needed here) ... */ playerListUl.innerHTML = ''; eliminatedPlayerListUl.innerHTML = ''; const currentLevelNum = state.live.currentLevelIndex + 1; const isRebuyActive = state.config.type === 'rebuy' && currentLevelNum <= state.config.rebuyLevels; const isAddonActive = state.config.type === 'rebuy' && currentLevelNum > state.config.rebuyLevels; const canEdit = state.live.status !== 'finished'; state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table).forEach(player => { const li = document.createElement('li'); let playerInfo = `${player.name} <span class="player-details">(B${player.table} S${player.seat})</span>`; if (player.rebuys > 0) playerInfo += ` <span class="player-details">[${player.rebuys}R]</span>`; if (player.addon) playerInfo += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && player.knockouts > 0) playerInfo += ` <span class="player-details">(KOs: ${player.knockouts})</span>`; let actions = ''; if (canEdit) { actions += `<button class="btn-edit-player small-button" data-player-id="${player.id}" title="Rediger Navn">✏️</button>`; if (isRebuyActive) actions += `<button class="btn-rebuy small-button" data-player-id="${player.id}" title="Registrer Rebuy">R</button>`; if (isAddonActive && !player.addon) actions += `<button class="btn-addon small-button" data-player-id="${player.id}" title="Registrer Addon">A</button>`; actions += `<button class="btn-eliminate small-button danger-button" data-player-id="${player.id}" title="Eliminer Spiller">X</button>`; } li.innerHTML = `<span class="item-name">${playerInfo}</span><div class="list-actions player-actions">${actions}</div>`; playerListUl.appendChild(li); }); state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity)).forEach(player => { const li = document.createElement('li'); let elimInfo = `${player.place ?? '?'}. ${player.name}`; if (player.rebuys > 0) elimInfo += ` <span class="player-details">[${player.rebuys}R]</span>`; if (player.addon) elimInfo += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && player.knockouts > 0) elimInfo += ` <span class="player-details">(KOs: ${player.knockouts})</span>`; if (player.eliminatedBy) elimInfo += ` <span class="player-details">(av ${getPlayerNameById(player.eliminatedBy)})</span>`; li.innerHTML = `<span class="item-name">${elimInfo}</span><div class="list-actions player-actions">${canEdit ? `<button class="btn-restore small-button warning-button" data-player-id="${player.id}" title="Gjenopprett Spiller">↩️</button>` : ''}</div>`; eliminatedPlayerListUl.appendChild(li); }); activePlayerCountSpan.textContent = state.live.players.length; eliminatedPlayerCountSpan.textContent = state.live.eliminatedPlayers.length; playerListUl.querySelectorAll('.btn-edit-player').forEach(btn => btn.onclick = handleEditPlayer); playerListUl.querySelectorAll('.btn-rebuy').forEach(btn => btn.onclick = handleRebuy); playerListUl.querySelectorAll('.btn-addon').forEach(btn => btn.onclick = handleAddon); playerListUl.querySelectorAll('.btn-eliminate').forEach(btn => btn.onclick = handleEliminate); eliminatedPlayerListUl.querySelectorAll('.btn-restore').forEach(btn => btn.onclick = handleRestore); }
+    function displayPrizes() { /* ... (No logical changes needed here) ... */ if (!prizeDisplayLive) return; const prizeData = calculatePrizes(); prizeDisplayLive.innerHTML = '<h3>Premiefordeling (Estimat)</h3>'; let summaryText = "N/A"; if (prizeData.length > 0) { const ol = document.createElement('ol'); prizeData.forEach(p => { const li = document.createElement('li'); li.textContent = `${p.place}. Plass: ${p.amount.toLocaleString('nb-NO')} kr (${p.percentage}%)`; ol.appendChild(li); }); prizeDisplayLive.appendChild(ol); summaryText = `${prizeData.length} plasser betalt`; if (prizeData[0]) summaryText += `, 1.: ${prizeData[0].amount.toLocaleString('nb-NO')} kr`; } else { const potForPrizes = state.live.totalPot - (state.config.type === 'knockout' ? state.live.totalEntries * (state.config.bountyAmount || 0) : 0); if (potForPrizes > 0 && (!state.config.prizeDistribution || state.config.prizeDistribution.length === 0)) { prizeDisplayLive.innerHTML += '<p>Premiefordeling ikke definert.</p>'; } else if (potForPrizes <= 0) { prizeDisplayLive.innerHTML += '<p>Ingen premiepott å fordele ennå.</p>'; } else { prizeDisplayLive.innerHTML += '<p>Beregner...</p>'; } } if(prizeSummarySpan) prizeSummarySpan.textContent = summaryText; }
+    function updateUI() {
+        // Verify core elements
+         const elementsToCheck = { nameDisplay, currentTimeDisplay, timerDisplay, currentLevelDisplay, nextBlindsDisplay, blindsDisplay, breakInfo, playersRemainingDisplay, totalEntriesDisplay, averageStackDisplay, totalPotDisplay, lateRegStatusDisplay, lateRegButton, startPauseButton, prevLevelButton, nextLevelButton, adjustTimeMinusButton, adjustTimePlusButton, btnEditSettings, endTournamentButton, prizeDisplayLive, prizeSummarySpan, playerListUl, eliminatedPlayerListUl, activePlayerCountSpan, eliminatedPlayerCountSpan, tableBalanceInfo, activityLogUl }; // Added activityLogUl
+         let missingElement = null; for (const key in elementsToCheck) { if (!elementsToCheck[key]) { missingElement = key; break; } }
+         if (missingElement) { console.error(`CRITICAL ERROR: UI element reference "${missingElement}" is null. Aborting update.`); if(timerInterval) clearInterval(timerInterval); if(realTimeInterval) clearInterval(realTimeInterval); document.body.innerHTML = `<h1 style="color:red; text-align:center; margin-top: 50px;">Kritisk UI Feil! Element "${missingElement}" mangler.</h1>`; return; }
+
+         // --- Rest of updateUI ---
+         nameDisplay.textContent = state.config.name; currentTimeDisplay.textContent = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+         const currentLevelIndex = state.live.currentLevelIndex; const currentLevel = state.config.blindLevels[currentLevelIndex]; const nextLevel = state.config.blindLevels[currentLevelIndex + 1]; const upcomingPauseMinutes = currentLevel?.pauseMinutes || 0; const nextLevelIsBreak = upcomingPauseMinutes > 0;
+         currentLevelDisplay.textContent = currentLevel ? currentLevel.level : 'N/A'; nextBlindsDisplay.textContent = formatNextBlindsText(nextLevel, nextLevelIsBreak, upcomingPauseMinutes);
+         if (state.live.isOnBreak) { timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak); blindsDisplay.innerHTML = ''; blindsDisplay.classList.add('hidden'); breakInfo.classList.remove('hidden'); breakInfo.textContent = `PAUSE (${formatTime(state.live.timeRemainingInBreak)})`; }
+         else { timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel); blindsDisplay.classList.remove('hidden'); breakInfo.classList.add('hidden'); blindsDisplay.innerHTML = formatBlindsHTML(currentLevel); }
+         const activePlayersCount = state.live.players.length; playersRemainingDisplay.textContent = activePlayersCount; totalEntriesDisplay.textContent = state.live.totalEntries; averageStackDisplay.textContent = calculateAverageStack().toLocaleString('nb-NO'); totalPotDisplay.textContent = state.live.totalPot.toLocaleString('nb-NO');
+         const currentLevelNum = currentLevelIndex + 1; const lateRegOpen = currentLevelNum <= state.config.lateRegLevel && state.config.lateRegLevel > 0 && state.live.status !== 'finished';
+         if (state.config.lateRegLevel > 0) { lateRegStatusDisplay.textContent = `Late Reg: ${lateRegOpen ? `Åpen t.o.m. nivå ${state.config.lateRegLevel}` : 'Stengt'}`; } else { lateRegStatusDisplay.textContent = 'Late Reg: Ikke tilgjengelig'; }
+         lateRegButton.disabled = !lateRegOpen || state.live.status !== 'running';
+         startPauseButton.textContent = state.live.status === 'running' ? 'Pause Klokke' : 'Start Klokke'; startPauseButton.disabled = state.live.status === 'finished';
+         prevLevelButton.disabled = currentLevelIndex <= 0 || state.live.status === 'finished'; nextLevelButton.disabled = currentLevelIndex >= state.config.blindLevels.length - 1 || state.live.status === 'finished';
+         adjustTimeMinusButton.disabled = state.live.status === 'finished'; adjustTimePlusButton.disabled = state.live.status === 'finished';
+         btnEditSettings.disabled = state.live.status === 'finished'; endTournamentButton.disabled = state.live.status === 'finished';
+         renderPlayerList(); displayPrizes(); renderActivityLog(); // Render log
+     }
+    // === 08: UI UPDATE FUNCTIONS END ===
 
 
     // === 09: TIMER LOGIC START ===
@@ -131,13 +171,60 @@ function updateUI() {
     // === 10: EVENT HANDLERS - CONTROLS END ===
 
 
-    // === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
-    function handleRebuy(event) { /* ... (No logical changes needed here) ... */ const playerId = parseInt(event.target.dataset.playerId); const player = state.live.players.find(p => p.id === playerId); const currentLevelNum = state.live.currentLevelIndex + 1; if (!player || state.config.type !== 'rebuy' || !(currentLevelNum <= state.config.rebuyLevels)) { alert("Re-buy ikke tilgjengelig."); return; } if (confirm(`Re-buy (${state.config.rebuyCost} kr) for ${player.name}?`)) { player.rebuys = (player.rebuys || 0) + 1; state.live.totalPot += state.config.rebuyCost; state.live.totalEntries++; state.live.totalRebuys++; updateUI(); saveTournamentState(currentTournamentId, state); } }
-    function handleAddon(event) { /* ... (No logical changes needed here) ... */ const playerId = parseInt(event.target.dataset.playerId); const player = state.live.players.find(p => p.id === playerId); const currentLevelNum = state.live.currentLevelIndex + 1; const isAddonPeriod = currentLevelNum > state.config.rebuyLevels; if (!player || state.config.type !== 'rebuy' || !isAddonPeriod || player.addon) { alert("Add-on ikke tilgjengelig."); return; } if (confirm(`Add-on (${state.config.addonCost} kr) for ${player.name}?`)) { player.addon = true; state.live.totalPot += state.config.addonCost; state.live.totalAddons++; updateUI(); saveTournamentState(currentTournamentId, state); } }
-    function handleEliminate(event) { /* ... (No logical changes needed here) ... */ if (state.live.status === 'finished') return; const playerId = parseInt(event.target.dataset.playerId); const playerIndex = state.live.players.findIndex(p => p.id === playerId); if (playerIndex === -1) return; const player = state.live.players[playerIndex]; let eliminatedByPlayerId = null; if (state.config.type === 'knockout' && (state.config.bountyAmount || 0) > 0 && state.live.players.length > 1) { const activePlayerNames = state.live.players.filter(p => p.id !== playerId).map(p => `${p.name} (B${p.table}S${p.seat})`); const promptMessage = `Hvem slo ut ${player.name}?\n\nAktive:\n - ${activePlayerNames.join("\n - ")}`; const eliminatorInput = prompt(promptMessage); if (eliminatorInput?.trim()) { const eliminatorName = eliminatorInput.trim().toLowerCase(); const eliminator = state.live.players.find(p => p.id !== playerId && p.name.toLowerCase() === eliminatorName); if (eliminator) { eliminatedByPlayerId = eliminator.id; eliminator.knockouts = (eliminator.knockouts || 0) + 1; state.live.knockoutLog.push({ eliminatedPlayerId: player.id, eliminatedByPlayerId: eliminator.id }); } else { alert(`Fant ikke "${eliminatorInput}".`); } } } if (confirm(`Eliminere ${player.name}?`)) { player.eliminated = true; player.eliminatedBy = eliminatedByPlayerId; player.place = state.live.players.length; state.live.eliminatedPlayers.push(player); state.live.players.splice(playerIndex, 1); const balanced = balanceTables(); if (!balanced) { updateUI(); saveTournamentState(currentTournamentId, state); } if (state.live.players.length <= 1) { finishTournament(); } } }
-    function handleRestore(event) { /* ... (No logical changes needed here) ... */ if (state.live.status === 'finished') { alert("Kan ikke gjenopprette."); return; } const playerId = parseInt(event.target.dataset.playerId); const playerIndex = state.live.eliminatedPlayers.findIndex(p => p.id === playerId); if (playerIndex === -1) return; const player = state.live.eliminatedPlayers[playerIndex]; if (confirm(`Gjenopprette ${player.name}?`)) { const eliminatedBy = player.eliminatedBy; player.eliminated = false; player.eliminatedBy = null; player.place = null; state.live.eliminatedPlayers.splice(playerIndex, 1); state.live.players.push(player); if (state.config.type === 'knockout' && eliminatedBy) { const eliminator = state.live.players.find(p => p.id === eliminatedBy) || state.live.eliminatedPlayers.find(p => p.id === eliminatedBy); if (eliminator?.knockouts > 0) eliminator.knockouts--; const logIndex = state.live.knockoutLog.findIndex(log => log.eliminatedPlayerId === player.id && log.eliminatedByPlayerId === eliminatedBy); if (logIndex > -1) state.live.knockoutLog.splice(logIndex, 1); } assignTableSeat(player); const balanced = balanceTables(); if (!balanced) { updateUI(); saveTournamentState(currentTournamentId, state); } } }
-    function handleEditPlayer(event) { /* ... (No logical changes needed here) ... */ if (state.live.status === 'finished') return; const playerId = parseInt(event.target.dataset.playerId); const player = state.live.players.find(p => p.id === playerId); if (!player) return; const newName = prompt(`Endre navn for ${player.name}:`, player.name); if (newName?.trim()) { player.name = newName.trim(); renderPlayerList(); saveTournamentState(currentTournamentId, state); } else if (newName === "") alert("Navn kan ikke være tomt."); }
-    function handleLateRegClick() { /* ... (No logical changes needed here) ... */ if (state.live.status === 'finished') return; const currentLevelNum = state.live.currentLevelIndex + 1; const lateRegOpen = currentLevelNum <= state.config.lateRegLevel && state.config.lateRegLevel > 0; if (!lateRegOpen) { alert("Sen registrering er stengt."); return; } if (state.live.status !== 'running') { alert("Start klokken for sen registrering."); return; } const name = prompt("Navn for sen registrering:"); if (name?.trim()) { const cost = state.config.buyIn; const player = { id: generateUniqueId('p'), name: name.trim(), stack: state.config.startStack, table: 0, seat: 0, rebuys: 0, addon: false, eliminated: false, eliminatedBy: null, place: null, knockouts: 0 }; state.live.players.push(player); assignTableSeat(player); state.live.totalPot += cost; state.live.totalEntries++; const balanced = balanceTables(); if (!balanced) { updateUI(); saveTournamentState(currentTournamentId, state); } } }
+        // === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
+    function handleRebuy(event) { const playerId = parseInt(event.target.dataset.playerId); const player = state.live.players.find(p => p.id === playerId); const currentLevelNum = state.live.currentLevelIndex + 1; if (!player || state.config.type !== 'rebuy' || !(currentLevelNum <= state.config.rebuyLevels)) { alert("Re-buy ikke tilgjengelig."); return; } if (confirm(`Re-buy (${state.config.rebuyCost} kr) for ${player.name}?`)) { player.rebuys = (player.rebuys || 0) + 1; state.live.totalPot += state.config.rebuyCost; state.live.totalEntries++; state.live.totalRebuys++; logActivity(state.live.activityLog, `${player.name} tok Re-buy.`); updateUI(); saveTournamentState(currentTournamentId, state); } }
+    function handleAddon(event) { const playerId = parseInt(event.target.dataset.playerId); const player = state.live.players.find(p => p.id === playerId); const currentLevelNum = state.live.currentLevelIndex + 1; const isAddonPeriod = currentLevelNum > state.config.rebuyLevels; if (!player || state.config.type !== 'rebuy' || !isAddonPeriod || player.addon) { alert("Add-on ikke tilgjengelig."); return; } if (confirm(`Add-on (${state.config.addonCost} kr) for ${player.name}?`)) { player.addon = true; state.live.totalPot += state.config.addonCost; state.live.totalAddons++; logActivity(state.live.activityLog, `${player.name} tok Add-on.`); updateUI(); saveTournamentState(currentTournamentId, state); } }
+    function handleEliminate(event) {
+        if (state.live.status === 'finished') return;
+        const playerId = parseInt(event.target.dataset.playerId);
+        const activePlayers = state.live.players; // Reference active players
+        const playerIndex = activePlayers.findIndex(p => p.id === playerId);
+        if (playerIndex === -1) { console.warn(`Player ID ${playerId} not found for elimination.`); return; }
+
+        // *** FIX: Prevent eliminating the very last player ***
+        if (activePlayers.length <= 1) {
+            alert("Kan ikke eliminere siste spiller. Fullfør turneringen i stedet.");
+            return;
+        }
+
+        const player = activePlayers[playerIndex];
+        let eliminatedByPlayerId = null; let eliminatorName = null;
+        // --- KO Handling ---
+        if (state.config.type === 'knockout' && (state.config.bountyAmount || 0) > 0 && activePlayers.length > 1) { const otherPlayers = activePlayers.filter(p => p.id !== playerId).map(p => `${p.name} (B${p.table}S${p.seat})`); const promptMessage = `Hvem slo ut ${player.name}?\n\nAktive:\n - ${otherPlayers.join("\n - ")}`; const eliminatorInput = prompt(promptMessage); if (eliminatorInput?.trim()) { const inputLower = eliminatorInput.trim().toLowerCase(); const eliminator = activePlayers.find(p => p.id !== playerId && p.name.toLowerCase() === inputLower); if (eliminator) { eliminatedByPlayerId = eliminator.id; eliminator.knockouts = (eliminator.knockouts || 0) + 1; eliminatorName = eliminator.name; state.live.knockoutLog.push({ eliminatedPlayerId: player.id, eliminatedByPlayerId: eliminator.id }); } else { alert(`Fant ikke "${eliminatorInput}".`); } } }
+        // --- Elimination ---
+        if (confirm(`Eliminere ${player.name}?`)) {
+            player.eliminated = true; player.eliminatedBy = eliminatedByPlayerId;
+            player.place = activePlayers.length; // Place before removal
+            state.live.eliminatedPlayers.push(player);
+            activePlayers.splice(playerIndex, 1); // Remove from array
+
+            const elimText = eliminatorName ? ` av ${eliminatorName}` : '';
+            logActivity(state.live.activityLog, `${player.name} slått ut på ${player.place}. plass${elimText}.`);
+
+            // Call balancing, returns true if changes were made (which triggers save/update internally)
+            const balanced = balanceTables();
+            // If balancing *didn't* run (or made no changes), manually update UI and save state
+            if (!balanced) {
+                updateUI(); // Update UI immediately after state change
+                saveTournamentState(currentTournamentId, state); // Save state immediately
+            }
+            // Check finish *after* state is updated and potentially saved
+            if (activePlayers.length === 1) {
+                 finishTournament();
+            }
+        }
+    }
+    function handleRestore(event) {
+        if (state.live.status === 'finished') { alert("Kan ikke gjenopprette."); return; } const playerId = parseInt(event.target.dataset.playerId); const playerIndex = state.live.eliminatedPlayers.findIndex(p => p.id === playerId); if (playerIndex === -1) return; const player = state.live.eliminatedPlayers[playerIndex];
+        if (confirm(`Gjenopprette ${player.name} (var ${player.place}. plass)?`)) { const eliminatedBy = player.eliminatedBy; const oldPlace = player.place; player.eliminated = false; player.eliminatedBy = null; player.place = null; state.live.eliminatedPlayers.splice(playerIndex, 1); state.live.players.push(player); if (state.config.type === 'knockout' && eliminatedBy) { const eliminator = state.live.players.find(p => p.id === eliminatedBy) || state.live.eliminatedPlayers.find(p => p.id === eliminatedBy); if (eliminator?.knockouts > 0) eliminator.knockouts--; const logIndex = state.live.knockoutLog.findIndex(log => log.eliminatedPlayerId === player.id && log.eliminatedByPlayerId === eliminatedBy); if (logIndex > -1) state.live.knockoutLog.splice(logIndex, 1); } assignTableSeat(player);
+            logActivity(state.live.activityLog, `${player.name} gjenopprettet fra ${oldPlace}. plass.`);
+            const balanced = balanceTables(); if (!balanced) { updateUI(); saveTournamentState(currentTournamentId, state); }
+        }
+    }
+    function handleEditPlayer(event) { if (state.live.status === 'finished') return; const playerId = parseInt(event.target.dataset.playerId); const player = state.live.players.find(p => p.id === playerId); if (!player) return; const oldName = player.name; const newName = prompt(`Endre navn for ${oldName}:`, oldName); if (newName?.trim() && newName.trim() !== oldName) { player.name = newName.trim(); logActivity(state.live.activityLog, `Navn endret: ${oldName} -> ${player.name}.`); renderPlayerList(); saveTournamentState(currentTournamentId, state); } else if (newName === "") alert("Navn kan ikke være tomt."); }
+    function handleLateRegClick() {
+        if (state.live.status === 'finished') return; const currentLevelNum = state.live.currentLevelIndex + 1; const lateRegOpen = currentLevelNum <= state.config.lateRegLevel && state.config.lateRegLevel > 0; if (!lateRegOpen) { alert("Sen registrering er stengt."); return; } if (state.live.status !== 'running') { alert("Start klokken for sen registrering."); return; } const name = prompt("Navn for sen registrering:");
+        if (name?.trim()) { const cost = state.config.buyIn; const player = { id: generateUniqueId('p'), name: name.trim(), stack: state.config.startStack, table: 0, seat: 0, rebuys: 0, addon: false, eliminated: false, eliminatedBy: null, place: null, knockouts: 0 }; state.live.players.push(player); assignTableSeat(player); state.live.totalPot += cost; state.live.totalEntries++; logActivity(state.live.activityLog, `${player.name} registrert (Late Reg).`); const balanced = balanceTables(); if (!balanced) { updateUI(); saveTournamentState(currentTournamentId, state); } } }
     // === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
 
 
@@ -163,15 +250,13 @@ function updateUI() {
     // === 14: EVENT LISTENER ATTACHMENT (General) END ===
 
 
-    // === 15: INITIAL UI RENDER & TIMER START ===
-    // Initial checks before rendering
-    if(!totalEntriesDisplay) { console.error("CRITICAL: totalEntriesDisplay is null BEFORE initial updateUI call!"); /* Handle this fatal error */ }
-    else { console.log("totalEntriesDisplay found OK before initial updateUI call."); }
-
-    updateUI(); startRealTimeClock();
+        // === 15: INITIAL UI RENDER & TIMER START ===
+    if(!state.live.activityLog) state.live.activityLog = []; // Initialize log if missing from old state
+    console.log("Initial state check OK. Rendering UI...");
+    updateUI(); // Initial render based on loaded state
+    startRealTimeClock(); // Start the wall clock
     if (state.live.status === 'running') { timerInterval = setInterval(tick, 1000); }
-    else if (state.live.status === 'finished') { finishTournament(); }
+    else if (state.live.status === 'finished') { finishTournament(); } // Ensure UI reflects finished state
     // === 15: INITIAL UI RENDER & TIMER START ===
-
 });
 // === 01: DOMContentLoaded LISTENER END ===
