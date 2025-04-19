@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentSbDisplay = document.getElementById('current-sb');
     const currentBbDisplay = document.getElementById('current-bb');
     const currentAnteDisplay = document.getElementById('current-ante');
+    const blindsDisplay = document.getElementById('blinds-display');
     const breakInfo = document.getElementById('break-info');
     const playersRemainingDisplay = document.getElementById('players-remaining');
     const playersStartedDisplay = document.getElementById('players-started');
