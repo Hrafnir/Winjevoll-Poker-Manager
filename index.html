@@ -1,36 +1,48 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
+    <!-- === HEAD SECTION START === -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Winjevoll Tournament Manager</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- === HEAD SECTION END === -->
 </head>
 <body>
+    <!-- === HEADER SECTION START === -->
     <header>
         <img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo">
         <h1>Winjevoll Tournament Manager</h1>
     </header>
+    <!-- === HEADER SECTION END === -->
+
+    <!-- === MAIN CONTENT SECTION START === -->
     <main class="start-page">
         <h2>Velkommen</h2>
         <button id="btn-new-tournament">Ny Turnering</button>
         <button id="btn-load-tournament" disabled>Last Inn Pågående Turnering</button>
         <p id="load-info"></p>
     </main>
+    <!-- === MAIN CONTENT SECTION END === -->
+
+    <!-- === FOOTER SECTION START === -->
     <footer>
         <p>© 2024 Winjevoll Pokerklubb</p>
     </footer>
+    <!-- === FOOTER SECTION END === -->
 
+    <!-- === SCRIPTS SECTION START === -->
     <script src="js/storage.js"></script>
     <script>
+        // --- Start Page Logic START ---
         document.addEventListener('DOMContentLoaded', () => {
             const loadButton = document.getElementById('btn-load-tournament');
             const loadInfo = document.getElementById('load-info');
-            const activeTournament = loadTournamentState();
+            const activeTournament = loadTournamentState(); // From storage.js
 
             if (activeTournament) {
                 loadButton.disabled = false;
-                loadInfo.textContent = `Fant pågående turnering: ${activeTournament.config.name || 'Ukjent Navn'} (Nivå ${activeTournament.live.currentLevelIndex + 1})`;
+                loadInfo.textContent = `Fant pågående turnering: ${activeTournament.config?.name || 'Ukjent Navn'} (Nivå ${activeTournament.live?.currentLevelIndex !== undefined ? activeTournament.live.currentLevelIndex + 1 : 'N/A'})`;
                 loadButton.addEventListener('click', () => {
                     window.location.href = 'tournament.html';
                 });
@@ -40,10 +52,14 @@
 
             document.getElementById('btn-new-tournament').addEventListener('click', () => {
                 // Slett eventuell gammel state før ny startes
-                clearTournamentState();
-                window.location.href = 'setup.html';
+                if (confirm("Er du sikker på at du vil starte en ny turnering? Eventuell pågående, ulagret turnering vil bli slettet.")) {
+                    clearTournamentState(); // From storage.js
+                    window.location.href = 'setup.html';
+                }
             });
         });
+         // --- Start Page Logic END ---
     </script>
+    <!-- === SCRIPTS SECTION END === -->
 </body>
 </html>
