@@ -1,488 +1,84 @@
-/* === GENERAL BODY & LAYOUT SECTION START === */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f0f2f5; /* Lysere, mer moderne bakgrunn */
-    font-size: 16px;
-    color: #333;
+/* === 01: GENERAL BODY & LAYOUT SECTION START === */
+:root { /* Define some color variables */
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --text-color: #212529;
+    --border-color: #dee2e6;
+    --background-color: #f0f2f5;
 }
-
-main {
-    padding: 15px;
-    flex-grow: 1;
-    display: flex; /* Ofte nyttig i main */
-    flex-direction: column;
-}
-
-h1, h2, h3 {
-    color: #1c1c1c;
-}
-
-button {
-    padding: 8px 15px;
-    font-size: 0.95em;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: #e9e9e9;
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-button:hover:not(:disabled) {
-    background-color: #dcdcdc;
-    border-color: #bbb;
-}
-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-button.danger-button {
-     background-color: #dc3545;
-     color: white;
-     border-color: #dc3545;
-}
-button.danger-button:hover:not(:disabled) {
-    background-color: #c82333;
-    border-color: #bd2130;
-}
-
-input[type="text"],
-input[type="number"],
-select,
-textarea {
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
-    font-size: 1em;
-    width: 95%;
-    max-width: 400px; /* Begrens bredde for lesbarhet */
-    box-sizing: border-box; /* Inkluder padding/border i bredden */
-}
-textarea {
-    min-height: 80px;
-    vertical-align: top; /* Juster textarea */
-}
-label {
-    display: block;
-    margin-bottom: 4px;
-    font-weight: 500; /* Litt fetere labels */
-}
-small {
-    display: block; /* Gjør small til blokk for bedre formattering */
-    font-size: 0.85em;
-    color: #555;
-    margin-top: -5px; /* Litt tettere på elementet over */
-    margin-bottom: 10px;
-}
-
-.hidden {
-    display: none !important;
-}
-.warning {
-    color: #fd7e14; /* Oransje */
-    font-weight: bold;
-    background-color: #fff3cd;
-    padding: 5px 10px;
-    border: 1px solid #ffeeba;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    display: inline-block; /* Gjør at den ikke tar full bredde */
-}
-/* === GENERAL BODY & LAYOUT SECTION END === */
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; background-color: var(--background-color); font-size: 16px; color: var(--text-color); }
+main { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+h1, h2, h3, h4 { color: var(--dark-color); margin: 1.2em 0 0.6em 0; }
+h1 { font-size: 1.8em; } h2 { font-size: 1.5em; } h3 { font-size: 1.25em; } h4 { font-size: 1.1em; margin-bottom: 8px;}
+button { padding: 8px 15px; font-size: 0.95em; border-radius: 4px; border: 1px solid #ccc; background-color: #e9e9e9; cursor: pointer; transition: all 0.2s ease; margin: 2px; vertical-align: middle; line-height: 1.4; }
+button:hover:not(:disabled) { background-color: #dcdcdc; border-color: #bbb; transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+button:disabled { cursor: not-allowed; opacity: 0.6; }
+button.primary-button { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+button.primary-button:hover:not(:disabled) { background-color: #0056b3; border-color: #0056b3; }
+button.danger-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
+button.danger-button:hover:not(:disabled) { background-color: #c82333; border-color: #bd2130; }
+button.success-button { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+button.success-button:hover:not(:disabled) { background-color: #218838; border-color: #1e7e34; }
+button.info-button { background-color: var(--info-color); color: white; border-color: var(--info-color); }
+button.info-button:hover:not(:disabled) { background-color: #138496; border-color: #117a8b; }
+button.warning-button { background-color: var(--warning-color); color: var(--text-color); border-color: var(--warning-color); }
+button.warning-button:hover:not(:disabled) { background-color: #e0a800; border-color: #d39e00; }
+button.small-button { padding: 4px 8px; font-size: 0.85em; }
+input[type="text"], input[type="number"], select, textarea { padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 1em; width: 100%; /* Use 100% width */ max-width: 450px; box-sizing: border-box; }
+textarea { min-height: 60px; vertical-align: top; }
+label { display: block; margin-bottom: 4px; font-weight: 500; }
+small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin-bottom: 10px; }
+.hidden { display: none !important; }
+.warning { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; padding: 8px 12px; margin-bottom: 10px; font-size: 0.9em;}
+.active-indicator { font-weight: bold; color: var(--success-color); margin-left: 10px; font-style: italic;}
+/* === 01: GENERAL BODY & LAYOUT SECTION END === */
 
 
-/* === HEADER & FOOTER SECTION START === */
-header, footer {
-    background-color: #343a40; /* Mørk gråblå */
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0; /* Forhindre krymping */
-}
-
-header .logo {
-    height: 40px;
-    margin-right: 15px;
-    /* Erstattes av ekte logo */
-    content: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23555"/><text x="50%" y="50%" fill="white" font-size="12" text-anchor="middle" dy=".3em">LOGO</text></svg>'); /* Placeholder SVG Logo */
-}
-header h1 {
-    color: white;
-    margin: 0;
-    font-size: 1.5em;
-}
-
-footer {
-    margin-top: auto; /* Skyver footer til bunnen */
-    font-size: 0.9em;
-}
-footer p { margin: 0; }
-/* === HEADER & FOOTER SECTION END === */
+/* === 02: HEADER & FOOTER SECTION START === */
+header, footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+header .logo { height: 40px; margin-right: 15px; content: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23555"/><text x="50%" y="50%" fill="white" font-size="12" text-anchor="middle" dy=".3em">WPK</text></svg>'); /* Simpler Placeholder */ }
+header h1 { color: white; margin: 0; font-size: 1.5em; }
+header .header-right button { margin-left: 8px; background-color: var(--secondary-color); border-color: var(--secondary-color); color: white; }
+header .header-right button:hover:not(:disabled) { background-color: #5a6268; border-color: #545b62; }
+footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer button { margin-left: 10px;}
+/* === 02: HEADER & FOOTER SECTION END === */
 
 
-/* === START PAGE SECTION START === */
-.start-page {
-    text-align: center;
-    padding-top: 50px;
-}
-.start-page button {
-    padding: 15px 30px;
-    font-size: 1.2em;
-    margin: 15px;
-    background-color: #007bff; /* Blå knapp */
-    color: white;
-    border-color: #007bff;
-}
-.start-page button:hover:not(:disabled) {
-    background-color: #0056b3;
-    border-color: #0056b3;
-}
-.start-page #load-info {
-    margin-top: 20px;
-    color: #555;
-    font-style: italic;
-}
-/* === START PAGE SECTION END === */
+/* === 03: START PAGE SECTION START === */
+.start-page { text-align: left; }
+.start-section { background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; padding: 15px 20px; margin-bottom: 20px; }
+.start-section h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+#btn-new-tournament-setup { padding: 12px 25px; font-size: 1.1em; margin-bottom: 15px; } /* Uses primary color */
+.item-list { list-style: none; padding: 0; margin: 10px 0 0 0; max-height: 300px; overflow-y: auto; border-top: 1px solid #eee;}
+.item-list li { border-bottom: 1px solid #eee; padding: 10px 5px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;} /* Wrap actions if needed */
+.item-list li:last-child { border-bottom: none; }
+.item-name { font-weight: 500; flex-grow: 1; margin-right: 10px; }
+.item-status { font-size: 0.9em; color: var(--secondary-color); white-space: nowrap;}
+.list-actions { flex-shrink: 0; } /* Prevent buttons shrinking */
+.list-actions button { margin-left: 5px; }
+#btn-clear-all-data { margin-top: 10px; }
+/* === 03: START PAGE SECTION END === */
 
 
-/* === SETUP PAGE SECTION START === */
-.setup-page form h2,
-.setup-page form h3 {
-    margin-top: 25px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 5px;
-}
-.setup-page form h2:first-of-type {
-     margin-top: 0; /* Fjerner toppmargin for første h2 */
-}
-.config-section {
-    border-left: 3px solid #007bff;
-    padding-left: 15px;
-    margin-bottom: 20px;
-}
-
-#blind-structure-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    margin-bottom: 10px; /* Litt luft etter tabell */
-    font-size: 0.9em; /* Mindre skrift i tabellen */
-}
-#blind-structure-table th, #blind-structure-table td {
-    border: 1px solid #ccc;
-    padding: 6px 8px;
-    text-align: left;
-    vertical-align: middle;
-}
-#blind-structure-table th {
-    background-color: #e9ecef; /* Lys grå bakgrunn for header */
-}
-#blind-structure-table input[type="number"] {
-    width: 70px;
-    padding: 4px;
-    font-size: 1em; /* Relativ til tabellskrift */
-    margin-bottom: 0; /* Fjerner standard margin */
-}
-#blind-structure-table input[type="checkbox"] {
-     width: auto;
-     margin-right: 5px; /* Litt luft rundt checkbox */
-     vertical-align: middle;
-}
-#blind-structure-table .btn-remove-level {
-    padding: 3px 8px;
-    font-size: 0.85em;
-    background-color: #ffc107; /* Gul knapp */
-    border-color: #ffc107;
-    color: #333;
-}
-#blind-structure-table .btn-remove-level:hover {
-     background-color: #e0a800;
-     border-color: #d39e00;
-}
-#btn-start-tournament {
-    padding: 12px 25px;
-    font-size: 1.1em;
-    background-color: #28a745; /* Grønn knapp */
-    color: white;
-    border-color: #28a745;
-}
-#btn-start-tournament:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-}
-#btn-back-to-main {
-    margin-left: 10px;
-    background-color: #6c757d; /* Grå knapp */
-    color: white;
-    border-color: #6c757d;
-}
-#btn-back-to-main:hover {
-     background-color: #5a6268;
-     border-color: #545b62;
-}
-/* === SETUP PAGE SECTION END === */
-
-
-/* === TOURNAMENT LIVE PAGE - GENERAL SECTION START === */
-.tournament-header {
-    background-color: #495057; /* Litt lysere mørk grå */
-}
-.tournament-live {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1; /* La live-visningen ta tilgjengelig plass */
-}
-/* === TOURNAMENT LIVE PAGE - GENERAL SECTION END === */
-
-
-/* === TOURNAMENT LIVE PAGE - TOP INFO (TIMER/BLINDS) SECTION START === */
-.live-info-top {
-    display: flex;
-    justify-content: space-around;
-    background-color: #1c1c1c; /* Mørk bakgrunn for kontrast */
-    color: white;
-    padding: 25px 10px; /* Mer padding */
-    min-height: 35vh; /* Gi den en betydelig minimumshøyde */
-    align-items: center; /* Sentrer innholdet vertikalt */
-    flex-shrink: 0; /* Ikke la denne krympe for mye */
-}
-
-.timer-section, .blinds-section {
-    text-align: center;
-    flex-basis: 48%; /* Gi nesten halvparten av plassen til hver */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.timer-section h2, .blinds-section h2 {
-    font-size: 1.8em; /* Større overskrifter */
-    margin: 0 0 10px 0; /* Justert margin */
-    color: #b0b0b0; /* Lysere grå */
-    text-transform: uppercase;
-    font-weight: normal;
-}
-
-#timer-display {
-    font-family: 'Orbitron', sans-serif; /* Eksempel på digital-lignende font (krever import) */
-    font-size: 11em; /* STOR skrift */
-    font-weight: bold;
-    line-height: 1.0;
-    color: #f0f0f0;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-}
-
-#blinds-display {
-    font-size: 7.5em; /* Også STOR skrift */
-    font-weight: bold;
-    line-height: 1.0;
-    color: #f0f0f0;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-    white-space: nowrap; /* Forhindre linjeskift i blinds */
-}
-
-#blinds-display .value { /* Bruk en klasse for selve verdiene */
-    margin: 0 10px;
-}
-#blinds-display .label { /* Bruk en klasse for labels */
-    font-size: 0.3em;
-    margin-right: 5px;
-    color: #ccc;
-    font-weight: normal;
-    vertical-align: middle; /* Kan hjelpe med justering */
-}
-
-.blinds-info { /* Info under timeren */
-    margin-top: 15px;
-    font-size: 1.3em;
-    color: #ddd;
-}
-.blinds-info p { margin: 2px 0; } /* Tettere linjer */
-
-#break-info { /* Pause-tekst */
-    font-size: 5em;
-    color: #FFEB3B; /* Gul */
-    font-weight: bold;
-    margin-top: 10px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-/* === TOURNAMENT LIVE PAGE - TOP INFO (TIMER/BLINDS) SECTION END === */
-
-
-/* === TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION START === */
-.live-info-secondary {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap; /* Tillat wrapping på små skjermer */
-    padding: 12px 20px;
-    background-color: #e9ecef; /* Lys grå */
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    border-bottom: 1px solid #dee2e6;
-    flex-shrink: 0; /* Ikke la denne krympe */
-}
-.live-info-secondary p {
-    margin: 3px 10px; /* Litt mer luft */
-}
-/* === TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION END === */
-
-
-/* === TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION START === */
-.live-info-prizes {
-    padding: 10px 20px;
-    background-color: #f8f9fa; /* Enda lysere grå */
-    border-bottom: 1px solid #dee2e6;
-    margin-bottom: 15px;
-     flex-shrink: 0; /* Ikke la denne krympe */
-}
-.live-info-prizes h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 1.1em;
-    color: #495057; /* Mørk grå tekst */
-}
-.live-info-prizes ol {
-    margin: 0;
-    padding-left: 25px;
-}
-.live-info-prizes li {
-    margin-bottom: 4px;
-    font-size: 0.95em;
-}
-.live-info-prizes p { /* For meldinger som "Beregner..." */
-    font-style: italic;
-    color: #6c757d;
-    margin: 5px 0;
-}
-/* === TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION END === */
-
-
-/* === TOURNAMENT LIVE PAGE - CONTROLS SECTION START === */
-.controls {
-    text-align: center;
-    margin-bottom: 20px;
-    padding: 10px 0;
-    border-bottom: 1px solid #dee2e6;
-    flex-shrink: 0; /* Ikke la denne krympe */
-}
-.controls button {
-    margin: 5px 8px; /* Mer luft */
-}
-/* === TOURNAMENT LIVE PAGE - CONTROLS SECTION END === */
-
-
-/* === TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION START === */
-.player-management {
-    display: flex;
-    flex-direction: row; /* Kolonner ved siden av hverandre */
-    gap: 20px; /* Mellomrom mellom kolonner */
-    flex-grow: 1; /* La denne ta resten av plassen */
-    overflow: hidden; /* Forhindre unødvendig scroll på container */
-}
-.player-column {
-    flex-basis: 50%; /* Hver kolonne tar halvparten */
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto; /* Tillat scrolling INNI kolonnen */
-    padding: 0 10px; /* Litt intern padding */
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    background-color: #ffffff;
-}
-.player-column h2 {
-    position: sticky; /* Gjør overskriften klebrig */
-    top: 0;
-    background-color: #ffffff; /* Bakgrunn for å dekke innhold */
-    padding: 10px 0 5px 0;
-    margin: 0 0 10px 0;
-    border-bottom: 1px solid #ccc;
-    z-index: 1; /* Sørg for at den ligger over listen */
-    font-size: 1.2em;
-}
-
-#player-list, #eliminated-player-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-#player-list li, #eliminated-player-list li {
-    background-color: white;
-    /* border: 1px solid #ddd; */ /* Kan droppe border hvis kolonnen har */
-    border-bottom: 1px solid #eee; /* Skill linjene */
-    padding: 8px 10px;
-    margin-bottom: 0; /* Ingen margin mellom list items */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.95em;
-}
-#player-list li:last-child, #eliminated-player-list li:last-child {
-    border-bottom: none;
-}
-
-.player-actions {
-    white-space: nowrap; /* Unngå at knapper wrapper */
-    flex-shrink: 0; /* Ikke la knapper krympe */
-    margin-left: 10px; /* Avstand til navn */
-}
-.player-actions button {
-    margin-left: 4px;
-    cursor: pointer;
-    padding: 3px 8px;
-    font-size: 0.9em; /* Litt mindre knapper */
-    border-radius: 3px;
-}
-.btn-rebuy { background-color: #cfe2ff; border-color: #b6d4fe;} /* Lys blå */
-.btn-rebuy:hover { background-color: #b6d4fe;}
-.btn-addon { background-color: #d1e7dd; border-color: #badbcc;} /* Lys grønn */
-.btn-addon:hover { background-color: #badbcc;}
-.btn-eliminate { background-color: #f8d7da; border-color: #f5c2c7;} /* Lys rød */
-.btn-eliminate:hover { background-color: #f5c2c7;}
-.btn-restore { background-color: #fff3cd; border-color: #ffeeba;} /* Lys gul */
-.btn-restore:hover { background-color: #ffeeba;}
-
-.player-details { /* Ekstra detaljer ved siden av navnet */
-    font-size: 0.85em;
-    color: #6c757d;
-    margin-left: 8px;
-}
-/* === TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION END === */
-
-
-/* === UTILITY & RESPONSIVE SECTION START === */
-/* (hidden og warning er flyttet til General) */
-
-@media (max-width: 992px) { /* Juster for tablets */
-    #timer-display { font-size: 9em; }
-    #blinds-display { font-size: 6em; }
-    .player-management { flex-direction: column; overflow: visible;} /* Stabler kolonner */
-    .player-column { flex-basis: auto; max-height: 40vh; /* Begrenset høyde per kolonne */ }
-}
-
-@media (max-width: 768px) { /* Juster for mindre tablets/store mobiler */
-    .live-info-top { flex-direction: column; align-items: center; padding: 15px 5px; min-height: 0;}
-    .timer-section, .blinds-section { flex-basis: auto; width: 100%; margin-bottom: 15px;}
-    #timer-display { font-size: 7em; }
-    #blinds-display { font-size: 5em; }
-    .live-info-secondary { font-size: 1em; padding: 8px 10px; }
-    .live-info-secondary p { margin: 2px 5px;}
-    .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;}
-    .player-column { max-height: none; /* Fjerner høydebegrensning på små skjermer */ }
-}
-
-@media (max-width: 480px) { /* Juster for små mobiler */
-     #timer-display { font-size: 5.5em; }
-     #blinds-display { font-size: 4em; }
-     #blinds-display .value { margin: 0 5px; } /* Tettere blinds */
-     .live-info-secondary { font-size: 0.9em; }
-     #player-list li, #eliminated-player-list li { flex-direction: column; align-items: flex-start; } /* Stabler navn og knapper */
-     .player-actions { margin-left: 0; margin-top: 5px; }
-     .player-actions button { margin-left: 0; margin-right: 4px; }
-}
-/* === UTILITY & RESPONSIVE SECTION END === */
+/* === 04: SETUP PAGE SECTION START === */
+.setup-page form h2, .setup-page form h3 { margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+.setup-page form h2:first-of-type { margin-top: 0; }
+.config-section { border-left: 3px solid var(--primary-color); padding-left: 15px; margin: 15px 0; }
+.form-actions { margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; flex-wrap: wrap;}
+.form-actions button { padding: 12px 25px; font-size: 1.1em; }
+#btn-save-template { background-color: var(--info-color); color: white; border-color: var(--info-color); }
+#btn-start-tournament { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+#btn-back-to-main { background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+.blind-structure-controls { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap;}
+.blind-table-container { max-height: 400px; overflow-y: auto; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px;}
+#blind-structure-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
+#blind-structure-table th, #blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: left; vertical-align: middle; }
+#blind-structure-table th { background-color: #e9ecef; position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; }
+#blind-structure-table td:last-child, #blind-structure-table th:last-child { border-right: none;}
+#blind-structure-table input[type="number"] { width: 80px; padding: 4px; font-size: 1
