@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winjevoll Tournament Manager</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo">
+        <h1>Winjevoll Tournament Manager</h1>
+    </header>
+    <main class="start-page">
+        <h2>Velkommen</h2>
+        <button id="btn-new-tournament">Ny Turnering</button>
+        <button id="btn-load-tournament" disabled>Last Inn Pågående Turnering</button>
+        <p id="load-info"></p>
+    </main>
+    <footer>
+        <p>© 2024 Winjevoll Pokerklubb</p>
+    </footer>
+
+    <script src="js/storage.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadButton = document.getElementById('btn-load-tournament');
+            const loadInfo = document.getElementById('load-info');
+            const activeTournament = loadTournamentState();
+
+            if (activeTournament) {
+                loadButton.disabled = false;
+                loadInfo.textContent = `Fant pågående turnering: ${activeTournament.config.name || 'Ukjent Navn'} (Nivå ${activeTournament.live.currentLevelIndex + 1})`;
+                loadButton.addEventListener('click', () => {
+                    window.location.href = 'tournament.html';
+                });
+            } else {
+                loadInfo.textContent = 'Ingen pågående turnering funnet.';
+            }
+
+            document.getElementById('btn-new-tournament').addEventListener('click', () => {
+                // Slett eventuell gammel state før ny startes
+                clearTournamentState();
+                window.location.href = 'setup.html';
+            });
+        });
+    </script>
+</body>
+</html>
