@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-    <!-- === HEAD SECTION START === -->
+    <!-- === 01: HEAD SECTION START === -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Turnering - Winjevoll</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- === HEAD SECTION END === -->
+    <!-- === 01: HEAD SECTION END === -->
 </head>
 <body>
-    <!-- === HEADER SECTION START === -->
+    <!-- === 02: HEADER SECTION START === -->
     <header class="tournament-header">
         <div class="header-left">
             <img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo">
@@ -17,13 +17,15 @@
         </div>
         <div class="header-right">
              <p>Klokke: <span id="current-time">--:--:--</span></p>
+             <button id="btn-edit-settings" title="Rediger Turneringsinnstillinger" class="small-button">⚙️ Innst.</button>
+             <button id="btn-back-to-main-live" title="Tilbake til Startside (Lagrer status)" class="small-button"> Hjem</button>
         </div>
     </header>
-    <!-- === HEADER SECTION END === -->
+    <!-- === 02: HEADER SECTION END === -->
 
-    <!-- === MAIN CONTENT SECTION START === -->
+    <!-- === 03: MAIN CONTENT SECTION START === -->
     <main class="tournament-live">
-        <!-- === LIVE INFO TOP (TIMER/BLINDS) SECTION START === -->
+        <!-- === 03a: LIVE INFO TOP (TIMER/BLINDS) SECTION START === -->
         <div class="live-info-top">
             <div class="timer-section">
                 <h2>Tid Igjen</h2>
@@ -36,73 +38,120 @@
             <div class="blinds-section">
                 <h2>Blinds</h2>
                 <div id="blinds-display">
-                    <!-- Content managed by JS -->
-                     <span>--</span> / <span>--</span> Ante: <span>--</span>
+                     <span class="value">--</span> / <span class="value">--</span> <span class="label">Ante:</span> <span class="value">--</span>
                 </div>
                  <p id="break-info" class="hidden">PAUSE</p>
             </div>
         </div>
-         <!-- === LIVE INFO TOP (TIMER/BLINDS) SECTION END === -->
+        <!-- === 03a: LIVE INFO TOP (TIMER/BLINDS) SECTION END === -->
 
-        <!-- === LIVE INFO SECONDARY SECTION START === -->
+        <!-- === 03b: LIVE INFO SECONDARY SECTION START === -->
         <div class="live-info-secondary">
-             <p>Spillere: <span id="players-remaining">--</span> / <span id="players-started">--</span> (<span id="total-entries">--</span> entries)</p>
+             <p>Spillere: <span id="players-remaining">--</span> (<span id="total-entries">--</span> entries)</p>
              <p>Snitt Stack: <span id="average-stack">--</span></p>
              <p>Total Pott: <span id="total-pot">--</span> kr</p>
              <p id="late-reg-status">Late Reg: --</p>
         </div>
-         <!-- === LIVE INFO SECONDARY SECTION END === -->
+        <!-- === 03b: LIVE INFO SECONDARY SECTION END === -->
 
-        <!-- === LIVE PRIZE DISPLAY SECTION START === -->
+        <!-- === 03c: LIVE PRIZE DISPLAY SECTION START === -->
         <div id="prize-display-live" class="live-info-prizes">
             <h3>Premier (Estimat)</h3>
             <p>Beregner...</p>
         </div>
-        <!-- === LIVE PRIZE DISPLAY SECTION END === -->
+        <!-- === 03c: LIVE PRIZE DISPLAY SECTION END === -->
 
-        <!-- === CONTROLS SECTION START === -->
+        <!-- === 03d: CONTROLS SECTION START === -->
         <div class="controls">
-            <button id="btn-start-pause">Start</button>
+            <button id="btn-start-pause">Start Klokke</button>
             <button id="btn-prev-level"><< Forrige Nivå</button>
             <button id="btn-next-level">Neste Nivå >></button>
             <button id="btn-adjust-time-minus">-1 min</button>
             <button id="btn-adjust-time-plus">+1 min</button>
-            <button id="btn-late-reg" disabled>Registrer Late Reg</button>
         </div>
-         <!-- === CONTROLS SECTION END === -->
+        <!-- === 03d: CONTROLS SECTION END === -->
 
-         <!-- === PLAYER MANAGEMENT SECTION START === -->
-         <div class="player-management">
+        <!-- === 03e: PLAYER MANAGEMENT SECTION START === -->
+        <div class="player-management">
+            <!-- Active Players Column -->
             <div class="player-column">
                 <h2>Aktive Spillere (<span id="active-player-count">--</span>)</h2>
                 <p id="table-balance-info" class="warning hidden">Ubalanserte bord! Balansering kan skje.</p>
-                <ul id="player-list">
-                    <!-- Spillere listes opp av JS -->
+                <ul id="player-list" class="item-list player-list-live">
                     <li>Laster spillere...</li>
                 </ul>
+                 <div class="add-player-live-section">
+                      <h4>Legg til Spiller</h4>
+                      <input type="text" id="add-player-name-live" placeholder="Navn på ny spiller">
+                      <button id="btn-add-player-live">Legg til</button>
+                      <button id="btn-late-reg" disabled>Late Reg</button>
+                      <small>(Legger til med start stack. Bruk 'Late Reg' hvis tilgjengelig.)</small>
+                 </div>
             </div>
+            <!-- Eliminated Players Column -->
             <div class="player-column">
                 <h2>Eliminerte Spillere (<span id="eliminated-player-count">--</span>)</h2>
-                <ul id="eliminated-player-list">
-                    <!-- Eliminerte spillere listes opp her -->
+                <ul id="eliminated-player-list" class="item-list player-list-live">
+                    <!-- Eliminerte listes opp her -->
                 </ul>
             </div>
         </div>
-        <!-- === PLAYER MANAGEMENT SECTION END === -->
+        <!-- === 03e: PLAYER MANAGEMENT SECTION END === -->
 
     </main>
-     <!-- === MAIN CONTENT SECTION END === -->
+    <!-- === 03: MAIN CONTENT SECTION END === -->
 
-    <!-- === FOOTER SECTION START === -->
+    <!-- === 04: FOOTER SECTION START === -->
     <footer>
         <p>© 2024 Winjevoll Pokerklubb</p>
-        <button id="btn-end-tournament" class="danger-button">Avslutt Turnering (Sletter Data)</button>
+        <div> <!-- Group buttons -->
+            <button id="btn-force-save" class="small-button">Lagre Nå</button>
+            <button id="btn-end-tournament" class="danger-button">Fullfør Turnering</button>
+        </div>
     </footer>
-    <!-- === FOOTER SECTION END === -->
+    <!-- === 04: FOOTER SECTION END === -->
 
-    <!-- === SCRIPTS SECTION START === -->
+    <!-- === 05: MODAL FOR EDITING SETTINGS START === -->
+    <div id="edit-settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="close-modal-button" title="Lukk">×</span>
+            <h2>Rediger Turneringsinnstillinger</h2>
+            <p class="warning">Advarsel: Endring av innstillinger underveis kan ha utilsiktede konsekvenser!</p>
+
+            <div id="edit-blinds-section">
+                <h3>Rediger Fremtidige Blindnivåer</h3>
+                <p><small>(Endringer påvirker kun nivåer som ikke har startet ennå. Historiske nivåer vises deaktivert.)</small></p>
+                 <div class="blind-table-container">
+                    <table id="edit-blind-structure-table">
+                         <thead><tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet</th><th>Pause?</th><th></th></tr></thead>
+                         <tbody id="edit-blind-structure-body"></tbody>
+                    </table>
+                </div>
+                 <button type="button" id="btn-add-edit-level">Legg til Nivå/Pause på Slutten</button>
+            </div>
+
+            <div id="edit-prizes-section">
+                 <h3>Rediger Premiefordeling</h3>
+                 <p><small>(Bør kun gjøres før noen er eliminert innenfor premiene for å unngå forvirring)</small></p>
+                 <label for="edit-paid-places">Antall Betalte Plasseringer:</label>
+                 <input type="number" id="edit-paid-places" min="1">
+                 <label for="edit-prize-distribution">Ny Fordeling (%):</label>
+                 <textarea id="edit-prize-distribution" rows="2"></textarea>
+                 <button type="button" id="btn-generate-edit-payout">Generer Standard</button>
+            </div>
+             <!-- Add more editable fields here later if needed -->
+
+             <div class="modal-actions">
+                  <button id="btn-save-edited-settings">Lagre Endringer</button>
+                  <button id="btn-cancel-edit-settings" type="button">Avbryt</button>
+             </div>
+        </div>
+    </div>
+    <!-- === 05: MODAL FOR EDITING SETTINGS END === -->
+
+    <!-- === 06: SCRIPTS SECTION START === -->
     <script src="js/storage.js"></script>
     <script src="js/tournament.js"></script>
-     <!-- === SCRIPTS SECTION END === -->
+    <!-- === 06: SCRIPTS SECTION END === -->
 </body>
 </html>
