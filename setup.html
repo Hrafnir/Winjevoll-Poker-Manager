@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konfigurer Turnering - Winjevoll</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo">
+        <h1>Konfigurer Ny Turnering</h1>
+    </header>
+    <main class="setup-page">
+        <form id="setup-form">
+            <h2>Grunnleggende</h2>
+            <label for="tournament-name">Turneringsnavn:</label>
+            <input type="text" id="tournament-name" value="Klubbkveld" required>
+
+            <label for="tournament-type">Type:</label>
+            <select id="tournament-type">
+                <option value="freezeout">Freezeout</option>
+                <option value="rebuy">Re-buy (+ Add-on)</option>
+                <option value="knockout">Knockout</option>
+            </select>
+
+            <label for="buy-in">Buy-in (kr):</label>
+            <input type="number" id="buy-in" value="100" min="0" required>
+
+            <div id="knockout-section" class="config-section hidden">
+                 <label for="bounty-amount">Bounty per spiller (kr):</label>
+                 <input type="number" id="bounty-amount" value="20" min="0">
+            </div>
+
+            <label for="start-stack">Start Stack:</label>
+            <input type="number" id="start-stack" value="10000" min="100" required>
+
+            <label for="players-per-table">Spillere per bord:</label>
+            <input type="number" id="players-per-table" value="9" min="2" max="10" required>
+
+            <div id="rebuy-section" class="config-section hidden">
+                <h3>Re-buy / Add-on</h3>
+                <label for="rebuy-cost">Re-buy Kostnad (kr):</label>
+                <input type="number" id="rebuy-cost" value="100" min="0">
+                <label for="rebuy-chips">Re-buy Sjetonger:</label>
+                <input type="number" id="rebuy-chips" value="10000" min="100">
+                <label for="rebuy-levels">Re-buy tillatt t.o.m. nivå:</label>
+                <input type="number" id="rebuy-levels" value="4" min="1">
+
+                <label for="addon-cost">Add-on Kostnad (kr):</label>
+                <input type="number" id="addon-cost" value="100" min="0">
+                <label for="addon-chips">Add-on Sjetonger:</label>
+                <input type="number" id="addon-chips" value="15000" min="100">
+                <small>(Add-on tilgjengelig etter Re-buy perioden)</small>
+            </div>
+
+             <h2>Premier</h2>
+             <label for="paid-places">Antall Betalte Plasseringer:</label>
+             <input type="number" id="paid-places" value="3" min="1" required>
+             <label for="prize-distribution">Premiefordeling (% per plass, separert med komma):</label>
+             <textarea id="prize-distribution" placeholder="Eks: 50, 30, 20">50, 30, 20</textarea>
+             <small>Sørg for at prosentene summerer til 100%.</small>
+
+            <h2>Blindstruktur</h2>
+            <label for="level-duration">Nivåvarighet (minutter):</label>
+            <input type="number" id="level-duration" value="20" min="5" required>
+
+            <label for="late-reg-level">Sen Registrering (Late Reg) t.o.m. nivå:</label>
+            <input type="number" id="late-reg-level" value="4" min="0">
+            <small>(0 betyr ingen sen registrering)</small>
+
+            <button type="button" id="btn-generate-blinds">Generer Standard Blinds</button>
+            <table id="blind-structure-table">
+                <thead>
+                    <tr>
+                        <th>Nivå</th>
+                        <th>Small Blind</th>
+                        <th>Big Blind</th>
+                        <th>Ante</th>
+                        <th>Varighet (min)</th>
+                        <th>Pause?</th>
+                        <th>Handling</th>
+                    </tr>
+                </thead>
+                <tbody id="blind-structure-body">
+                    <!-- Rader legges til av JS -->
+                </tbody>
+            </table>
+            <button type="button" id="btn-add-level">Legg til Nivå/Pause</button>
+
+            <h2>Spillere</h2>
+            <label for="player-names">Registrer Spillere (ett navn per linje):</label>
+            <textarea id="player-names" rows="10" placeholder="Ola Nordmann\nKari Nordmann"></textarea>
+
+            <button type="submit" id="btn-start-tournament">Start Turnering</button>
+        </form>
+    </main>
+    <footer>
+        <p>© 2024 Winjevoll Pokerklubb</p>
+    </footer>
+
+    <script src="js/storage.js"></script>
+    <script src="js/setup.js"></script>
+</body>
+</html>
