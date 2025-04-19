@@ -1,110 +1,186 @@
+// === DOMContentLoaded LISTENER START ===
 document.addEventListener('DOMContentLoaded', () => {
+    // === DOM REFERENCES START ===
     const form = document.getElementById('setup-form');
     const tournamentTypeSelect = document.getElementById('tournament-type');
     const rebuySection = document.getElementById('rebuy-section');
     const knockoutSection = document.getElementById('knockout-section');
     const blindStructureBody = document.getElementById('blind-structure-body');
+    const levelDurationInput = document.getElementById('level-duration');
     const paidPlacesInput = document.getElementById('paid-places');
     const prizeDistInput = document.getElementById('prize-distribution');
+    const startStackInput = document.getElementById('start-stack');
+    // === DOM REFERENCES END ===
 
-    // Vis/skjul seksjoner basert på type
-    function toggleSections() {
-        const type = tournamentTypeSelect.value;
-        rebuySection.classList.toggle('hidden', type !== 'rebuy');
-        knockoutSection.classList.toggle('hidden', type !== 'knockout');
-    }
-    tournamentTypeSelect.addEventListener('change', toggleSections);
-    toggleSections(); // Kjør ved lasting
 
-    // --- Blindstruktur ---
-    let blindLevelCounter = 0;
+    // === STATE VARIABLES START ===
+    let blindLevelCounter = 0; // Holder styr på antall nivåer for nummerering
+    // Standard payout structures (example, can be expanded)
+    const standardPayouts = {
+        1: [100],
+        2: [65, 35],
+        3: [50, 30, 20],
+        4: [45, 27, 18, 10],
+        5: [40, 25, 16, 11, 8],
+        6: [38, 24, 15, 10, 8, 5],
+        7: [36, 23, 14, 10, 8, 5, 4],
+        8: [35, 22, 13, 9, 7, 6, 4, 4],
+        9: [34, 21, 13, 9, 7, 6, 4, 3, 3],
+       10: [33, 20, 12, 9, 7, 6, 5, 3, 3, 2]
+        // Add more structures as needed
+    };
+    // === STATE VARIABLES END ===
 
-    function addBlindLevelRow(levelData = {}) {
+
+    // === HELPER FUNCTIONS - BLINDS START ===
+    function addBlindLevelRow(levelData = {}, isGenerated = false) {
         blindLevelCounter++;
         const row = blindStructureBody.insertRow();
+        row.dataset.levelNumber = blindLevelCounter; // Bruk data-attributt
+
+        const defaultDuration = levelDurationInput.value || 20;
+
         row.innerHTML = `
             <td><span class="level-number">${blindLevelCounter}</span></td>
-            <td><input type="number" class="sb-input" value="${levelData.sb || ''}" min="0"></td>
-            <td><input type="number" class="bb-input" value="${levelData.bb || ''}" min="0"></td>
-            <td><input type="number" class="ante-input" value="${levelData.ante || 0}" min="0"></td>
-            <td><input type="number" class="duration-input" value="${levelData.duration || document.getElementById('level-duration').value}" min="1"></td>
-            <td><input type="checkbox" class="is-break-checkbox" ${levelData.isBreak ? 'checked' : ''}></td>
-            <td><button type="button" class="btn-remove-level">Fjern</button></td>
+            <td><input type="number" class="sb-input" value="${levelData.sb ?? ''}" min="0" ${levelData.isBreak ? 'disabled' : ''}></td>
+            <td><input type="number" class="bb-input" value="${levelData.bb ?? ''}" min="0" ${levelData.isBreak ? 'disabled' : ''}></td>
+            <td><input type="number" class="ante-input" value="${levelData.ante ?? 0}" min="0" ${levelData.isBreak ? 'disabled' : ''}></td>
+            <td><input type="number" class="duration-input" value="${levelData.duration ?? defaultDuration}" min="1"></td>
+            <td><input type="checkbox" class="is-break-checkbox" ${levelData.isBreak ? 'checked' : ''}> Pause</td>
+            <td><button type="button" class="btn-remove-level" title="Fjern nivå ${blindLevelCounter}">X</button></td>
         `;
+
+        // Add event listeners for the new row
         row.querySelector('.btn-remove-level').addEventListener('click', () => {
             row.remove();
             updateLevelNumbers();
         });
-        row.querySelector('.is-break-checkbox').addEventListener('change', (e) => {
+
+        const breakCheckbox = row.querySelector('.is-break-checkbox');
+        breakCheckbox.addEventListener('change', (e) => {
             const isBreak = e.target.checked;
-            row.querySelector('.sb-input').disabled = isBreak;
-            row.querySelector('.bb-input').disabled = isBreak;
-            row.querySelector('.ante-input').disabled = isBreak;
-            if(isBreak) {
-                 row.querySelector('.sb-input').value = '';
-                 row.querySelector('.bb-input').value = '';
-                 row.querySelector('.ante-input').value = 0;
+            const sbInput = row.querySelector('.sb-input');
+            const bbInput = row.querySelector('.bb-input');
+            const anteInput = row.querySelector('.ante-input');
+            sbInput.disabled = isBreak;
+            bbInput.disabled = isBreak;
+            anteInput.disabled = isBreak;
+            if (isBreak) {
+                // Clear blind values if it becomes a break
+                sbInput.value = '';
+                bbInput.value = '';
+                anteInput.value = 0;
             }
         });
-         // Trigger change event initially if it's a break
-        if(levelData.isBreak) {
-             row.querySelector('.is-break-checkbox').dispatchEvent(new Event('change'));
-        }
+         // Initial disable state if it starts as a break
+         if(levelData.isBreak) {
+             breakCheckbox.dispatchEvent(new Event('change'));
+         }
     }
 
     function updateLevelNumbers() {
         const rows = blindStructureBody.querySelectorAll('tr');
         rows.forEach((row, index) => {
-            row.querySelector('.level-number').textContent = index + 1;
+            const levelNum = index + 1;
+            row.dataset.levelNumber = levelNum;
+            row.querySelector('.level-number').textContent = levelNum;
+             row.querySelector('.btn-remove-level').title = `Fjern nivå ${levelNum}`;
         });
-        blindLevelCounter = rows.length;
+        blindLevelCounter = rows.length; // Update the counter
     }
 
-    document.getElementById('btn-add-level').addEventListener('click', () => addBlindLevelRow());
-
-    document.getElementById('btn-generate-blinds').addEventListener('click', () => {
+    function generateStandardBlinds() {
         blindStructureBody.innerHTML = ''; // Clear existing
         blindLevelCounter = 0;
-        const startStack = parseInt(document.getElementById('start-stack').value) || 10000;
-        const duration = parseInt(document.getElementById('level-duration').value) || 20;
-        // Enkel generering (kan gjøres mer avansert)
+        const startStack = parseInt(startStackInput.value) || 10000;
+        const duration = parseInt(levelDurationInput.value) || 20;
+        // Improved simple structure (adjust as needed)
         const blinds = [
-            { sb: Math.round(startStack / 200), bb: Math.round(startStack / 100), ante: 0 },
-            { sb: Math.round(startStack / 150), bb: Math.round(startStack / 75), ante: 0 },
-            { sb: Math.round(startStack / 100), bb: Math.round(startStack / 50), ante: Math.round(startStack / 500) || 0 },
-            { sb: Math.round(startStack / 75), bb: Math.round(startStack / 37), ante: Math.round(startStack / 400) || 0 },
-            { isBreak: true, duration: 10 }, // Pause
-            { sb: Math.round(startStack / 50), bb: Math.round(startStack / 25), ante: Math.round(startStack / 250) || 0 },
-            { sb: Math.round(startStack / 30), bb: Math.round(startStack / 15), ante: Math.round(startStack / 150) || 0 },
-            { sb: Math.round(startStack / 20), bb: Math.round(startStack / 10), ante: Math.round(startStack / 100) || 0 },
-            { sb: Math.round(startStack / 15), bb: Math.round(startStack / 7.5), ante: Math.round(startStack / 75) || 0 },
-             { isBreak: true, duration: 10 }, // Pause
-            { sb: Math.round(startStack / 10), bb: Math.round(startStack / 5), ante: Math.round(startStack / 50) || 0 },
-            { sb: Math.round(startStack / 7), bb: Math.round(startStack / 3.5), ante: Math.round(startStack / 35) || 0 },
-            { sb: Math.round(startStack / 5), bb: Math.round(startStack / 2.5), ante: Math.round(startStack / 25) || 0 },
-        ];
-        blinds.forEach(b => addBlindLevelRow({ ...b, duration: b.isBreak ? b.duration : duration }));
+            { sb: Math.round(startStack / 200), bb: Math.round(startStack / 100) }, // ~1%
+            { sb: Math.round(startStack / 133), bb: Math.round(startStack / 67) },  // ~1.5%
+            { sb: Math.round(startStack / 100), bb: Math.round(startStack / 50), ante: Math.round(startStack / 500) || 0 }, // ~2% + ante
+            { sb: Math.round(startStack / 67), bb: Math.round(startStack / 33), ante: Math.round(startStack / 330) || 0 },  // ~3% + ante
+            { isBreak: true, duration: 10 },
+            { sb: Math.round(startStack / 50), bb: Math.round(startStack / 25), ante: Math.round(startStack / 250) || 0 },  // ~4% + ante
+            { sb: Math.round(startStack / 33), bb: Math.round(startStack / 17), ante: Math.round(startStack / 170) || 0 },  // ~6% + ante
+            { sb: Math.round(startStack / 25), bb: Math.round(startStack / 12.5), ante: Math.round(startStack / 125) || 0 }, // ~8% + ante
+            { sb: Math.round(startStack / 17), bb: Math.round(startStack / 8.5), ante: Math.round(startStack / 85) || 0 },  // ~12% + ante
+            { isBreak: true, duration: 10 },
+            { sb: Math.round(startStack / 12.5), bb: Math.round(startStack / 6.25), ante: Math.round(startStack / 60) || 0 }, // ~16% + ante
+            { sb: Math.round(startStack / 8.5), bb: Math.round(startStack / 4.25), ante: Math.round(startStack / 40) || 0 }, // ~24% + ante
+            { sb: Math.round(startStack / 6), bb: Math.round(startStack / 3), ante: Math.round(startStack / 30) || 0 },     // ~33% + ante
+        ].map(level => ({ ...level, bb: Math.max(level.sb || 0, level.bb || 0) })); // Ensure BB >= SB
+
+        blinds.forEach(b => addBlindLevelRow({ ...b, duration: b.isBreak ? b.duration : duration }, true));
+    }
+     // === HELPER FUNCTIONS - BLINDS END ===
+
+
+     // === HELPER FUNCTIONS - PAYOUTS START ===
+     function generateStandardPayout() {
+         const places = parseInt(paidPlacesInput.value) || 0;
+         if (places > 0 && standardPayouts[places]) {
+             prizeDistInput.value = standardPayouts[places].join(', ');
+             console.log(`Generated standard payout for ${places} places.`);
+         } else if (places > 0) {
+             alert(`Ingen standard fordeling funnet for ${places} plasser. Legg inn manuelt.`);
+             prizeDistInput.value = ''; // Clear if no standard found
+         } else {
+             prizeDistInput.value = ''; // Clear if places is 0 or invalid
+         }
+     }
+     // === HELPER FUNCTIONS - PAYOUTS END ===
+
+
+    // === EVENT LISTENERS START ===
+    tournamentTypeSelect.addEventListener('change', () => {
+        const type = tournamentTypeSelect.value;
+        rebuySection.classList.toggle('hidden', type !== 'rebuy');
+        knockoutSection.classList.toggle('hidden', type !== 'knockout');
     });
 
-    // Generer noen start-nivåer
-    document.getElementById('btn-generate-blinds').click();
+    document.getElementById('btn-add-level').addEventListener('click', () => addBlindLevelRow());
+    document.getElementById('btn-generate-blinds').addEventListener('click', generateStandardBlinds);
+     document.getElementById('btn-clear-blinds').addEventListener('click', () => {
+         if (confirm("Er du sikker på at du vil slette hele blindstrukturen?")) {
+             blindStructureBody.innerHTML = '';
+             blindLevelCounter = 0;
+         }
+     });
+     document.getElementById('btn-generate-payout').addEventListener('click', generateStandardPayout);
+
+     document.getElementById('btn-back-to-main').addEventListener('click', () => {
+        if (confirm("Er du sikker på at du vil gå tilbake? Endringer i dette skjemaet vil ikke bli lagret.")) {
+            window.location.href = 'index.html';
+        }
+    });
+    // === EVENT LISTENERS END ===
 
 
-    // --- Skjemainnsending ---
+    // === INITIALIZATION START ===
+    tournamentTypeSelect.dispatchEvent(new Event('change')); // Trigger initial show/hide
+    generateStandardBlinds(); // Generate default blinds on load
+     generateStandardPayout(); // Attempt to generate payout based on default paid places
+    // === INITIALIZATION END ===
+
+
+    // === FORM SUBMISSION HANDLER START ===
     form.addEventListener('submit', (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Prevent default form submission
 
-        // 1. Samle inn all data
+        // --- 1. Data Collection START ---
         const config = {
-            name: document.getElementById('tournament-name').value.trim(),
-            date: new Date().toISOString().slice(0, 10), // Dagens dato
+            name: document.getElementById('tournament-name').value.trim() || "Ukjent Turnering",
+            date: new Date().toISOString().slice(0, 10),
             type: tournamentTypeSelect.value,
             buyIn: parseInt(document.getElementById('buy-in').value) || 0,
             bountyAmount: 0,
-            startStack: parseInt(document.getElementById('start-stack').value) || 10000,
+            startStack: parseInt(startStackInput.value) || 10000,
             playersPerTable: parseInt(document.getElementById('players-per-table').value) || 9,
             paidPlaces: parseInt(paidPlacesInput.value) || 1,
-            prizeDistribution: prizeDistInput.value.split(',').map(p => parseFloat(p.trim())).filter(p => !isNaN(p)),
+            prizeDistribution: prizeDistInput.value.split(',')
+                                   .map(p => parseFloat(p.trim()))
+                                   .filter(p => !isNaN(p) && p >= 0), // Tillat 0%
             rebuyCost: 0,
             rebuyChips: 0,
             rebuyLevels: 0,
@@ -123,111 +199,205 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (config.type === 'knockout') {
             config.bountyAmount = parseInt(document.getElementById('bounty-amount').value) || 0;
-            if (config.bountyAmount > config.buyIn) {
-                 alert("Bounty kan ikke være større enn Buy-in.");
-                 return;
+        }
+        // --- 1. Data Collection END ---
+
+
+        // --- 2. Validation START ---
+        let isValid = true;
+        let errorMessages = [];
+
+        if (config.startStack <= 0) {
+             isValid = false;
+             errorMessages.push("Start Stack må være større enn 0.");
+        }
+        if (config.playersPerTable < 2) {
+             isValid = false;
+             errorMessages.push("Maks spillere per bord må være minst 2.");
+        }
+        if (config.paidPlaces <= 0) {
+             isValid = false;
+             errorMessages.push("Antall betalte plasseringer må være minst 1.");
+        }
+
+        // Validate Prize Distribution
+        if (config.prizeDistribution.length !== config.paidPlaces) {
+            isValid = false;
+            errorMessages.push(`Antall premier (${config.prizeDistribution.length}) stemmer ikke med Antall Betalte Plasseringer (${config.paidPlaces}).`);
+        } else {
+            const prizeSum = config.prizeDistribution.reduce((sum, p) => sum + p, 0);
+            // Allow for tiny floating point inaccuracies
+            if (Math.abs(prizeSum - 100) > 0.1) {
+                isValid = false;
+                errorMessages.push(`Summen av premiefordelingen (${prizeSum.toFixed(1)}%) er ikke 100%.`);
             }
         }
 
-        // Valider premiefordeling
-        const prizeSum = config.prizeDistribution.reduce((sum, p) => sum + p, 0);
-        if (config.prizeDistribution.length !== config.paidPlaces || Math.abs(prizeSum - 100) > 0.1) {
-             alert(`Antall premier (${config.prizeDistribution.length}) stemmer ikke med Antall Betalte (${config.paidPlaces}), eller summen (${prizeSum}%) er ikke 100%.`);
-             return;
-        }
+        // Validate Bounty Amount
+         if (config.type === 'knockout' && config.bountyAmount > config.buyIn) {
+             isValid = false;
+             errorMessages.push("Bounty kan ikke være større enn Buy-in.");
+         }
+         if (config.type === 'knockout' && config.bountyAmount < 0) {
+             isValid = false;
+             errorMessages.push("Bounty kan ikke være negativ.");
+         }
 
 
-        // Samle blindstruktur
+        // Collect and Validate Blind Structure
         const blindRows = blindStructureBody.querySelectorAll('tr');
         if (blindRows.length === 0) {
-            alert("Du må definere minst ett blindnivå.");
-            return;
+            isValid = false;
+            errorMessages.push("Du må definere minst ett blindnivå.");
         }
         blindRows.forEach((row, index) => {
+            const levelNum = index + 1;
             const isBreak = row.querySelector('.is-break-checkbox').checked;
+            const sbInput = row.querySelector('.sb-input');
+            const bbInput = row.querySelector('.bb-input');
+            const anteInput = row.querySelector('.ante-input');
+            const durationInput = row.querySelector('.duration-input');
+
             const level = {
-                level: index + 1,
-                sb: isBreak ? 0 : parseInt(row.querySelector('.sb-input').value) || 0,
-                bb: isBreak ? 0 : parseInt(row.querySelector('.bb-input').value) || 0,
-                ante: isBreak ? 0 : parseInt(row.querySelector('.ante-input').value) || 0,
-                duration: parseInt(row.querySelector('.duration-input').value) || 20,
+                level: levelNum,
+                sb: isBreak ? 0 : parseInt(sbInput.value),
+                bb: isBreak ? 0 : parseInt(bbInput.value),
+                ante: isBreak ? 0 : parseInt(anteInput.value) || 0, // Default ante to 0 if empty/NaN
+                duration: parseInt(durationInput.value) || 20, // Use default if empty/invalid
                 isBreak: isBreak,
             };
-             // Validering: BB må være minst SB, begge må være > 0 hvis ikke pause
-             if (!isBreak && (level.bb <= 0 || level.bb < level.sb)) {
-                  alert(`Ugyldig blindnivå ${level.level}: Big Blind må være større enn 0 og minst like stor som Small Blind.`);
-                  throw new Error("Invalid blind level"); // Stopp prosessen
-             }
+
+             // Validation within the loop
+            if (level.duration <= 0) {
+                isValid = false;
+                errorMessages.push(`Nivå ${levelNum}: Varighet må være større enn 0.`);
+                durationInput.style.borderColor = 'red'; // Highlight error
+            } else {
+                 durationInput.style.borderColor = '';
+            }
+
+            if (!isBreak) {
+                 if (isNaN(level.sb) || level.sb < 0) {
+                      isValid = false;
+                      errorMessages.push(`Nivå ${levelNum}: Small Blind er ugyldig.`);
+                      sbInput.style.borderColor = 'red';
+                 } else {
+                      sbInput.style.borderColor = '';
+                 }
+                 if (isNaN(level.bb) || level.bb <= 0) {
+                      isValid = false;
+                      errorMessages.push(`Nivå ${levelNum}: Big Blind må være større enn 0.`);
+                      bbInput.style.borderColor = 'red';
+                 } else if (level.bb < level.sb) {
+                      isValid = false;
+                      errorMessages.push(`Nivå ${levelNum}: Big Blind må være lik eller større enn Small Blind.`);
+                      bbInput.style.borderColor = 'red';
+                 } else {
+                      bbInput.style.borderColor = '';
+                 }
+                 if (isNaN(level.ante) || level.ante < 0) {
+                      isValid = false;
+                      errorMessages.push(`Nivå ${levelNum}: Ante er ugyldig.`);
+                      anteInput.style.borderColor = 'red';
+                 } else {
+                      anteInput.style.borderColor = '';
+                 }
+            } else {
+                  // Clear borders for breaks
+                  sbInput.style.borderColor = '';
+                  bbInput.style.borderColor = '';
+                  anteInput.style.borderColor = '';
+            }
+
+
             config.blindLevels.push(level);
         });
 
-        // 2. Initialiser live state
-        const live = {
-            status: "paused", // Starter pauset
+        // Validate Player Names
+        const playerNamesRaw = document.getElementById('player-names').value;
+        const playerNames = playerNamesRaw.split('\n')
+            .map(name => name.trim()).filter(name => name.length > 0);
+
+        if (playerNames.length < 2) {
+            isValid = false;
+            errorMessages.push("Du må registrere minst to spillere.");
+        }
+
+        // --- 2. Validation END ---
+
+
+        // --- 3. Handle Validation Result START ---
+        if (!isValid) {
+            alert("Vennligst rett følgende feil:\n\n- " + errorMessages.join("\n- "));
+            return; // Stop submission
+        }
+        // --- 3. Handle Validation Result END ---
+
+
+        // --- 4. Initialize Live State & Player Distribution START ---
+         const live = {
+            status: "paused", // 'paused', 'running', 'finished'
             currentLevelIndex: 0,
             timeRemainingInLevel: config.blindLevels[0].duration * 60,
             players: [],
             eliminatedPlayers: [],
-            totalPot: 0, // Start pott
-            totalEntries: 0, // Buyins + Rebuys
+            totalPot: 0,
+            totalEntries: 0,
             totalRebuys: 0,
             totalAddons: 0,
-            nextPlayerId: 1,
-            nextTable: 1,
-            nextSeat: 1,
-             knockoutLog: [], // For KO tracking
+            nextPlayerId: 1, // Start player IDs from 1
+            knockoutLog: [], // { eliminatedPlayerId, eliminatedByPlayerId }
+            // nextTable/Seat are less critical now with better initial distribution
         };
 
-        // 3. Registrer spillere og sett startpott/entries
-        const playerNames = document.getElementById('player-names').value.split('\n')
-            .map(name => name.trim()).filter(name => name.length > 0);
+        // --- Improved Initial Player Distribution ---
+         const numPlayers = playerNames.length;
+         const playersPerTable = config.playersPerTable;
+         const numTables = Math.ceil(numPlayers / playersPerTable);
 
-        if (playerNames.length < 2) {
-            alert("Du må registrere minst to spillere.");
-            return;
-        }
+         let playerIndex = 0;
+         for (let t = 1; t <= numTables; t++) {
+             const playersOnThisTable = Math.floor(numPlayers / numTables) + (t <= numPlayers % numTables ? 1 : 0);
+             for (let s = 1; s <= playersOnThisTable; s++) {
+                 if (playerIndex >= numPlayers) break;
 
-        const playersPerTable = config.playersPerTable;
-        let currentTable = 1;
-        let currentSeat = 1;
-
-        playerNames.forEach(name => {
-            const player = {
-                id: live.nextPlayerId++,
-                name: name,
-                stack: config.startStack, // Første stack
-                table: currentTable,
-                seat: currentSeat,
-                rebuys: 0,
-                addon: false,
-                eliminated: false,
-                eliminatedBy: null,
-                place: null,
-                knockouts: 0 // For KO
-            };
-            live.players.push(player);
-            live.totalPot += config.buyIn;
-            live.totalEntries++; // Hver startende spiller er en entry
-
-            // Enkel bordplassering
-            currentSeat++;
-            if (currentSeat > playersPerTable) {
-                currentSeat = 1;
-                currentTable++;
-            }
-        });
-         live.nextTable = currentTable;
-         live.nextSeat = currentSeat;
+                 const name = playerNames[playerIndex];
+                 const player = {
+                     id: live.nextPlayerId++, // Assign unique ID
+                     name: name,
+                     stack: config.startStack,
+                     table: t,
+                     seat: s,
+                     rebuys: 0,
+                     addon: false,
+                     eliminated: false,
+                     eliminatedBy: null,
+                     place: null,
+                     knockouts: 0
+                 };
+                 live.players.push(player);
+                 live.totalPot += config.buyIn;
+                 live.totalEntries++;
+                 playerIndex++;
+             }
+         }
+         live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); // Sort for consistency
+         console.log(`Fordelte ${numPlayers} spillere på ${numTables} bord.`);
+         // --- 4. Initialize Live State & Player Distribution END ---
 
 
-        // 4. Lagre state og naviger
+        // --- 5. Save State and Navigate START ---
         const tournamentState = { config, live };
         try {
-             saveTournamentState(tournamentState);
+             saveTournamentState(tournamentState); // From storage.js
              window.location.href = 'tournament.html';
         } catch (error) {
              console.error("Klarte ikke lagre eller navigere:", error);
-             // Ikke naviger hvis lagring feilet
+             alert("En feil oppstod under lagring av turneringsoppsettet.");
         }
+        // --- 5. Save State and Navigate END ---
     });
+    // === FORM SUBMISSION HANDLER END ===
+
 });
+// === DOMContentLoaded LISTENER END ===
