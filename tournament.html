@@ -26,16 +26,22 @@
         <!-- === 03a: LIVE VIEW MAIN SPLIT CONTAINER START === -->
         <div class="live-split-container">
 
-            <!-- === 03a-LEFT: TIMER COLUMN START === -->
+                        <!-- === 03a-LEFT: TIMER COLUMN START === -->
             <div class="live-left-column">
                 <div class="timer-section">
                     <h2>Tid Igjen</h2>
                     <div id="timer-display">--:--</div>
+                    <!-- Korrigert blinds-info div med riktig ID -->
+                    <div class="blinds-info">
+                        <p>Nivå: <span id="current-level">--</span></p>
+                         <!-- Linjen under var allerede der, men inkluderes for kompletthet -->
+                        <p>Neste: <span id="next-blinds">-- / -- (--)</span></p>
+                    </div>
                     <div id="break-info" class="hidden">PAUSE</div>
                 </div>
             </div>
             <!-- === 03a-LEFT: TIMER COLUMN END === -->
-
+            
             <!-- === 03a-RIGHT: INFO COLUMN START === -->
             <div class="live-right-column">
                 <div class="right-col-logo-area">
