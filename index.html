@@ -1,65 +1,201 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-    <!-- === HEAD SECTION START === -->
+    <!-- === 01: HEAD SECTION START === -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Winjevoll Tournament Manager</title>
     <link rel="stylesheet" href="css/style.css">
-    <!-- === HEAD SECTION END === -->
+    <!-- === 01: HEAD SECTION END === -->
 </head>
 <body>
-    <!-- === HEADER SECTION START === -->
+    <!-- === 02: HEADER SECTION START === -->
     <header>
         <img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo">
         <h1>Winjevoll Tournament Manager</h1>
     </header>
-    <!-- === HEADER SECTION END === -->
+    <!-- === 02: HEADER SECTION END === -->
 
-    <!-- === MAIN CONTENT SECTION START === -->
+    <!-- === 03: MAIN CONTENT SECTION START === -->
     <main class="start-page">
-        <h2>Velkommen</h2>
-        <button id="btn-new-tournament">Ny Turnering</button>
-        <button id="btn-load-tournament" disabled>Last Inn Pågående Turnering</button>
-        <p id="load-info"></p>
-    </main>
-    <!-- === MAIN CONTENT SECTION END === -->
+        <h2>Startside</h2>
 
-    <!-- === FOOTER SECTION START === -->
+        <!-- === 03a: NEW TOURNAMENT SECTION START === -->
+        <div class="start-section">
+            <h3>Start Ny Turnering</h3>
+            <button id="btn-new-tournament-setup">Konfigurer Ny Turnering</button>
+            <div id="template-list-start">
+                <h4>Eller start fra mal:</h4>
+                <ul class="item-list">
+                    <li>Laster maler...</li>
+                </ul>
+            </div>
+        </div>
+        <!-- === 03a: NEW TOURNAMENT SECTION END === -->
+
+        <!-- === 03b: LOAD TOURNAMENT SECTION START === -->
+        <div class="start-section">
+            <h3>Fortsett / Se Lagrede Turneringer</h3>
+            <div id="tournament-list-start">
+                 <ul class="item-list">
+                    <li>Laster turneringer...</li>
+                </ul>
+            </div>
+        </div>
+        <!-- === 03b: LOAD TOURNAMENT SECTION END === -->
+
+        <!-- === 03c: DATA MANAGEMENT SECTION START === -->
+         <div class="start-section">
+              <h3>Datahåndtering</h3>
+              <p><small>Fremtidige versjoner vil ha eksport/import.</small></p>
+              <button id="btn-clear-all-data" class="danger-button">Slett ALLE Lagrede Data (Advarsel!)</button>
+         </div>
+         <!-- === 03c: DATA MANAGEMENT SECTION END === -->
+
+    </main>
+    <!-- === 03: MAIN CONTENT SECTION END === -->
+
+    <!-- === 04: FOOTER SECTION START === -->
     <footer>
         <p>© 2024 Winjevoll Pokerklubb</p>
     </footer>
-    <!-- === FOOTER SECTION END === -->
+    <!-- === 04: FOOTER SECTION END === -->
 
-    <!-- === SCRIPTS SECTION START === -->
+    <!-- === 05: SCRIPTS SECTION START === -->
     <script src="js/storage.js"></script>
     <script>
-        // --- Start Page Logic START ---
+        // === 05a: Start Page Logic START ===
         document.addEventListener('DOMContentLoaded', () => {
-            const loadButton = document.getElementById('btn-load-tournament');
-            const loadInfo = document.getElementById('load-info');
-            const activeTournament = loadTournamentState(); // From storage.js
+            // DOM References
+            const templateListUl = document.querySelector('#template-list-start ul');
+            const tournamentListUl = document.querySelector('#tournament-list-start ul');
+            const newTournamentButton = document.getElementById('btn-new-tournament-setup');
+            const clearAllButton = document.getElementById('btn-clear-all-data');
 
-            if (activeTournament) {
-                loadButton.disabled = false;
-                loadInfo.textContent = `Fant pågående turnering: ${activeTournament.config?.name || 'Ukjent Navn'} (Nivå ${activeTournament.live?.currentLevelIndex !== undefined ? activeTournament.live.currentLevelIndex + 1 : 'N/A'})`;
-                loadButton.addEventListener('click', () => {
-                    window.location.href = 'tournament.html';
+            // --- Display Templates ---
+            function displayTemplates() {
+                templateListUl.innerHTML = '';
+                const templates = loadTemplateCollection(); // from storage.js
+                const templateIds = Object.keys(templates);
+
+                if (templateIds.length === 0) {
+                    templateListUl.innerHTML = '<li>Ingen maler lagret.</li>'; return;
+                }
+
+                templateIds.sort((a, b) => (templates[a]?.name || '').localeCompare(templates[b]?.name || '')) // Sort alphabetically
+                .forEach(id => {
+                    const config = templates[id];
+                    if (!config || !config.name) return;
+
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span class="item-name">${config.name}</span>
+                        <div class="list-actions">
+                            <button data-template-id="${id}" class="btn-start-from-template">Start fra Mal</button>
+                            <button data-template-id="${id}" class="btn-delete-template danger-button">Slett</button>
+                        </div>`;
+                    templateListUl.appendChild(li);
                 });
-            } else {
-                loadInfo.textContent = 'Ingen pågående turnering funnet.';
+
+                templateListUl.querySelectorAll('.btn-start-from-template').forEach(btn => {
+                    btn.onclick = (e) => { // Use onclick for simplicity here
+                        const templateId = e.target.dataset.templateId;
+                         if (confirm(`Starte ny turnering basert på malen "${templates[templateId]?.name ?? templateId}"?`)) {
+                             setActiveTemplateId(templateId); // Set which template setup should load
+                             clearActiveTournamentId(); // Don't load any active tournament
+                             window.location.href = `setup.html`;
+                         }
+                    };
+                });
+                 templateListUl.querySelectorAll('.btn-delete-template').forEach(btn => {
+                     btn.onclick = (e) => {
+                          const templateId = e.target.dataset.templateId;
+                          if (confirm(`Slette malen "${templates[templateId]?.name ?? templateId}"?\nDette kan ikke angres.`)) {
+                               deleteTemplate(templateId); // from storage.js
+                               displayTemplates(); // Refresh
+                          }
+                     };
+                 });
             }
 
-            document.getElementById('btn-new-tournament').addEventListener('click', () => {
-                // Slett eventuell gammel state før ny startes
-                if (confirm("Er du sikker på at du vil starte en ny turnering? Eventuell pågående, ulagret turnering vil bli slettet.")) {
-                    clearTournamentState(); // From storage.js
-                    window.location.href = 'setup.html';
-                }
+            // --- Display Tournaments ---
+             function displayTournaments() {
+                 tournamentListUl.innerHTML = '';
+                 const tournaments = loadTournamentCollection(); // from storage.js
+                 const tournamentIds = Object.keys(tournaments);
+                 const activeTournamentId = getActiveTournamentId();
+
+                 if (tournamentIds.length === 0) {
+                     tournamentListUl.innerHTML = '<li>Ingen turneringer lagret.</li>'; return;
+                 }
+
+                 tournamentIds.sort((a, b) => (tournaments[b]?.config?.date || '').localeCompare(tournaments[a]?.config?.date || '') || b.localeCompare(a)) // Sort by date desc, then ID
+                 .forEach(id => {
+                     const state = tournaments[id];
+                     if (!state || !state.config || !state.live) return;
+
+                     const li = document.createElement('li');
+                     const status = state.live.status || 'unknown';
+                     let statusText = 'Ukjent'; let canContinue = false; let isFinished = false;
+                     const levelText = `Nivå ${state.live.currentLevelIndex + 1}`;
+
+                     if (status === 'paused' || status === 'running') {
+                         statusText = `Pågående (${levelText})`; canContinue = true;
+                     } else if (status === 'finished') {
+                         statusText = `Fullført (${state.live.eliminatedPlayers?.length ?? '?'} spillere)`; isFinished = true;
+                     } else { statusText = `Ukjent status: ${status}`; }
+
+                     li.innerHTML = `
+                         <span class="item-name">${state.config.name} <small>(${state.config.date})</small></span>
+                         <span class="item-status">${statusText} ${id === activeTournamentId ? '<span class="active-indicator">*Aktiv*</span>': ''}</span>
+                         <div class="list-actions">
+                             ${canContinue ? `<button data-tournament-id="${id}" class="btn-load-tournament">Fortsett</button>` : ''}
+                             ${isFinished ? `<button data-tournament-id="${id}" class="btn-view-tournament">Vis Resultat</button>` : ''}
+                             ${!canContinue && !isFinished ? `<button data-tournament-id="${id}" class="btn-view-tournament">Vis (Uferdig)</button>` : ''}
+                             <button data-tournament-id="${id}" class="btn-delete-tournament danger-button">Slett</button>
+                         </div>`;
+                     tournamentListUl.appendChild(li);
+                 });
+
+                 tournamentListUl.querySelectorAll('.btn-load-tournament, .btn-view-tournament').forEach(btn => {
+                     btn.onclick = (e) => {
+                         const tournamentId = e.target.dataset.tournamentId;
+                         setActiveTournamentId(tournamentId); // Set this as the one to load
+                         clearActiveTemplateId();
+                         window.location.href = `tournament.html`;
+                     };
+                 });
+                 tournamentListUl.querySelectorAll('.btn-delete-tournament').forEach(btn => {
+                     btn.onclick = (e) => {
+                         const tournamentId = e.target.dataset.tournamentId;
+                         if (confirm(`Slette turneringen "${tournaments[tournamentId]?.config?.name ?? tournamentId}"?\nDette kan ikke angres.`)) {
+                             deleteTournamentState(tournamentId); // from storage.js
+                             displayTournaments(); // Refresh
+                         }
+                     };
+                 });
+             }
+
+            // --- Button Listeners ---
+            newTournamentButton.addEventListener('click', () => {
+                 clearActiveTournamentId(); clearActiveTemplateId();
+                 window.location.href = 'setup.html';
             });
+
+            clearAllButton.addEventListener('click', () => {
+                 if (confirm("ADVARSEL!\n\nEr du HELT sikker på at du vil slette ALLE lagrede turneringer OG maler?\n\nDette kan IKKE angres!")) {
+                      clearAllData(); // from storage.js
+                      displayTemplates(); displayTournaments();
+                      alert("All data slettet.");
+                 }
+            });
+
+            // --- Initial Display ---
+            displayTemplates();
+            displayTournaments();
         });
-         // --- Start Page Logic END ---
+        // === 05a: Start Page Logic END ===
     </script>
-    <!-- === SCRIPTS SECTION END === -->
+    <!-- === 05: SCRIPTS SECTION END === -->
 </body>
 </html>
