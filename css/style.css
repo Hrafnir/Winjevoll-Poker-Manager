@@ -1,86 +1,21 @@
 /* === 01: GENERAL BODY & LAYOUT SECTION START === */
-:root { /* Define some color variables */
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --light-color: #f8f9fa;
-    --dark-color: #343a40;
-    --text-color: #212529;
-    --border-color: #dee2e6;
-    --background-color: #f0f2f5;
-}
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: var(--background-color);
-    font-size: 16px;
-    color: var(--text-color);
-}
-main {
-    padding: 15px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-h1, h2, h3, h4 {
-    color: var(--dark-color);
-    margin: 1.2em 0 0.6em 0;
-}
+:root { --primary-color: #007bff; --secondary-color: #6c757d; --success-color: #28a745; --danger-color: #dc3545; --warning-color: #ffc107; --info-color: #17a2b8; --light-color: #f8f9fa; --dark-color: #343a40; --text-color: #212529; --border-color: #dee2e6; --background-color: #f0f2f5; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; background-color: var(--background-color); font-size: 16px; color: var(--text-color); }
+main { padding: 0; flex-grow: 1; display: flex; flex-direction: column; } /* Fjern padding for full bredde layout */
+h1, h2, h3, h4 { color: var(--dark-color); margin: 1.2em 0 0.6em 0; }
 h1 { font-size: 1.8em; } h2 { font-size: 1.5em; } h3 { font-size: 1.25em; } h4 { font-size: 1.1em; margin-bottom: 8px;}
-
-button {
-    padding: 8px 15px;
-    font-size: 0.95em;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: #e9e9e9;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin: 2px;
-    vertical-align: middle;
-    line-height: 1.4;
-    text-align: center;
-}
-button:hover:not(:disabled) {
-    background-color: #dcdcdc;
-    border-color: #bbb;
-    transform: translateY(-1px);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
+button { padding: 8px 15px; font-size: 0.95em; border-radius: 4px; border: 1px solid #ccc; background-color: #e9e9e9; cursor: pointer; transition: all 0.2s ease; margin: 2px; vertical-align: middle; line-height: 1.4; text-align: center; }
+button:hover:not(:disabled) { background-color: #dcdcdc; border-color: #bbb; transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 button:disabled { cursor: not-allowed; opacity: 0.6; }
-button.primary-button { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
-button.primary-button:hover:not(:disabled) { background-color: #0056b3; border-color: #0056b3; }
-button.danger-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
-button.danger-button:hover:not(:disabled) { background-color: #c82333; border-color: #bd2130; }
-button.success-button { background-color: var(--success-color); color: white; border-color: var(--success-color); }
-button.success-button:hover:not(:disabled) { background-color: #218838; border-color: #1e7e34; }
-button.info-button { background-color: var(--info-color); color: white; border-color: var(--info-color); }
-button.info-button:hover:not(:disabled) { background-color: #138496; border-color: #117a8b; }
-button.warning-button { background-color: var(--warning-color); color: var(--text-color); border-color: var(--warning-color); }
-button.warning-button:hover:not(:disabled) { background-color: #e0a800; border-color: #d39e00; }
+button.primary-button { background-color: var(--primary-color); color: white; border-color: var(--primary-color); } button.primary-button:hover:not(:disabled) { background-color: #0056b3; border-color: #0056b3; }
+button.danger-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); } button.danger-button:hover:not(:disabled) { background-color: #c82333; border-color: #bd2130; }
+button.success-button { background-color: var(--success-color); color: white; border-color: var(--success-color); } button.success-button:hover:not(:disabled) { background-color: #218838; border-color: #1e7e34; }
+button.info-button { background-color: var(--info-color); color: white; border-color: var(--info-color); } button.info-button:hover:not(:disabled) { background-color: #138496; border-color: #117a8b; }
+button.warning-button { background-color: var(--warning-color); color: var(--text-color); border-color: var(--warning-color); } button.warning-button:hover:not(:disabled) { background-color: #e0a800; border-color: #d39e00; }
 button.small-button { padding: 4px 8px; font-size: 0.85em; }
-
-input[type="text"], input[type="number"], select, textarea {
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
-    font-size: 1em;
-    width: 100%; /* Default to full width */
-    max-width: 450px; /* Apply max width */
-    box-sizing: border-box;
-}
-/* Make number inputs slightly less wide by default */
+input[type="text"], input[type="number"], select, textarea { padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 1em; width: 100%; max-width: 450px; box-sizing: border-box; }
 input[type="number"] { max-width: 120px; }
-/* Override for specific cases */
-#tournament-name, #prize-distribution, #player-names, #add-player-name-live { max-width: 450px; }
-
+#tournament-name, #prize-distribution, #player-names { max-width: 450px; }
 textarea { min-height: 60px; vertical-align: top; }
 label { display: block; margin-bottom: 4px; font-weight: 500; }
 small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin-bottom: 10px; }
@@ -92,8 +27,9 @@ small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin
 
 /* === 02: HEADER & FOOTER SECTION START === */
 header, footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-header .logo { height: 40px; margin-right: 15px; content: url('placeholder-logo.png'); /* Use the actual file */ background-color: #555; /* Fallback color */ object-fit: contain; /* Ensure logo fits */}
-header h1 { color: white; margin: 0; font-size: 1.5em; }
+header.banner { /* Specific style for the top banner */ padding: 15px 20px; } /* Slightly taller banner */
+header .logo { height: 40px; margin-right: 15px; content: url('placeholder-logo.png'); background-color: #555; object-fit: contain; }
+header h1 { color: white; margin: 0; font-size: 1.6em; /* Slightly larger banner title */ text-align: center; flex-grow: 1; /* Allow title to center */ }
 header .header-right { display: flex; align-items: center; gap: 8px; }
 header .header-right p { margin: 0; white-space: nowrap;}
 header .header-right button { background-color: var(--secondary-color); border-color: var(--secondary-color); color: white; }
@@ -103,7 +39,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 
 
 /* === 03: START PAGE SECTION START === */
-.start-page { text-align: left; max-width: 900px; margin: 0 auto; }
+.start-page { text-align: left; max-width: 900px; margin: 15px auto; /* Add top/bottom margin */ }
 .start-section { background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .start-section h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;}
 #btn-new-tournament-setup { padding: 12px 25px; font-size: 1.1em; margin-bottom: 15px; } /* Uses primary */
@@ -118,7 +54,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 
 
 /* === 04: SETUP PAGE SECTION START === */
-.setup-page { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+.setup-page { max-width: 800px; margin: 15px auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
 .setup-page form h2, .setup-page form h3 { margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
 .setup-page form h2:first-of-type { margin-top: 0; }
 .config-section { border-left: 3px solid var(--primary-color); padding-left: 15px; margin: 15px 0; }
@@ -131,41 +67,127 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .blind-table-container { max-height: 400px; overflow-y: auto; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px;}
 /* Shared table styles */
 #blind-structure-table, #edit-blind-structure-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
-#blind-structure-table th, #blind-structure-table td,
-#edit-blind-structure-table th, #edit-blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: center; vertical-align: middle; } /* Centered text in table */
+#blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: center; vertical-align: middle; }
 #blind-structure-table th, #edit-blind-structure-table th { background-color: #e9ecef; position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; font-weight: 600;}
-#blind-structure-table td:last-child, #blind-structure-table th:last-child,
-#edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
+#blind-structure-table td:last-child, #blind-structure-table th:last-child, #edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
 #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0; border-color: #ccc; text-align: center; }
 #blind-structure-table input:invalid, #edit-blind-structure-table input:invalid { border-color: red !important; box-shadow: 0 0 3px red; }
 #blind-structure-table input:disabled, #edit-blind-structure-table input:disabled { background-color: #eee; cursor: not-allowed;}
-#blind-structure-table .pause-duration-input, #edit-blind-structure-table .pause-duration-input { width: 60px; } /* Narrower pause input */
+#blind-structure-table .pause-duration-input, #edit-blind-structure-table .pause-duration-input { width: 60px; }
 #blind-structure-table .btn-remove-level, #edit-blind-structure-table .btn-remove-level { padding: 3px 8px; font-size: 1.1em; background-color: transparent; border: none; color: var(--danger-color); font-weight: bold; line-height: 1;}
 #blind-structure-table .btn-remove-level:hover, #edit-blind-structure-table .btn-remove-level:hover { background-color: var(--danger-color); color: white; border-radius: 3px;}
 /* === 04: SETUP PAGE SECTION END === */
 
 
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION START === */
-.tournament-header { background-color: #495057; }
-.tournament-live { display: flex; flex-direction: column; flex-grow: 1; }
+.tournament-live { display: flex; flex-direction: column; flex-grow: 1; padding: 0; /* Remove padding for edge-to-edge */ }
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION END === */
 
 
-/* === 06: TOURNAMENT LIVE PAGE - TOP INFO (TIMER/BLINDS) SECTION START === */
-.live-info-top { display: flex; justify-content: space-around; background-color: #1c1c1c; color: white; padding: 25px 10px; min-height: 35vh; align-items: center; flex-shrink: 0; }
-.timer-section, .blinds-section { text-align: center; flex-basis: 48%; display: flex; flex-direction: column; justify-content: center; }
-.timer-section h2, .blinds-section h2 { font-size: 1.8em; margin: 0 0 10px 0; color: #b0b0b0; text-transform: uppercase; font-weight: normal; }
-#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 11em; font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-#blinds-display { font-size: 7.5em; font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); white-space: nowrap; }
-#blinds-display .value { margin: 0 10px; } #blinds-display .label { font-size: 0.3em; margin-right: 5px; color: #ccc; font-weight: normal; vertical-align: middle; }
+/* === 06: TOURNAMENT LIVE PAGE - NEW SPLIT LAYOUT START === */
+.live-split-container {
+    display: flex;
+    flex-grow: 1; /* Try to fill vertical space */
+    min-height: 40vh; /* Minimum height */
+    background-color: #1c1c1c; /* Dark background for this area */
+    color: white;
+    flex-shrink: 0; /* Don't shrink this part */
+}
+
+.live-left-column {
+    flex-basis: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    border-right: 1px solid #444; /* Separator */
+}
+
+.live-right-column {
+    flex-basis: 50%;
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    padding: 0; /* No padding on container */
+}
+
+.right-col-logo-area {
+    flex-basis: 50%; /* Top 50% height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden; /* Hide overflowing logo */
+}
+.right-col-logo-area .logo {
+    max-width: 90%; /* Limit logo width */
+    max-height: 90%; /* Limit logo height */
+    height: auto; /* Maintain aspect ratio */
+    object-fit: contain;
+    display: block; /* Ensure it behaves like block */
+}
+
+.right-col-blinds-area {
+    flex-basis: 35%; /* Middle 35% height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    border-top: 1px solid #444;
+    border-bottom: 1px solid #444;
+    box-sizing: border-box;
+    text-align: center;
+}
+.right-col-blinds-area h3 { /* "Blinds" title */
+    color: #b0b0b0;
+    margin: 0 0 10px 0;
+    font-size: 1.4em;
+    text-transform: uppercase;
+    font-weight: normal;
+}
+#blinds-display { /* Container for blinds values */
+    font-size: 4.5em; /* Smaller than timer, but still large */
+    font-weight: bold;
+    line-height: 1.0;
+    color: #f0f0f0;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    white-space: nowrap;
+}
+#blinds-display .value { margin: 0 8px; }
+#blinds-display .label { font-size: 0.3em; margin-right: 4px; color: #ccc; font-weight: normal; vertical-align: middle; }
 #blinds-display .break-text { font-size: 0.5em; color: #FFEB3B; }
-.blinds-info { margin-top: 15px; font-size: 1.3em; color: #ddd; } .blinds-info p { margin: 2px 0; }
-#break-info { font-size: 5em; color: #FFEB3B; font-weight: bold; margin-top: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-/* === 06: TOURNAMENT LIVE PAGE - TOP INFO (TIMER/BLINDS) SECTION END === */
+
+
+.right-col-info-area {
+    flex-basis: 15%; /* Bottom 15% height */
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    justify-content: space-around; /* Space out items */
+    align-items: center; /* Center vertically */
+    padding: 10px 15px;
+    box-sizing: border-box;
+    font-size: 0.95em; /* Slightly smaller font */
+    background-color: #2a2a2a; /* Slightly different shade */
+    color: #ddd;
+}
+.right-col-info-area p {
+    margin: 2px 8px; /* Spacing around each info item */
+    white-space: nowrap;
+}
+#prize-summary { font-weight: bold; color: var(--warning-color);} /* Highlight prize summary */
+
+/* Timer specific styling (within left column) */
+.timer-section { text-align: center; width: 100%; }
+.timer-section h2 { font-size: 1.8em; margin: 0 0 10px 0; color: #b0b0b0; text-transform: uppercase; font-weight: normal; }
+#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 12em; /* Maximize timer size */ font-weight: bold; line-height: 1.0; color: #f0f0f0; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+#break-info { font-size: 6em; /* Large break text */ color: #FFEB3B; font-weight: bold; margin-top: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+/* === 06: TOURNAMENT LIVE PAGE - NEW SPLIT LAYOUT END === */
 
 
 /* === 07: TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION START === */
-.live-info-secondary { display: flex; justify-content: space-around; flex-wrap: wrap; padding: 12px 20px; background-color: #e9ecef; margin-bottom: 15px; font-size: 1.1em; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+.live-info-secondary { display: flex; justify-content: space-around; flex-wrap: wrap; padding: 10px 20px; background-color: #e9ecef; margin: 15px 0; font-size: 1.1em; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
 .live-info-secondary p { margin: 3px 10px; white-space: nowrap;}
 /* === 07: TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION END === */
 
@@ -179,19 +201,19 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 
 
 /* === 09: TOURNAMENT LIVE PAGE - CONTROLS SECTION START === */
-.controls { text-align: center; margin-bottom: 20px; padding: 10px 0; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+.controls { text-align: center; margin-bottom: 20px; padding: 10px 15px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; background-color: #fff; } /* Add background */
 .controls button { margin: 5px 8px; }
 /* === 09: TOURNAMENT LIVE PAGE - CONTROLS SECTION END === */
 
 
 /* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION START === */
-.player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; }
+.player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; padding: 0 15px 15px 15px; /* Padding on container */}
 .player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; padding: 0 10px 10px 10px; border: 1px solid var(--border-color); border-radius: 4px; background-color: #ffffff; }
 .player-column h2 { position: sticky; top: 0; background-color: #ffffff; padding: 10px 0 5px 0; margin: 0 0 10px 0; border-bottom: 1px solid #ccc; z-index: 1; font-size: 1.2em; }
-.player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; } /* Scroll only the list */
+.player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
 .player-list-live li { border-bottom: 1px solid #eee; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; }
 .player-list-live li:last-child { border-bottom: none; }
-.player-actions { white-space: nowrap; flex-shrink: 0; margin-left: 10px; display: flex; gap: 4px;} /* Use gap for button spacing */
+.player-actions { white-space: nowrap; flex-shrink: 0; margin-left: 10px; display: flex; gap: 4px;}
 .player-actions button { margin-left: 0; cursor: pointer; padding: 3px 8px; font-size: 0.9em; border-radius: 3px; }
 .btn-edit-player { background-color: #e2e3e5; border-color: #d6d8db;} .btn-edit-player:hover { background-color: #d6d8db;}
 .btn-rebuy { background-color: #cfe2ff; border-color: #b6d4fe;} .btn-rebuy:hover { background-color: #b6d4fe;}
@@ -199,12 +221,7 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 .btn-eliminate { background-color: #f8d7da; border-color: #f5c2c7;} .btn-eliminate:hover { background-color: #f5c2c7;}
 .btn-restore { background-color: #fff3cd; border-color: #ffeeba;} .btn-restore:hover { background-color: #ffeeba;}
 .player-details { font-size: 0.85em; color: var(--secondary-color); margin-left: 8px; }
-.add-player-live-section { margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;}
-.add-player-live-section h4 {margin: 0;}
-.add-player-live-section input[type="text"] { margin-bottom: 0; max-width: none; width: 100%;}
-.add-player-live-section div { display: flex; gap: 10px; align-items: center;}
-.add-player-live-section button { flex-shrink: 0; }
-.add-player-live-section small { margin: 0; padding-left: 0; }
+/* Removed add player section styles */
 /* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION END === */
 
 
@@ -225,36 +242,41 @@ footer { margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer di
 /* === 12: UTILITY & RESPONSIVE SECTION START === */
 @media (max-width: 992px) {
     #timer-display { font-size: 9em; } #blinds-display { font-size: 6em; }
+    .live-split-container { min-height: 30vh;} /* Less height on smaller screens */
     .player-management { flex-direction: column; overflow: visible; }
     .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;}
     .player-column .player-list-live { overflow-y: auto; }
     .modal-content { width: 90%; }
-    #blind-structure-table, #edit-blind-structure-table { font-size: 0.85em; } /* Smaller font in table on smaller screens */
+    #blind-structure-table, #edit-blind-structure-table { font-size: 0.85em; }
 }
 @media (max-width: 768px) {
-    .live-info-top { flex-direction: column; align-items: center; padding: 15px 5px; min-height: 0; }
-    .timer-section, .blinds-section { flex-basis: auto; width: 100%; margin-bottom: 15px; }
-    #timer-display { font-size: 7em; } #blinds-display { font-size: 5em; }
-    .live-info-secondary { font-size: 1em; padding: 8px 10px; } .live-info-secondary p { margin: 2px 5px;}
-    .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;}
-    .player-column { max-height: none; }
-    .add-player-live-section { flex-direction: column; align-items: stretch;}
-    .add-player-live-section div { flex-direction: column; align-items: stretch; gap: 5px;}
-    .add-player-live-section small { padding-left: 0; text-align: center; margin-top: 5px;}
-    header .header-right { gap: 4px;} /* Tighter header buttons */
-    header .header-right p { display: none;} /* Hide wall clock on small screens */
+     .live-split-container { flex-direction: column; min-height: 0; /* Let content decide height */}
+     .live-left-column, .live-right-column { flex-basis: auto; width: 100%; }
+     .live-left-column { border-right: none; border-bottom: 1px solid #444; min-height: 25vh; padding: 15px;}
+     .live-right-column { flex-direction: row; /* Side by side for logo/blinds/info */ flex-wrap: wrap;}
+     .right-col-logo-area { flex-basis: 40%; flex-grow: 1; border-bottom: 1px solid #444; min-height: 15vh; padding: 10px;}
+     .right-col-blinds-area { flex-basis: 60%; flex-grow: 1; border-top: none; border-left: 1px solid #444; border-bottom: 1px solid #444;}
+     .right-col-info-area { flex-basis: 100%; flex-grow: 1; border-top: 1px solid #444;}
+     #timer-display { font-size: 8em; } #blinds-display { font-size: 4em; }
+     .live-info-secondary { font-size: 1em; padding: 8px 10px; margin: 0; border-radius: 0;}
+     .controls { margin-bottom: 10px; padding: 8px 10px;}
+     .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;}
+     .player-column { max-height: none; }
+     header .header-right p { display: none;}
+     .player-management { padding: 10px; gap: 10px;}
 }
 @media (max-width: 480px) {
      body { font-size: 14px; } header h1 {font-size: 1.1em;} header .logo {height: 30px;}
-     #timer-display { font-size: 5em; } #blinds-display { font-size: 3.5em; }
+     #timer-display { font-size: 6em; } #blinds-display { font-size: 3em; }
      #blinds-display .value { margin: 0 5px; }
      .live-info-secondary { font-size: 0.9em; }
      .player-list-live li { flex-direction: column; align-items: flex-start; }
      .player-actions { margin-left: 0; margin-top: 5px; } .player-actions button { margin-left: 0; margin-right: 4px; }
      .modal-content { width: 95%; padding: 15px; }
-     #blind-structure-table th, #blind-structure-table td,
-     #edit-blind-structure-table th, #edit-blind-structure-table td { padding: 4px; } /* Tighter table padding */
-     #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 60px; } /* Even smaller inputs */
-     .form-actions { justify-content: center;} /* Center form buttons */
+     #blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { padding: 4px; }
+     #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 60px; }
+     .form-actions { justify-content: center;}
+     .live-right-column { flex-direction: column;} /* Stack right col on very small screens */
+     .right-col-logo-area, .right-col-blinds-area, .right-col-info-area { flex-basis: auto; border-left: none; border-bottom: 1px solid #444;}
 }
 /* === 12: UTILITY & RESPONSIVE SECTION END === */
