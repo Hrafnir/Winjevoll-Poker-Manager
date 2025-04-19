@@ -209,60 +209,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 09: FORM SUBMISSION/SAVE HANDLERS START ===
     function collectConfigFromForm() {
-         const config = {
+        // --- Data Collection ---
+        const config = {
             name: tournamentNameInput.value.trim() || "Ukjent Turnering", date: new Date().toISOString().slice(0, 10), type: tournamentTypeSelect.value,
             buyIn: parseInt(buyInInput.value) || 0, bountyAmount: 0, startStack: parseInt(startStackInput.value) || 10000, playersPerTable: parseInt(playersPerTableInput.value) || 9, paidPlaces: parseInt(paidPlacesInput.value) || 1,
             prizeDistribution: prizeDistInput.value.split(',').map(p => parseFloat(p.trim())).filter(p => !isNaN(p) && p >= 0),
             rebuyCost: 0, rebuyChips: 0, rebuyLevels: 0, addonCost: 0, addonChips: 0, lateRegLevel: parseInt(lateRegLevelInput.value) || 0, blindLevels: [],
-         };
-         if (config.type === 'rebuy') { config.rebuyCost = parseInt(rebuyCostInput.value) || 0; config.rebuyChips = parseInt(rebuyChipsInput.value) || config.startStack; config.rebuyLevels = parseInt(rebuyLevelsInput.value) || 0; config.addonCost = parseInt(addonCostInput.value) || 0; config.addonChips = parseInt(addonChipsInput.value) || 0; }
-         if (config.type === 'knockout') { config.bountyAmount = parseInt(bountyAmountInput.value) || 0; }
+        };
+        if (config.type === 'rebuy') { config.rebuyCost = parseInt(rebuyCostInput.value) || 0; config.rebuyChips = parseInt(rebuyChipsInput.value) || config.startStack; config.rebuyLevels = parseInt(rebuyLevelsInput.value) || 0; config.addonCost = parseInt(addonCostInput.value) || 0; config.addonChips = parseInt(addonChipsInput.value) || 0; }
+        if (config.type === 'knockout') { config.bountyAmount = parseInt(bountyAmountInput.value) || 0; }
 
-         let isValid = true; let errorMessages = [];
-         // Basic validations
-         if (config.startStack <= 0) { isValid = false; errorMessages.push("Start Stack > 0."); } if (config.playersPerTable < 2) { isValid = false; errorMessages.push("Maks spillere/bord >= 2."); } if (config.paidPlaces <= 0) { isValid = false; errorMessages.push("Betalte plasser >= 1."); }
-         if (config.prizeDistribution.length !== config.paidPlaces) { isValid = false; errorMessages.push("Antall premier != Antall Betalte."); } else { const sum = config.prizeDistribution.reduce((a, b) => a + b, 0); if (Math.abs(sum - 100) > 0.1) { isValid = false; errorMessages.push(`Premiesum (${sum.toFixed(1)}%) != 100%.`); } }
-         if (config.type === 'knockout' && config.bountyAmount > config.buyIn) { isValid = false; errorMessages.push("Bounty > Buy-in."); } if (config.type === 'knockout' && config.bountyAmount < 0) { isValid = false; errorMessages.push("Bounty >= 0."); }
+        // --- Validation ---
+        let isValid = true; let errorMessages = [];
+        if (config.startStack <= 0) { isValid = false; errorMessages.push("Start Stack > 0."); } if (config.playersPerTable < 2) { isValid = false; errorMessages.push("Maks spillere/bord >= 2."); } if (config.paidPlaces <= 0) { isValid = false; errorMessages.push("Betalte plasser >= 1."); }
+        if (config.prizeDistribution.length !== config.paidPlaces) { isValid = false; errorMessages.push("Antall premier != Antall Betalte."); } else { const sum = config.prizeDistribution.reduce((a, b) => a + b, 0); if (Math.abs(sum - 100) > 0.1) { isValid = false; errorMessages.push(`Premiesum (${sum.toFixed(1)}%) != 100%.`); } }
+        if (config.type === 'knockout' && config.bountyAmount > config.buyIn) { isValid = false; errorMessages.push("Bounty > Buy-in."); } if (config.type === 'knockout' && config.bountyAmount < 0) { isValid = false; errorMessages.push("Bounty >= 0."); }
 
-         // Collect & Validate Blinds
-         config.blindLevels = []; let foundInvalidBlind = false;
-         const blindRows = blindStructureBody.querySelectorAll('tr');
-         if (blindRows.length === 0) { isValid = false; errorMessages.push("Minst ett blindnivå kreves."); }
-         blindRows.forEach((row, index) => {
-             const levelNum = index + 1;
-             const sbInput = row.querySelector('.sb-input'); const bbInput = row.querySelector('.bb-input'); const anteInput = row.querySelector('.ante-input'); const durationInput = row.querySelector('.duration-input'); const pauseInput = row.querySelector('.pause-duration-input');
-             const sb = parseInt(sbInput.value); const bb = parseInt(bbInput.value); const ante = parseInt(anteInput.value) || 0; const duration = parseInt(durationInput.value); const pauseMinutes = parseInt(pauseInput.value) || 0;
-             let rowValid = true;
-             // Reset invalid styles
-             [sbInput, bbInput, anteInput, durationInput, pauseInput].forEach(el => el.classList.remove('invalid'));
+        // --- Collect & Validate Blinds ---
+        config.blindLevels = []; let foundInvalidBlind = false;
+        const blindRows = blindStructureBody.querySelectorAll('tr');
+        if (blindRows.length === 0) { isValid = false; errorMessages.push("Minst ett blindnivå kreves."); }
+        blindRows.forEach((row, index) => {
+            const levelNum = index + 1;
+            const sbInput = row.querySelector('.sb-input'); const bbInput = row.querySelector('.bb-input'); const anteInput = row.querySelector('.ante-input'); const durationInput = row.querySelector('.duration-input'); const pauseInput = row.querySelector('.pause-duration-input');
+            const sb = parseInt(sbInput.value); const bb = parseInt(bbInput.value); const ante = parseInt(anteInput.value) || 0; const duration = parseInt(durationInput.value); const pauseMinutes = parseInt(pauseInput.value) || 0;
+            let rowValid = true;
+            [sbInput, bbInput, anteInput, durationInput, pauseInput].forEach(el => el.classList.remove('invalid'));
 
-             if (isNaN(duration) || duration <= 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig varighet.`); durationInput.classList.add('invalid'); }
-             if (isNaN(sb) || sb < 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig SB.`); sbInput.classList.add('invalid');}
-             if (isNaN(bb) || bb <= 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig BB (>0).`); bbInput.classList.add('invalid');}
-             // SB/BB 50% Rule Check (Allow SB=0 only if BB=0 - unlikely scenario)
-             else if (bb > 0 && sb !== roundToNearestValid(Math.floor(bb / 2), 100)) {
-                 // Allow some flexibility if SB=0 is intended? No, enforce the rule for consistency.
-                 if (sb > 0) { // Only warn if SB is not 0 and incorrect
-                      rowValid = false; errorMessages.push(`Nivå ${levelNum}: SB (${sb}) bør være ~50% av BB (${bb}) og rundet.`); sbInput.classList.add('invalid'); bbInput.classList.add('invalid');
-                 } else if (bb >= 200) { // If BB is >= 200, SB really shouldn't be 0
-                      rowValid = false; errorMessages.push(`Nivå ${levelNum}: SB (${sb}) bør være ~50% av BB (${bb}) og rundet.`); sbInput.classList.add('invalid');
-                 }
-                 // Allow SB=0 if BB=100 as the only exception? Maybe too complex. Let's enforce SB > 0 if BB > 0.
-                 if (bb > 0 && sb <= 0) {
-                      rowValid = false; errorMessages.push(`Nivå ${levelNum}: SB må være > 0 hvis BB er > 0.`); sbInput.classList.add('invalid');
-                 }
+            if (isNaN(duration) || duration <= 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig varighet.`); durationInput.classList.add('invalid'); }
+            if (isNaN(sb) || sb < 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig SB.`); sbInput.classList.add('invalid');}
+            if (isNaN(bb) || bb <= 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig BB (>0).`); bbInput.classList.add('invalid');}
+            else if (bb > 0 && sb <= 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: SB må være > 0 hvis BB > 0.`); sbInput.classList.add('invalid');}
+            else if (bb > 0 && sb !== roundToNearestValid(Math.floor(bb/2), 100)) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: SB (${sb}) er ikke ~50% av BB (${bb}) og rundet.`); sbInput.classList.add('invalid'); bbInput.classList.add('invalid'); }
+            if (isNaN(ante) || ante < 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig Ante.`); anteInput.classList.add('invalid');}
+            if (isNaN(pauseMinutes) || pauseMinutes < 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig pause.`); pauseInput.classList.add('invalid');}
+            if (!rowValid) foundInvalidBlind = true;
+            config.blindLevels.push({ level: levelNum, sb: sb, bb: bb, ante: ante, duration: duration, pauseMinutes: pauseMinutes });
+        });
+        if (foundInvalidBlind) isValid = false;
 
-             }
-             if (isNaN(ante) || ante < 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig Ante.`); anteInput.classList.add('invalid');}
-             if (isNaN(pauseMinutes) || pauseMinutes < 0) { rowValid = false; errorMessages.push(`Nivå ${levelNum}: Ugyldig pause.`); pauseInput.classList.add('invalid');}
-
-             if (!rowValid) foundInvalidBlind = true;
-             // Store pauseMinutes instead of isBreak
-             config.blindLevels.push({ level: levelNum, sb: sb, bb: bb, ante: ante, duration: duration, pauseMinutes: pauseMinutes });
-         });
-         if (foundInvalidBlind) isValid = false;
-
-         return { config, isValid, errorMessages };
+        return { config, isValid, errorMessages };
     }
 
     function handleStartTournament(e) {
@@ -272,20 +258,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const live = {
             status: "paused", currentLevelIndex: 0, timeRemainingInLevel: config.blindLevels[0].duration * 60,
-            timeRemainingInBreak: 0, // New: Track break time separately
-            isOnBreak: false, // New: Flag for break state
+            timeRemainingInBreak: 0, isOnBreak: false,
             players: [], eliminatedPlayers: [],
             totalPot: 0, totalEntries: 0, totalRebuys: 0, totalAddons: 0,
-            nextPlayerId: 1, knockoutLog: [],
+            nextPlayerId: 1, knockoutLog: [], activityLog: [] // Added activityLog
         };
 
+        // --- KORRIGERT Initial Player Distribution ---
         const playerNames = playerNamesTextarea.value.split('\n').map(name => name.trim()).filter(name => name.length > 0);
          if (playerNames.length > 0) {
-             const numPlayers = playerNames.length; const playersPerTable = config.playersPerTable; const numTables = Math.ceil(numPlayers / playersPerTable); let playerIndex = 0;
-              for (let t = 1; t <= numTables; t++) { const playersOnThisTable = Math.floor(numPlayers / numTables) + (t <= numPlayers % numTables ? 1 : 0); for (let s = 1; s <= playersOnThisTable; s++) { if (playerIndex >= numPlayers) break; const name = playerNames[playerIndex]; const player = { id: live.nextPlayerId++, name: name, stack: config.startStack, table: t, seat: s, rebuys: 0, addon: false, eliminated: false, eliminatedBy: null, place: null, knockouts: 0 }; live.players.push(player); live.totalPot += config.buyIn; live.totalEntries++; playerIndex++; } }
-             live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); console.log(`Fordelte ${numPlayers} spillere på ${numTables} bord.`);
-         } else { console.log("Ingen spillere lagt inn ved oppsett."); }
+             const numPlayers = playerNames.length;
+             const playersPerTable = config.playersPerTable;
+             const numTables = Math.ceil(numPlayers / playersPerTable);
+             console.log(`Initial Distribution: ${numPlayers} players, ${playersPerTable} per table => ${numTables} tables needed.`); // Debug log
 
+             const basePlayersPerTable = Math.floor(numPlayers / numTables);
+             let extraPlayers = numPlayers % numTables;
+             let playerIndex = 0;
+
+             for (let t = 1; t <= numTables; t++) {
+                 const playersOnThisTable = basePlayersPerTable + (extraPlayers > 0 ? 1 : 0);
+                 if (extraPlayers > 0) extraPlayers--; // Decrement remaining extra players
+
+                 console.log(` - Table ${t}: Allocating ${playersOnThisTable} players.`); // Debug log
+                 for (let s = 1; s <= playersOnThisTable; s++) {
+                     if (playerIndex >= numPlayers) { console.error("Distribution Error: More seats allocated than players available!"); break; }
+                     const name = playerNames[playerIndex];
+                     const player = { id: live.nextPlayerId++, name: name, stack: config.startStack, table: t, seat: s, rebuys: 0, addon: false, eliminated: false, eliminatedBy: null, place: null, knockouts: 0 };
+                     live.players.push(player);
+                     live.totalPot += config.buyIn;
+                     live.totalEntries++;
+                     playerIndex++;
+                 }
+             }
+             live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table);
+             logActivity(live.activityLog, `Startet turnering med ${numPlayers} spillere fordelt på ${numTables} bord.`); // Log initial setup
+         } else {
+              logActivity(live.activityLog, `Startet turnering uten forhåndsregistrerte spillere.`);
+         }
+
+        // --- Save State and Navigate ---
         const tournamentState = { config, live };
         const tournamentId = generateUniqueId('t');
         if (saveTournamentState(tournamentId, tournamentState)) { setActiveTournamentId(tournamentId); window.location.href = 'tournament.html'; }
@@ -299,7 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
          if (saveTemplate(templateId, templateData)) { alert(`Malen "${config.name}" er lagret!`); }
          else { alert(`Kunne ikke lagre malen "${config.name}".`); }
      }
-    // === 09: FORM SUBMISSION/SAVE HANDLERS END ===
+// === 09: FORM SUBMISSION/SAVE HANDLERS END ===
 
 });
 // === 01: DOMContentLoaded LISTENER END ===
