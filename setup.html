@@ -1,18 +1,25 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
+    <!-- === HEAD SECTION START === -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Konfigurer Turnering - Winjevoll</title>
     <link rel="stylesheet" href="css/style.css">
+    <!-- === HEAD SECTION END === -->
 </head>
 <body>
+    <!-- === HEADER SECTION START === -->
     <header>
         <img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo">
         <h1>Konfigurer Ny Turnering</h1>
     </header>
+    <!-- === HEADER SECTION END === -->
+
+    <!-- === MAIN CONTENT SECTION START === -->
     <main class="setup-page">
         <form id="setup-form">
+            <!-- === BASIC INFO SECTION START === -->
             <h2>Grunnleggende</h2>
             <label for="tournament-name">Turneringsnavn:</label>
             <input type="text" id="tournament-name" value="Klubbkveld" required>
@@ -26,18 +33,27 @@
 
             <label for="buy-in">Buy-in (kr):</label>
             <input type="number" id="buy-in" value="100" min="0" required>
+            <!-- === BASIC INFO SECTION END === -->
 
+            <!-- === KNOCKOUT SECTION START === -->
             <div id="knockout-section" class="config-section hidden">
+                 <h3>Knockout</h3>
                  <label for="bounty-amount">Bounty per spiller (kr):</label>
                  <input type="number" id="bounty-amount" value="20" min="0">
+                 <small>Dette beløpet trekkes fra Buy-in før premiepotten beregnes.</small>
             </div>
+            <!-- === KNOCKOUT SECTION END === -->
 
+            <!-- === STRUCTURE SECTION START === -->
+            <h2>Struktur</h2>
             <label for="start-stack">Start Stack:</label>
             <input type="number" id="start-stack" value="10000" min="100" required>
 
-            <label for="players-per-table">Spillere per bord:</label>
+            <label for="players-per-table">Maks spillere per bord:</label>
             <input type="number" id="players-per-table" value="9" min="2" max="10" required>
+             <!-- === STRUCTURE SECTION END === -->
 
+            <!-- === REBUY/ADDON SECTION START === -->
             <div id="rebuy-section" class="config-section hidden">
                 <h3>Re-buy / Add-on</h3>
                 <label for="rebuy-cost">Re-buy Kostnad (kr):</label>
@@ -51,18 +67,23 @@
                 <input type="number" id="addon-cost" value="100" min="0">
                 <label for="addon-chips">Add-on Sjetonger:</label>
                 <input type="number" id="addon-chips" value="15000" min="100">
-                <small>(Add-on tilgjengelig etter Re-buy perioden)</small>
+                <small>(Add-on vanligvis tilgjengelig rett etter Re-buy perioden)</small>
             </div>
+            <!-- === REBUY/ADDON SECTION END === -->
 
+            <!-- === PRIZES SECTION START === -->
              <h2>Premier</h2>
              <label for="paid-places">Antall Betalte Plasseringer:</label>
              <input type="number" id="paid-places" value="3" min="1" required>
-             <label for="prize-distribution">Premiefordeling (% per plass, separert med komma):</label>
-             <textarea id="prize-distribution" placeholder="Eks: 50, 30, 20">50, 30, 20</textarea>
-             <small>Sørg for at prosentene summerer til 100%.</small>
+             <label for="prize-distribution">Premiefordeling (% per plass, topplass først, separert med komma):</label>
+             <textarea id="prize-distribution" placeholder="Eks: 50, 30, 20" rows="2">50, 30, 20</textarea>
+             <button type="button" id="btn-generate-payout">Generer Standard Fordeling</button>
+             <small>Antall prosentverdier må matche Antall Betalte. Summen må være 100%.</small>
+             <!-- === PRIZES SECTION END === -->
 
+            <!-- === BLIND STRUCTURE SECTION START === -->
             <h2>Blindstruktur</h2>
-            <label for="level-duration">Nivåvarighet (minutter):</label>
+            <label for="level-duration">Standard Nivåvarighet (minutter):</label>
             <input type="number" id="level-duration" value="20" min="5" required>
 
             <label for="late-reg-level">Sen Registrering (Late Reg) t.o.m. nivå:</label>
@@ -70,6 +91,7 @@
             <small>(0 betyr ingen sen registrering)</small>
 
             <button type="button" id="btn-generate-blinds">Generer Standard Blinds</button>
+             <button type="button" id="btn-clear-blinds">Tøm Struktur</button>
             <table id="blind-structure-table">
                 <thead>
                     <tr>
@@ -87,19 +109,32 @@
                 </tbody>
             </table>
             <button type="button" id="btn-add-level">Legg til Nivå/Pause</button>
+             <!-- === BLIND STRUCTURE SECTION END === -->
 
+            <!-- === PLAYER INPUT SECTION START === -->
             <h2>Spillere</h2>
             <label for="player-names">Registrer Spillere (ett navn per linje):</label>
-            <textarea id="player-names" rows="10" placeholder="Ola Nordmann\nKari Nordmann"></textarea>
+            <textarea id="player-names" rows="10" placeholder="Ola Nordmann\nKari Nordmann\nPelle P Panser"></textarea>
+            <small>Lim inn liste med navn, ett navn per linje.</small>
+            <!-- === PLAYER INPUT SECTION END === -->
 
+            <!-- === ACTION BUTTONS SECTION START === -->
             <button type="submit" id="btn-start-tournament">Start Turnering</button>
+            <button type="button" id="btn-back-to-main">Tilbake (Avbryt)</button>
+             <!-- === ACTION BUTTONS SECTION END === -->
         </form>
     </main>
+     <!-- === MAIN CONTENT SECTION END === -->
+
+    <!-- === FOOTER SECTION START === -->
     <footer>
         <p>© 2024 Winjevoll Pokerklubb</p>
     </footer>
+    <!-- === FOOTER SECTION END === -->
 
+    <!-- === SCRIPTS SECTION START === -->
     <script src="js/storage.js"></script>
     <script src="js/setup.js"></script>
+     <!-- === SCRIPTS SECTION END === -->
 </body>
 </html>
