@@ -1,77 +1,241 @@
-// === CONSTANTS SECTION START ===
-const TOURNAMENT_STORAGE_KEY = 'winjevollActiveTournament_v1'; // Versjonsnummer i nøkkel for å unngå konflikt med gamle data
-// === CONSTANTS SECTION END ===
+// === 01: CONSTANTS SECTION START ===
+const TOURNAMENT_COLLECTION_KEY = 'winjevollTournamentCollection_v1';
+const TEMPLATE_COLLECTION_KEY = 'winjevollTemplateCollection_v1';
+const ACTIVE_TOURNAMENT_ID_KEY = 'winjevollActiveTournamentId_v1';
+const ACTIVE_TEMPLATE_ID_KEY = 'winjevollActiveTemplateId_v1'; // For loading template into setup
+// === 01: CONSTANTS SECTION END ===
 
 
-// === SAVE FUNCTION SECTION START ===
-function saveTournamentState(state) {
+// === 02: UTILITY FUNCTIONS (Load/Save Collections) START ===
+function loadCollection(key) {
     try {
-        // Basic validation before saving
-        if (!state || typeof state !== 'object' || !state.config || !state.live) {
-             console.error("Attempted to save invalid state:", state);
-             throw new Error("Invalid state object provided for saving.");
+        const collectionJSON = localStorage.getItem(key);
+        if (collectionJSON) {
+            const collection = JSON.parse(collectionJSON);
+            // Basic validation: should be an object
+            if (typeof collection === 'object' && collection !== null) {
+                 return collection;
+            } else {
+                 console.warn(`Data retrieved for key "${key}" is not a valid object. Returning empty object.`);
+                 localStorage.removeItem(key); // Remove invalid data
+                 return {};
+            }
         }
-        localStorage.setItem(TOURNAMENT_STORAGE_KEY, JSON.stringify(state));
-        console.log("Tournament state saved successfully."); // Mer informativ logg
+        return {}; // Return empty object if no data found
     } catch (e) {
-        console.error("Error saving state to localStorage:", e);
-        // Prøv å gi en mer spesifikk feilmelding hvis mulig
-        if (e.name === 'QuotaExceededError') {
-             alert("Kunne ikke lagre turneringsstatus! Nettleserens lagringsplass er full. Prøv å slette gamle data eller øke kvoten.");
-        } else {
-             alert("En ukjent feil oppstod under lagring av turneringsstatus!");
-        }
+        console.error(`Error loading collection from localStorage (key: ${key}):`, e);
+        alert(`Kunne ikke laste data for ${key}. Lagret data kan være korrupt.`);
+        localStorage.removeItem(key); // Attempt to remove corrupted data
+        return {};
     }
 }
-// === SAVE FUNCTION SECTION END ===
 
-
-// === LOAD FUNCTION SECTION START ===
-function loadTournamentState() {
+function saveCollection(key, collection) {
     try {
-        const stateJSON = localStorage.getItem(TOURNAMENT_STORAGE_KEY);
-        if (stateJSON) {
-            const state = JSON.parse(stateJSON);
-            // Basic validation of loaded state
-             if (!state || typeof state !== 'object' || !state.config || !state.live) {
-                 console.error("Loaded state from localStorage is invalid:", state);
-                 throw new Error("Invalid state format loaded.");
-             }
-            console.log("Tournament state loaded successfully."); // Mer informativ logg
-            return state;
+        if (typeof collection !== 'object' || collection === null) {
+             throw new Error("Attempted to save non-object as collection.");
         }
-        return null; // Ingen lagret state
+        localStorage.setItem(key, JSON.stringify(collection));
+        // console.log(`Collection saved successfully for key: ${key}`);
     } catch (e) {
-        console.error("Error loading state from localStorage:", e);
-        alert("Kunne ikke laste turneringsstatus! Lagret data kan være korrupt eller i feil format. Prøver å fjerne den.");
-        clearTournamentState(); // Prøv å fjerne korrupt data
+        console.error(`Error saving collection to localStorage (key: ${key}):`, e);
+        if (e.name === 'QuotaExceededError') {
+             alert(`Kunne ikke lagre data (${key})! Nettleserens lagringsplass er full.`);
+        } else {
+             alert(`En ukjent feil oppstod under lagring av data (${key})!`);
+        }
+         throw e; // Re-throw error so calling function knows it failed
+    }
+}
+// === 02: UTILITY FUNCTIONS (Load/Save Collections) END ===
+
+
+// === 03: TOURNAMENT FUNCTIONS START ===
+function loadTournamentCollection() {
+    return loadCollection(TOURNAMENT_COLLECTION_KEY);
+}
+
+function saveTournamentState(tournamentId, state) {
+     if (!tournamentId || !state || !state.config || !state.live) {
+         console.error("Invalid tournamentId or state provided to saveTournamentState.");
+         alert("Intern feil: Forsøkte å lagre ugyldig turneringsdata."); // User feedback
+         return false; // Indicate failure
+     }
+    try {
+        const collection = loadTournamentCollection();
+        collection[tournamentId] = state;
+        saveCollection(TOURNAMENT_COLLECTION_KEY, collection);
+        console.log(`Tournament ${tournamentId} state saved.`);
+        return true; // Indicate success
+    } catch (error) {
+        console.error(`Failed to save state for tournament ${tournamentId}`, error);
+        // Alert might already be shown by saveCollection
+        return false; // Indicate failure
+    }
+}
+
+function loadTournamentState(tournamentId) {
+    if (!tournamentId) {
+        console.warn("loadTournamentState called with no tournamentId.");
         return null;
     }
-}
-// === LOAD FUNCTION SECTION END ===
-
-
-// === CLEAR FUNCTION SECTION START ===
-function clearTournamentState() {
-    try {
-        localStorage.removeItem(TOURNAMENT_STORAGE_KEY);
-        console.log("Active tournament state cleared from localStorage.");
-    } catch (e) {
-        console.error("Error clearing tournament state from localStorage:", e);
-        alert("Kunne ikke slette lagret turneringsstatus!");
+    const collection = loadTournamentCollection();
+    // Add validation for the loaded state structure
+    if(collection[tournamentId] && collection[tournamentId].config && collection[tournamentId].live) {
+         console.log(`Loading state for tournament ${tournamentId}`);
+         return collection[tournamentId];
+    } else {
+         console.warn(`Tournament state for ID ${tournamentId} not found or invalid in collection.`);
+         // Optionally remove the invalid entry?
+         // delete collection[tournamentId];
+         // saveCollection(TOURNAMENT_COLLECTION_KEY, collection);
+         return null;
     }
 }
-// === CLEAR FUNCTION SECTION END ===
 
-
-// === UNIQUE ID GENERATOR SECTION START ===
-// Enkel teller-basert ID, tilstrekkelig for lokal bruk i én økt.
-// Persisterer ikke mellom sideinnlastinger, men det gjør ikke noe
-// siden spillere får permanente IDer når turneringen lagres.
-let nextIdCounter = Date.now(); // Start med noe (relativt) unikt for økten
-
-function generateUniqueId() {
-    // Bruker en teller for å sikre unikhet innenfor denne sideinnlastingen.
-    return nextIdCounter++;
+function deleteTournamentState(tournamentId) {
+    if (!tournamentId) return;
+    try {
+        const collection = loadTournamentCollection();
+        if (collection[tournamentId]) {
+            delete collection[tournamentId];
+            saveCollection(TOURNAMENT_COLLECTION_KEY, collection);
+            console.log(`Tournament ${tournamentId} deleted.`);
+            // Also clear active ID if it was the deleted one
+            if (getActiveTournamentId() === tournamentId) {
+                 clearActiveTournamentId();
+            }
+        } else {
+            console.warn(`Tournament ${tournamentId} not found for deletion.`);
+        }
+    } catch (error) {
+         console.error(`Failed to delete state for tournament ${tournamentId}`, error);
+         alert(`Kunne ikke slette turnering ${tournamentId}.`);
+    }
 }
-// === UNIQUE ID GENERATOR SECTION END ===
+// === 03: TOURNAMENT FUNCTIONS END ===
+
+
+// === 04: TEMPLATE FUNCTIONS START ===
+function loadTemplateCollection() {
+    return loadCollection(TEMPLATE_COLLECTION_KEY);
+}
+
+function saveTemplate(templateId, templateData) {
+     if (!templateId || !templateData || !templateData.config) {
+          console.error("Invalid templateId or templateData provided to saveTemplate.");
+          alert("Intern feil: Forsøkte å lagre ugyldig maldata.");
+          return false;
+     }
+    try {
+        const collection = loadTemplateCollection();
+        collection[templateId] = templateData; // templateData should be { config: {...} }
+        saveCollection(TEMPLATE_COLLECTION_KEY, collection);
+        console.log(`Template ${templateId} saved.`);
+        return true;
+    } catch(error) {
+         console.error(`Failed to save template ${templateId}`, error);
+         return false;
+    }
+}
+
+function loadTemplate(templateId) {
+     if (!templateId) return null;
+     const collection = loadTemplateCollection();
+     // Add validation for template structure if needed
+     if(collection[templateId] && collection[templateId].config) {
+          console.log(`Loading template ${templateId}`);
+          return collection[templateId];
+     } else {
+          console.warn(`Template data for ID ${templateId} not found or invalid.`);
+          return null;
+     }
+}
+
+function deleteTemplate(templateId) {
+     if (!templateId) return;
+     try {
+         const collection = loadTemplateCollection();
+         if (collection[templateId]) {
+             delete collection[templateId];
+             saveCollection(TEMPLATE_COLLECTION_KEY, collection);
+             console.log(`Template ${templateId} deleted.`);
+              if (getActiveTemplateId() === templateId) { // Clear active ID if deleting loaded template
+                  clearActiveTemplateId();
+             }
+         } else {
+             console.warn(`Template ${templateId} not found for deletion.`);
+         }
+     } catch (error) {
+          console.error(`Failed to delete template ${templateId}`, error);
+          alert(`Kunne ikke slette mal ${templateId}.`);
+     }
+}
+// === 04: TEMPLATE FUNCTIONS END ===
+
+
+// === 05: ACTIVE ID FUNCTIONS START ===
+function setActiveTournamentId(tournamentId) {
+    if (tournamentId) {
+        localStorage.setItem(ACTIVE_TOURNAMENT_ID_KEY, tournamentId);
+        console.log(`Active tournament set to: ${tournamentId}`);
+    } else {
+        localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY);
+        console.log("Active tournament ID cleared.");
+    }
+}
+
+function getActiveTournamentId() {
+    return localStorage.getItem(ACTIVE_TOURNAMENT_ID_KEY);
+}
+
+function clearActiveTournamentId() {
+    localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY);
+    // console.log("Active tournament ID cleared."); // Reduced logging noise
+}
+
+function setActiveTemplateId(templateId) { // For passing template to setup
+    if (templateId) {
+        localStorage.setItem(ACTIVE_TEMPLATE_ID_KEY, templateId);
+        console.log(`Active template ID set to: ${templateId}`);
+    } else {
+        localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY);
+    }
+}
+
+function getActiveTemplateId() {
+    return localStorage.getItem(ACTIVE_TEMPLATE_ID_KEY);
+}
+
+function clearActiveTemplateId() {
+    localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY);
+    // console.log("Active template ID cleared."); // Reduced logging noise
+}
+// === 05: ACTIVE ID FUNCTIONS END ===
+
+
+// === 06: CLEAR ALL DATA FUNCTION START ===
+function clearAllData() {
+     try {
+          localStorage.removeItem(TOURNAMENT_COLLECTION_KEY);
+          localStorage.removeItem(TEMPLATE_COLLECTION_KEY);
+          localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY);
+          localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY);
+          // Add any other keys used by the app here if they are added later
+          console.log("All application data cleared from localStorage.");
+     } catch (e) {
+          console.error("Error clearing all data from localStorage:", e);
+          alert("Kunne ikke slette all lagret data!");
+     }
+}
+// === 06: CLEAR ALL DATA FUNCTION END ===
+
+
+// === 07: UNIQUE ID GENERATOR SECTION START ===
+// Generates a reasonably unique ID using timestamp and random string
+function generateUniqueId(prefix = 'id') {
+    const timestamp = Date.now().toString(36); // Base 36 timestamp
+    const randomPart = Math.random().toString(36).substring(2, 9); // Random string part (7 chars)
+    return `${prefix}-${timestamp}-${randomPart}`;
+}
+// === 07: UNIQUE ID GENERATOR SECTION END ===
