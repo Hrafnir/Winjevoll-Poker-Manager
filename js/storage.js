@@ -105,6 +105,22 @@ function clearAllData() {
 }
 // === 06: CLEAR ALL DATA FUNCTION END ===
 
+// === 06b: ACTIVITY LOG HELPER (NEW) START ===
+function logActivity(logArray, message) {
+    if (!logArray) logArray = []; // Initialize if it somehow doesn't exist
+    const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit'});
+    logArray.unshift({ timestamp, message }); // Add new message to the beginning
+
+    const MAX_LOG_ENTRIES = 50; // Keep log size reasonable
+    if (logArray.length > MAX_LOG_ENTRIES) {
+        logArray.pop(); // Remove the oldest entry
+    }
+    // Note: We don't call renderActivityLog() here, as that function lives in tournament.js
+    // The calling script (setup.js or tournament.js) is responsible for updating UI if needed.
+    console.log(`[Log Activity]: ${message}`); // Log to console for debugging setup
+}
+// === 06b: ACTIVITY LOG HELPER (NEW) END ===
+
 
 // === 07: UNIQUE ID GENERATOR SECTION START ===
 function generateUniqueId(prefix = 'id') { const timestamp = Date.now().toString(36); const randomPart = Math.random().toString(36).substring(2, 9); return `${prefix}-${timestamp}-${randomPart}`; }
