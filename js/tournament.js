@@ -54,10 +54,105 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 06: HELPER FUNCTIONS - CALCULATIONS END ===
 
     // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT START ===
-    function assignTableSeat(player) { const tables = {}; let minTableNum = -1; state.live.players.forEach(p => { if (p.id !== player.id) { tables[p.table] = (tables[p.table] || 0) + 1; } }); const sortedTables = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).sort((a, b) => a.count - b.count); for (const tableInfo of sortedTables) { if (tableInfo.count < state.config.playersPerTable) { minTableNum = tableInfo.tableNum; break; } } if (minTableNum === -1) { const existingTableNumbers = Object.keys(tables).map(Number); minTableNum = existingTableNumbers.length > 0 ? Math.max(...existingTableNumbers) + 1 : 1; player.table = minTableNum; player.seat = 1; } else { const occupiedSeats = state.live.players.filter(p => p.table === minTableNum).map(p => p.seat); let seatNum = 1; while (occupiedSeats.includes(seatNum)) { seatNum++; } if (seatNum > state.config.playersPerTable) { console.error(`ERROR: No seat on table ${minTableNum}`); seatNum = occupiedSeats.length + 1; } player.table = minTableNum; player.seat = seatNum; } console.log(`Assigned ${player.name} to T${player.table} S${player.seat}`); }
-    function reassignAllSeats(targetTableNum) { const playersToReseat = state.live.players.filter(p => p.table === targetTableNum); const numPlayers = playersToReseat.length; const seats = Array.from({ length: numPlayers }, (_, i) => i + 1); for (let i = seats.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [seats[i], seats[j]] = [seats[j], seats[i]]; } playersToReseat.forEach((player, index) => { player.seat = seats[index]; logActivity(state.live.activityLog, `Finalebord: ${player.name} -> Sete ${player.seat}.`); }); state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); }
-    function checkAndHandleTableBreak() { const activePlayersCount = state.live.players.length; const playersPerTable = state.config.playersPerTable; const currentTablesSet = new Set(state.live.players.map(p => p.table)); const currentTableCount = currentTablesSet.size; const targetTables = Math.ceil(activePlayersCount / playersPerTable); if (currentTableCount <= targetTables) return false; /* No break needed */ const tables = {}; state.live.players.forEach(p => { tables[p.table] = (tables[p.table] || 0) + 1; }); const sortedTables = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).sort((a, b) => a.count - b.count); const tableToBreak = sortedTables[0].tableNum; logActivity(state.live.activityLog, `Slår sammen bord! Flytter spillere fra bord ${tableToBreak}.`); alert(`Slår sammen bord! Flytter spillere fra bord ${tableToBreak}.`); const playersToMove = state.live.players.filter(p => p.table === tableToBreak); playersToMove.forEach(player => { player.table = 0; assignTableSeat(player); logActivity(state.live.activityLog, `Flyttet ${player.name} -> B${player.table} S${player.seat}.`); }); const finalTableSize = playersPerTable; const newTableCount = new Set(state.live.players.map(p => p.table)).size; if (activePlayersCount <= finalTableSize && newTableCount === 1) { const finalTableNum = state.live.players[0].table; logActivity(state.live.activityLog, `Finalebord (Bord ${finalTableNum})! Trekker nye seter...`); alert("Finalebord! Nye seter trekkes."); reassignAllSeats(finalTableNum); } return true; /* Table break happened */ }
-    function balanceTables() { if (state.live.status === 'finished' || state.live.players.length <= state.config.playersPerTable) { tableBalanceInfo.classList.add('hidden'); return false; } let balancingPerformed = false; while (true) { const tables = {}; state.live.players.forEach(p => { tables[p.table] = (tables[p.table] || 0) + 1; }); const tableCounts = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).filter(tc => tc.count > 0); if (tableCounts.length < 2) { tableBalanceInfo.classList.add('hidden'); break; } tableCounts.sort((a, b) => a.count - b.count); const minTable = tableCounts[0]; const maxTable = tableCounts[tableCounts.length - 1]; if (maxTable.count - minTable.count < 2) { tableBalanceInfo.classList.add('hidden'); break; } balancingPerformed = true; tableBalanceInfo.classList.remove('hidden'); console.log(`Balancing: Max T${maxTable.tableNum}(${maxTable.count}), Min T${minTable.tableNum}(${minTable.count})`); const playersOnMaxTable = state.live.players.filter(p => p.table === maxTable.tableNum); if (playersOnMaxTable.length === 0) { console.error("Balancing Error!"); break; } const playerToMove = playersOnMaxTable[Math.floor(Math.random() * playersOnMaxTable.length)]; const occupiedSeatsMin = state.live.players.filter(p => p.table === minTable.tableNum).map(p => p.seat); let newSeat = 1; while (occupiedSeatsMin.includes(newSeat)) { newSeat++; } if (newSeat > state.config.playersPerTable) { console.error(`Balancing Error: No seat on table ${minTable.tableNum}.`); alert(`Balanseringsfeil bord ${minTable.tableNum}.`); break; } const oldTable = playerToMove.table; const oldSeat = playerToMove.seat; const message = `Balansering: ${playerToMove.name} flyttes fra B${oldTable} S${oldSeat} til B${minTable.tableNum} S${newSeat}.`; logActivity(state.live.activityLog, message); playerToMove.table = minTable.tableNum; playerToMove.seat = newSeat; updateUI(); alert(message); } if (balancingPerformed) { console.log("Balancing done."); state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); return true; } return false; }
+    function assignTableSeat(player) {
+        const tables = {}; let minTableNum = -1;
+        state.live.players.forEach(p => { if (p.id !== player.id) { tables[p.table] = (tables[p.table] || 0) + 1; } });
+        const sortedTables = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).sort((a, b) => a.count - b.count);
+        for (const tableInfo of sortedTables) { if (tableInfo.count < state.config.playersPerTable) { minTableNum = tableInfo.tableNum; break; } }
+        if (minTableNum === -1) { const existingTableNumbers = Object.keys(tables).map(Number); minTableNum = existingTableNumbers.length > 0 ? Math.max(...existingTableNumbers) + 1 : 1; player.table = minTableNum; player.seat = 1; }
+        else { const occupiedSeats = state.live.players.filter(p => p.table === minTableNum).map(p => p.seat); let seatNum = 1; while (occupiedSeats.includes(seatNum)) { seatNum++; } if (seatNum > state.config.playersPerTable) { console.error(`ERROR: No seat on table ${minTableNum}`); seatNum = occupiedSeats.length + 1; } player.table = minTableNum; player.seat = seatNum; }
+        // console.log(`Assigned ${player.name} to T${player.table} S${player.seat}`); // Reduced logging noise
+    }
+
+    function reassignAllSeats(targetTableNum) {
+        logActivity(state.live.activityLog, `Finalebord (Bord ${targetTableNum})! Trekker nye seter...`);
+        const playersToReseat = state.live.players; // Reassign ALL active players to the target table
+        const numPlayers = playersToReseat.length;
+        const seats = Array.from({ length: numPlayers }, (_, i) => i + 1);
+        for (let i = seats.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [seats[i], seats[j]] = [seats[j], seats[i]]; }
+        playersToReseat.forEach((player, index) => {
+            player.table = targetTableNum; // Ensure all are on the target table
+            player.seat = seats[index];
+            logActivity(state.live.activityLog, ` -> ${player.name} får sete ${player.seat}.`);
+        });
+        state.live.players.sort((a, b) => a.seat - b.seat); // Sort final table by seat
+        console.log("Final table seats reassigned to table:", targetTableNum);
+    }
+
+    function checkAndHandleTableBreak() { // Returns true if break happened (including final table)
+        const activePlayersCount = state.live.players.length;
+        const playersPerTable = state.config.playersPerTable;
+        const currentTablesSet = new Set(state.live.players.map(p => p.table));
+        const currentTableCount = currentTablesSet.size;
+        const targetTables = Math.ceil(activePlayersCount / playersPerTable);
+        const finalTableSize = playersPerTable; // Or maybe a fixed number like 9 or 10? Use playersPerTable for now.
+
+        // --- Check for Final Table condition FIRST ---
+        if (activePlayersCount <= finalTableSize && currentTableCount > 1) {
+            const targetFinalTableNum = 1; // Always move to table 1
+            logActivity(state.live.activityLog, `Finalebord! Flytter alle til Bord ${targetFinalTableNum} og trekker seter...`);
+            alert(`Finalebord! Flytter alle til Bord ${targetFinalTableNum} og trekker seter.`); // Alert before redraw
+
+            // Move all players to target table BEFORE redrawing seats
+            state.live.players.forEach(p => p.table = targetFinalTableNum);
+            reassignAllSeats(targetFinalTableNum); // Redraw seats on the target table
+            return true; // Final table formation is a type of table break
+        }
+
+        // --- Check for regular table break ---
+        if (currentTableCount > targetTables && currentTableCount > 1) {
+            const tables = {}; state.live.players.forEach(p => { tables[p.table] = (tables[p.table] || 0) + 1; });
+            const sortedTables = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).sort((a, b) => a.count - b.count);
+            const tableToBreak = sortedTables[0].tableNum;
+
+            const breakMsg = `Slår sammen bord! Flytter spillere fra bord ${tableToBreak}.`;
+            logActivity(state.live.activityLog, breakMsg);
+            alert(breakMsg); // Alert before moving
+
+            const playersToMove = state.live.players.filter(p => p.table === tableToBreak);
+            playersToMove.forEach(player => {
+                 const oldTable = player.table; const oldSeat = player.seat;
+                 player.table = 0; // Unset temporarily to allow reassignment
+                 assignTableSeat(player); // Assign to a remaining table
+                 logActivity(state.live.activityLog, ` -> Flyttet ${player.name} (B${oldTable}S${oldSeat}) til B${player.table}S${player.seat}.`);
+            });
+            state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); // Re-sort
+            return true; // Table break happened
+        }
+        return false; // No table break needed
+    }
+
+    function balanceTables() { // Balances players between existing tables (doesn't break tables)
+         if (state.live.status === 'finished') return false;
+         const tables = {}; state.live.players.forEach(p => { tables[p.table] = (tables[p.table] || 0) + 1; });
+         const tableCounts = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).filter(tc => tc.count > 0);
+         if (tableCounts.length < 2) { tableBalanceInfo.classList.add('hidden'); return false; } // Can't balance < 2 tables
+         tableCounts.sort((a, b) => a.count - b.count); const minTable = tableCounts[0]; const maxTable = tableCounts[tableCounts.length - 1];
+
+         if (maxTable.count - minTable.count < 2) { tableBalanceInfo.classList.add('hidden'); return false; } // Already balanced
+
+         // --- Perform Balancing ---
+         tableBalanceInfo.classList.remove('hidden'); console.log(`Balancing needed: Max T${maxTable.tableNum}(${maxTable.count}), Min T${minTable.tableNum}(${minTable.count})`);
+         const playersOnMaxTable = state.live.players.filter(p => p.table === maxTable.tableNum); if (playersOnMaxTable.length === 0) { console.error("Balancing Error!"); return false; }
+         const playerToMove = playersOnMaxTable[Math.floor(Math.random() * playersOnMaxTable.length)];
+         const occupiedSeatsMin = state.live.players.filter(p => p.table === minTable.tableNum).map(p => p.seat); let newSeat = 1; while (occupiedSeatsMin.includes(newSeat)) { newSeat++; }
+         if (newSeat > state.config.playersPerTable) { console.error(`Balancing Error: No seat on table ${minTable.tableNum}.`); alert(`Balanseringsfeil bord ${minTable.tableNum}.`); return false; }
+         const oldTable = playerToMove.table; const oldSeat = playerToMove.seat; const message = `Balansering: ${playerToMove.name} flyttes fra B${oldTable} S${oldSeat} til B${minTable.tableNum} S${newSeat}.`;
+
+         // Update state FIRST
+         playerToMove.table = minTable.tableNum; playerToMove.seat = newSeat;
+         logActivity(state.live.activityLog, message);
+         state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); // Re-sort after move
+
+         // Update UI SECOND (before alert)
+         updateUI();
+
+         // Alert LAST
+         alert(message);
+
+         console.log("Balancing move applied.");
+         return true; // Balancing was performed
+     }
     // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT END ===
 
 
