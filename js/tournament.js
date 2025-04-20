@@ -139,31 +139,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // === 08: UI UPDATE FUNCTIONS START ===
-// Inside // === 08: UI UPDATE FUNCTIONS START ===
-function renderActivityLog() {
-    if (!activityLogUl) return;
-    activityLogUl.innerHTML = '';
-    if (!state?.live?.activityLog || state.live.activityLog.length === 0) {
-        activityLogUl.innerHTML = '<li>Loggen er tom.</li>';
-        return;
-    }
-    state.live.activityLog.forEach(entry => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span class="log-time">[${entry.timestamp}]</span> ${entry.message}`;
-        activityLogUl.appendChild(li);
-    });
-}
-// (updateUI, renderPlayerList, displayPrizes functions follow)
-    
-    function renderPlayerList() { playerListUl.innerHTML = ''; eliminatedPlayerListUl.innerHTML = ''; const cln = state.live.currentLevelIndex + 1; const rbA = state.config.type === 'rebuy' && cln <= state.config.rebuyLevels; const adA = state.config.type === 'rebuy' && cln > state.config.rebuyLevels; const canEdit = state.live.status !== 'finished'; state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table).forEach(p => { const li = document.createElement('li'); let i = `${p.name} <span class="player-details">(B${p.table} S${p.seat})</span>`; if (p.rebuys > 0) i += ` <span class="player-details">[${p.rebuys}R]</span>`; if (p.addon) i += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && p.knockouts > 0) i += ` <span class="player-details">(KOs: ${p.knockouts})</span>`; let a = ''; if (canEdit) { a += `<button class="btn-edit-player small-button" data-player-id="${p.id}" title="Rediger Navn">✏️</button>`; if (rbA) a += `<button class="btn-rebuy small-button" data-player-id="${p.id}" title="Rebuy">R</button>`; if (adA && !p.addon) a += `<button class="btn-addon small-button" data-player-id="${p.id}" title="Addon">A</button>`; a += `<button class="btn-eliminate small-button danger-button" data-player-id="${p.id}" title="Eliminer">X</button>`; } li.innerHTML = `<span class="item-name">${i}</span><div class="list-actions player-actions">${a}</div>`; playerListUl.appendChild(li); }); state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity)).forEach(p => { const li = document.createElement('li'); let e = `${p.place ?? '?'}. ${p.name}`; if (p.rebuys > 0) e += ` <span class="player-details">[${p.rebuys}R]</span>`; if (p.addon) e += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && p.knockouts > 0) e += ` <span class="player-details">(KOs: ${p.knockouts})</span>`; if (p.eliminatedBy) e += ` <span class="player-details">(av ${getPlayerNameById(p.eliminatedBy)})</span>`; li.innerHTML = `<span class="item-name">${e}</span><div class="list-actions player-actions">${canEdit ? `<button class="btn-restore small-button warning-button" data-player-id="${p.id}" title="Gjenopprett">↩️</button>` : ''}</div>`; eliminatedPlayerListUl.appendChild(li); }); activePlayerCountSpan.textContent = state.live.players.length; eliminatedPlayerCountSpan.textContent = state.live.eliminatedPlayers.length; playerListUl.querySelectorAll('.btn-edit-player').forEach(btn => btn.onclick = handleEditPlayer); playerListUl.querySelectorAll('.btn-rebuy').forEach(btn => btn.onclick = handleRebuy); playerListUl.querySelectorAll('.btn-addon').forEach(btn => btn.onclick = handleAddon); playerListUl.querySelectorAll('.btn-eliminate').forEach(btn => btn.onclick = handleEliminate); eliminatedPlayerListUl.querySelectorAll('.btn-restore').forEach(btn => btn.onclick = handleRestore); }
-    function displayPrizes() { if (!prizeDisplayLive) return; const prizeData = calculatePrizes(); prizeDisplayLive.innerHTML = '<h3>Premiefordeling</h3>'; let summaryText = "N/A"; if (prizeData.length > 0) { const ol = document.createElement('ol'); prizeData.forEach(p => { const li = document.createElement('li'); li.textContent = `${p.place}. Plass: ${p.amount.toLocaleString('nb-NO')} kr (${p.percentage}%)`; ol.appendChild(li); }); prizeDisplayLive.appendChild(ol); summaryText = `${prizeData.length} plasser betalt`; if (prizeData[0]) summaryText += `, 1.: ${prizeData[0].amount.toLocaleString('nb-NO')} kr`; prizeDisplayLive.classList.remove('hidden'); } else { prizeDisplayLive.classList.add('hidden'); const potForPrizes = state.live.totalPot - (state.config.type === 'knockout' ? state.live.totalEntries * (state.config.bountyAmount || 0) : 0); if (potForPrizes > 0 && (!state.config.prizeDistribution || state.config.prizeDistribution.length === 0)) { summaryText = 'Udefinert'; } else { summaryText = 'Ingen pott'; } } if(prizeSummarySpan) prizeSummarySpan.textContent = summaryText; }
+    function renderPlayerList() { /* ... (No change needed) ... */ playerListUl.innerHTML = ''; eliminatedPlayerListUl.innerHTML = ''; const cln = state.live.currentLevelIndex + 1; const rbA = state.config.type === 'rebuy' && cln <= state.config.rebuyLevels; const adA = state.config.type === 'rebuy' && cln > state.config.rebuyLevels; const canEdit = state.live.status !== 'finished'; state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table).forEach(p => { const li = document.createElement('li'); let i = `${p.name} <span class="player-details">(B${p.table} S${p.seat})</span>`; if (p.rebuys > 0) i += ` <span class="player-details">[${p.rebuys}R]</span>`; if (p.addon) i += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && p.knockouts > 0) i += ` <span class="player-details">(KOs: ${p.knockouts})</span>`; let a = ''; if (canEdit) { a += `<button class="btn-edit-player small-button" data-player-id="${p.id}" title="Rediger Navn">✏️</button>`; if (rbA) a += `<button class="btn-rebuy small-button" data-player-id="${p.id}" title="Rebuy">R</button>`; if (adA && !p.addon) a += `<button class="btn-addon small-button" data-player-id="${p.id}" title="Addon">A</button>`; a += `<button class="btn-eliminate small-button danger-button" data-player-id="${p.id}" title="Eliminer">X</button>`; } li.innerHTML = `<span class="item-name">${i}</span><div class="list-actions player-actions">${a}</div>`; playerListUl.appendChild(li); }); state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity)).forEach(p => { const li = document.createElement('li'); let e = `${p.place ?? '?'}. ${p.name}`; if (p.rebuys > 0) e += ` <span class="player-details">[${p.rebuys}R]</span>`; if (p.addon) e += ` <span class="player-details">[A]</span>`; if (state.config.type === 'knockout' && p.knockouts > 0) e += ` <span class="player-details">(KOs: ${p.knockouts})</span>`; if (p.eliminatedBy) e += ` <span class="player-details">(av ${getPlayerNameById(p.eliminatedBy)})</span>`; li.innerHTML = `<span class="item-name">${e}</span><div class="list-actions player-actions">${canEdit ? `<button class="btn-restore small-button warning-button" data-player-id="${p.id}" title="Gjenopprett">↩️</button>` : ''}</div>`; eliminatedPlayerListUl.appendChild(li); }); activePlayerCountSpan.textContent = state.live.players.length; eliminatedPlayerCountSpan.textContent = state.live.eliminatedPlayers.length; playerListUl.querySelectorAll('.btn-edit-player').forEach(btn => btn.onclick = handleEditPlayer); playerListUl.querySelectorAll('.btn-rebuy').forEach(btn => btn.onclick = handleRebuy); playerListUl.querySelectorAll('.btn-addon').forEach(btn => btn.onclick = handleAddon); playerListUl.querySelectorAll('.btn-eliminate').forEach(btn => btn.onclick = handleEliminate); eliminatedPlayerListUl.querySelectorAll('.btn-restore').forEach(btn => btn.onclick = handleRestore); }
+    function displayPrizes() { /* ... (No change needed) ... */ if (!prizeDisplayLive) return; const prizeData = calculatePrizes(); prizeDisplayLive.innerHTML = '<h3>Premiefordeling</h3>'; let summaryText = "N/A"; if (prizeData.length > 0) { const ol = document.createElement('ol'); prizeData.forEach(p => { const li = document.createElement('li'); li.textContent = `${p.place}. Plass: ${p.amount.toLocaleString('nb-NO')} kr (${p.percentage}%)`; ol.appendChild(li); }); prizeDisplayLive.appendChild(ol); summaryText = `${prizeData.length} plasser betalt`; if (prizeData[0]) summaryText += `, 1.: ${prizeData[0].amount.toLocaleString('nb-NO')} kr`; prizeDisplayLive.classList.remove('hidden'); } else { prizeDisplayLive.classList.add('hidden'); const potForPrizes = state.live.totalPot - (state.config.type === 'knockout' ? state.live.totalEntries * (state.config.bountyAmount || 0) : 0); if (potForPrizes > 0 && (!state.config.prizeDistribution || state.config.prizeDistribution.length === 0)) { summaryText = 'Udefinert'; } else { summaryText = 'Ingen pott'; } } if(prizeSummarySpan) prizeSummarySpan.textContent = summaryText; }
     function updateUI() {
         const elementsToCheck = { nameDisplay, currentTimeDisplay, timerDisplay, currentLevelDisplay, nextBlindsDisplay, blindsDisplay, breakInfo, playersRemainingDisplay, totalEntriesDisplay, averageStackDisplay, totalPotDisplay, lateRegStatusDisplay, lateRegButton, startPauseButton, prevLevelButton, nextLevelButton, adjustTimeMinusButton, adjustTimePlusButton, btnEditSettings, endTournamentButton, prizeDisplayLive, prizeSummarySpan, playerListUl, eliminatedPlayerListUl, activePlayerCountSpan, eliminatedPlayerCountSpan, tableBalanceInfo, activityLogUl }; let missingElement = null; for (const key in elementsToCheck) { if (!elementsToCheck[key]) { missingElement = key; break; } } if (missingElement) { console.error(`CRITICAL ERROR: UI element "${missingElement}" missing.`); if(timerInterval) clearInterval(timerInterval); if(realTimeInterval) clearInterval(realTimeInterval); document.body.innerHTML = `<h1 style="color:red; text-align:center; margin-top: 50px;">UI Feil! Element "${missingElement}" mangler.</h1>`; return; }
         nameDisplay.textContent = state.config.name; currentTimeDisplay.textContent = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const cLI = state.live.currentLevelIndex; const cL = state.config.blindLevels[cLI]; const nL = state.config.blindLevels[cLI + 1]; const uPM = cL?.pauseMinutes || 0; const nLIB = uPM > 0;
         currentLevelDisplay.textContent = `(Nivå ${cL ? cL.level : 'N/A'})`; nextBlindsDisplay.textContent = formatNextBlindsText(nL, nLIB, uPM);
-        if (state.live.isOnBreak) { timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak); blindsDisplay.innerHTML = ''; blindsDisplay.classList.add('hidden'); breakInfo.classList.remove('hidden'); breakInfo.textContent = `PAUSE (${formatTime(state.live.timeRemainingInBreak)})`; }
-        else { timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel); blindsDisplay.classList.remove('hidden'); breakInfo.classList.add('hidden'); blindsDisplay.innerHTML = formatBlindsHTML(cL); }
+
+        if (state.live.isOnBreak) {
+            timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak); // Show remaining break time in main timer
+            blindsDisplay.innerHTML = ''; // Clear blinds area
+            blindsDisplay.classList.add('hidden'); // Hide blinds display
+            breakInfo.classList.remove('hidden'); // Show break info element
+            breakInfo.textContent = `PAUSE`; // Only show "PAUSE", timer is above
+        } else {
+            timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel); // Show remaining level time
+            blindsDisplay.classList.remove('hidden'); // Show blinds display
+            breakInfo.classList.add('hidden'); // Hide break info element
+            blindsDisplay.innerHTML = formatBlindsHTML(cL); // Update blinds HTML
+        }
+
         const apc = state.live.players.length; playersRemainingDisplay.textContent = apc; totalEntriesDisplay.textContent = state.live.totalEntries; averageStackDisplay.textContent = calculateAverageStack().toLocaleString('nb-NO'); totalPotDisplay.textContent = state.live.totalPot.toLocaleString('nb-NO');
         const cLN = cLI + 1; const lRO = cLN <= state.config.lateRegLevel && state.config.lateRegLevel > 0 && state.live.status !== 'finished';
         if (state.config.lateRegLevel > 0) { lateRegStatusDisplay.textContent = `Late Reg: ${lRO ? `Åpen t.o.m. nivå ${state.config.lateRegLevel}` : 'Stengt'}`; } else { lateRegStatusDisplay.textContent = 'Late Reg: N/A'; }
@@ -176,8 +172,64 @@ function renderActivityLog() {
      }
     // === 08: UI UPDATE FUNCTIONS END ===
 
-    // === 09: TIMER LOGIC START ===
-    function tick() { if (state.live.status !== 'running') return; if (state.live.isOnBreak) { state.live.timeRemainingInBreak--; breakInfo.textContent = `PAUSE (${formatTime(state.live.timeRemainingInBreak)})`; if (state.live.timeRemainingInBreak < 0) { state.live.isOnBreak = false; state.live.currentLevelIndex++; if (state.live.currentLevelIndex >= state.config.blindLevels.length) { finishTournament(); return; } const newLevel = state.config.blindLevels[state.live.currentLevelIndex]; state.live.timeRemainingInLevel = newLevel.duration * 60; logActivity(state.live.activityLog, `Pause over. Nivå ${newLevel.level} starter.`); updateUI(); saveTournamentState(currentTournamentId, state); } else if (state.live.timeRemainingInBreak % 15 === 0) { saveTournamentState(currentTournamentId, state); } } else { state.live.timeRemainingInLevel--; timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel); if (state.live.timeRemainingInLevel < 0) { const currentLevel = state.config.blindLevels[state.live.currentLevelIndex]; const pauseMinutes = currentLevel?.pauseMinutes || 0; if (pauseMinutes > 0) { state.live.isOnBreak = true; state.live.timeRemainingInBreak = pauseMinutes * 60; logActivity(state.live.activityLog, `Nivå ${currentLevel.level} ferdig. Starter ${pauseMinutes} min pause.`); updateUI(); saveTournamentState(currentTournamentId, state); } else { state.live.currentLevelIndex++; if (state.live.currentLevelIndex >= state.config.blindLevels.length) { finishTournament(); return; } const newLevel = state.config.blindLevels[state.live.currentLevelIndex]; state.live.timeRemainingInLevel = newLevel.duration * 60; logActivity(state.live.activityLog, `Nivå ${newLevel.level} starter.`); updateUI(); saveTournamentState(currentTournamentId, state); } } else if (state.live.timeRemainingInLevel > 0 && state.live.timeRemainingInLevel % 30 === 0) { saveTournamentState(currentTournamentId, state); } } }
+        // === 09: TIMER LOGIC START ===
+    function tick() {
+        if (state.live.status !== 'running') return;
+
+        if (state.live.isOnBreak) {
+            // --- Handle Break Timer ---
+            state.live.timeRemainingInBreak--;
+            timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak); // Update main timer display
+
+            if (state.live.timeRemainingInBreak < 0) {
+                // Break finished
+                state.live.isOnBreak = false;
+                state.live.currentLevelIndex++;
+                if (state.live.currentLevelIndex >= state.config.blindLevels.length) {
+                    finishTournament(); return;
+                }
+                const newLevel = state.config.blindLevels[state.live.currentLevelIndex];
+                state.live.timeRemainingInLevel = newLevel.duration * 60;
+                logActivity(state.live.activityLog, `Pause over. Nivå ${newLevel.level} starter.`);
+                updateUI(); // Full update
+                saveTournamentState(currentTournamentId, state);
+            } else if (state.live.timeRemainingInBreak % 15 === 0) {
+                 saveTournamentState(currentTournamentId, state);
+            }
+
+        } else {
+            // --- Handle Level Timer ---
+            state.live.timeRemainingInLevel--;
+            timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel); // Update main timer display
+
+            if (state.live.timeRemainingInLevel < 0) {
+                const currentLevel = state.config.blindLevels[state.live.currentLevelIndex];
+                const pauseMinutes = currentLevel?.pauseMinutes || 0;
+
+                if (pauseMinutes > 0) {
+                    // Start break
+                    state.live.isOnBreak = true;
+                    state.live.timeRemainingInBreak = pauseMinutes * 60;
+                    logActivity(state.live.activityLog, `Nivå ${currentLevel.level} ferdig. Starter ${pauseMinutes} min pause.`);
+                    updateUI(); // Full update
+                    saveTournamentState(currentTournamentId, state);
+                } else {
+                    // No break, move to next level
+                    state.live.currentLevelIndex++;
+                    if (state.live.currentLevelIndex >= state.config.blindLevels.length) {
+                        finishTournament(); return;
+                    }
+                    const newLevel = state.config.blindLevels[state.live.currentLevelIndex];
+                    state.live.timeRemainingInLevel = newLevel.duration * 60;
+                    logActivity(state.live.activityLog, `Nivå ${newLevel.level} starter.`);
+                    updateUI(); // Full update
+                    saveTournamentState(currentTournamentId, state);
+                }
+            } else if (state.live.timeRemainingInLevel > 0 && state.live.timeRemainingInLevel % 30 === 0) {
+                 saveTournamentState(currentTournamentId, state);
+            }
+        }
+    }
     function startRealTimeClock() { if (realTimeInterval) clearInterval(realTimeInterval); realTimeInterval = setInterval(() => { if(currentTimeDisplay) currentTimeDisplay.textContent = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }, 1000); }
     // === 09: TIMER LOGIC END ===
 
