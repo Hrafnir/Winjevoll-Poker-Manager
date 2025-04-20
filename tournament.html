@@ -26,35 +26,13 @@
     <!-- === 04: FOOTER SECTION END === -->
 
     <!-- === 05: MODAL FOR EDITING SETTINGS START === -->
-    <div id="edit-settings-modal" class="modal hidden"><div class="modal-content">
-        <span class="close-button" id="close-modal-button" title="Lukk">×</span><h2>Rediger Innstillinger</h2><p class="warning">Advarsel: Endringer underveis kan ha utilsiktede konsekvenser!</p>
-        <div id="edit-blinds-section"><h3>Fremtidige Nivåer/Pauser</h3><p><small>(Historiske er låst.)</small></p><div class="blind-table-container"><table id="edit-blind-structure-table"><thead><tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet</th><th>Pause Etter (min)</th><th></th></tr></thead><tbody id="edit-blind-structure-body"></tbody></table></div><button type="button" id="btn-add-edit-level">Legg til Nivå</button></div>
-        <div id="edit-prizes-section"><h3>Premier</h3><label for="edit-paid-places">Antall Betalte:</label><input type="number" id="edit-paid-places" min="1"><label for="edit-prize-distribution">Ny Fordeling (%):</label><textarea id="edit-prize-distribution" rows="2"></textarea><button type="button" id="btn-generate-edit-payout">Generer Standard</button></div>
-        <div id="edit-theme-section"><h3>Fargetema</h3><div class="theme-editor-row"><div class="theme-editor-color"><h4>Bakgrunn</h4><div class="control-group"><label>R:</label><input type="range" id="bgRedSlider" min="0" max="255"><input type="number" id="bgRedInput" min="0" max="255"></div><div class="control-group"><label>G:</label><input type="range" id="bgGreenSlider" min="0" max="255"><input type="number" id="bgGreenInput" min="0" max="255"></div><div class="control-group"><label>B:</label><input type="range" id="bgBlueSlider" min="0" max="255"><input type="number" id="bgBlueInput" min="0" max="255"></div></div><div class="theme-editor-preview"><label>Preview:</label><div id="bg-color-preview" class="color-preview-box"></div></div></div><div class="theme-editor-row"><div class="theme-editor-color"><h4>Tekst</h4><div class="control-group"><label>R:</label><input type="range" id="textRedSlider" min="0" max="255"><input type="number" id="textRedInput" min="0" max="255"></div><div class="control-group"><label>G:</label><input type="range" id="textGreenSlider" min="0" max="255"><input type="number" id="textGreenInput" min="0" max="255"></div><div class="control-group"><label>B:</label><input type="range" id="textBlueSlider" min="0" max="255"><input type="number" id="textBlueInput" min="0" max="255"></div></div><div class="theme-editor-preview"><label>Preview:</label><div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div></div></div></div>
-
-        <!-- === NEW LOGO EDITOR SECTION START === -->
-        <div id="edit-logo-section">
-             <h3>Logo Utseende</h3>
-             <div class="control-group layout-control">
-                  <label for="logoSizeSlider">Størrelse (% av tilgj. høyde):</label>
-                  <input type="range" id="logoSizeSlider" min="10" max="100" value="90">
-                  <input type="number" id="logoSizeInput" min="10" max="100" value="90"><span>%</span>
-             </div>
-              <div class="control-group layout-control">
-                  <label for="logoPosSlider">Vertikal Posisjon:</label>
-                  <input type="range" id="logoPosSlider" min="0" max="100" value="50"> <!-- 0=top, 50=center, 100=bottom -->
-                  <input type="number" id="logoPosInput" min="0" max="100" value="50"><span>%</span>
-             </div>
-             <small>Justerer hvor mye av logo-området bildet fyller og vertikal plassering.</small>
-        </div>
-         <!-- === NEW LOGO EDITOR SECTION END === -->
-
-        <div class="modal-actions"><button id="btn-save-edited-settings" class="success-button">Lagre Alle Endringer</button><button id="btn-cancel-edit-settings" type="button">Avbryt</button></div>
-    </div></div>
+    <div id="edit-settings-modal" class="modal hidden"><div class="modal-content"><span class="close-button" id="close-modal-button" title="Lukk">×</span><h2>Rediger Innstillinger</h2><p class="warning">Advarsel: Endringer underveis kan ha utilsiktede konsekvenser!</p><div id="edit-blinds-section"><h3>Fremtidige Nivåer/Pauser</h3><p><small>(Historiske er låst.)</small></p><div class="blind-table-container"><table id="edit-blind-structure-table"><thead><tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet</th><th>Pause Etter (min)</th><th></th></tr></thead><tbody id="edit-blind-structure-body"></tbody></table></div><button type="button" id="btn-add-edit-level">Legg til Nivå</button></div><div id="edit-prizes-section"><h3>Premier</h3><label for="edit-paid-places">Antall Betalte:</label><input type="number" id="edit-paid-places" min="1"><label for="edit-prize-distribution">Ny Fordeling (%):</label><textarea id="edit-prize-distribution" rows="2"></textarea><button type="button" id="btn-generate-edit-payout">Generer Standard</button></div><div id="edit-theme-section"><h3>Fargetema</h3><div class="theme-editor-row"><div class="theme-editor-color"><h4>Bakgrunn</h4><div class="control-group"><label>R:</label><input type="range" id="bgRedSlider" min="0" max="255"><input type="number" id="bgRedInput" min="0" max="255"></div><div class="control-group"><label>G:</label><input type="range" id="bgGreenSlider" min="0" max="255"><input type="number" id="bgGreenInput" min="0" max="255"></div><div class="control-group"><label>B:</label><input type="range" id="bgBlueSlider" min="0" max="255"><input type="number" id="bgBlueInput" min="0" max="255"></div></div><div class="theme-editor-preview"><label>Preview:</label><div id="bg-color-preview" class="color-preview-box"></div></div></div><div class="theme-editor-row"><div class="theme-editor-color"><h4>Tekst</h4><div class="control-group"><label>R:</label><input type="range" id="textRedSlider" min="0" max="255"><input type="number" id="textRedInput" min="0" max="255"></div><div class="control-group"><label>G:</label><input type="range" id="textGreenSlider" min="0" max="255"><input type="number" id="textGreenInput" min="0" max="255"></div><div class="control-group"><label>B:</label><input type="range" id="textBlueSlider" min="0" max="255"><input type="number" id="textBlueInput" min="0" max="255"></div></div><div class="theme-editor-preview"><label>Preview:</label><div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div></div></div></div><div id="edit-logo-section"><h3>Logo Utseende</h3><div class="control-group layout-control"><label for="logoSizeSlider">Størrelse (% høyde):</label><input type="range" id="logoSizeSlider" min="10" max="100" value="90"><input type="number" id="logoSizeInput" min="10" max="100" value="90"><span>%</span></div><div class="control-group layout-control"><label for="logoPosSlider">Vertikal Posisjon:</label><input type="range" id="logoPosSlider" min="0" max="100" value="50"><input type="number" id="logoPosInput" min="0" max="100" value="50"><span>%</span></div><small>Justerer logoens størrelse og plassering.</small></div><div class="modal-actions"><button id="btn-save-edited-settings" class="success-button">Lagre Alle Endringer</button><button id="btn-cancel-edit-settings" type="button">Avbryt</button></div></div></div>
     <!-- === 05: MODAL FOR EDITING SETTINGS END === -->
 
     <!-- === 06: SCRIPTS SECTION START === -->
-    <script src="js/storage.js"></script><script src="js/tournament.js"></script>
+    <!-- IMPORTANT: storage.js MUST come before tournament.js -->
+    <script src="js/storage.js"></script>
+    <script src="js/tournament.js"></script>
     <!-- === 06: SCRIPTS SECTION END === -->
 </body>
 </html>
