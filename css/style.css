@@ -87,16 +87,16 @@ main.tournament-live { display: flex; flex-direction: column; flex-grow: 1; back
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION END === */
 
 /* === 06: TOURNAMENT LIVE PAGE - SPLIT LAYOUT START === */
-.live-split-container { display: flex; flex-grow: 1; min-height: 55vh; /* Increased again */ background-color: transparent; /* Inherit from main */ color: inherit; /* Inherit from main */ flex-shrink: 0; border-bottom: 1px solid var(--live-split-border); }
+.live-split-container { display: flex; flex-grow: 1; min-height: 55vh; background-color: var(--live-page-bg); color: var(--live-page-text); flex-shrink: 0; border-bottom: 1px solid var(--live-split-border); }
 .live-left-column { flex-basis: 60%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; /* Removed border */ }
-.live-right-column { flex-basis: 40%; display: flex; flex-direction: column; padding: 0; border-left: 1px solid var(--live-split-border); }
+.live-right-column { flex-basis: 40%; display: flex; flex-direction: column; padding: 0; /* Removed border */ } /* Removed border-left */
 .right-col-logo-area { flex-basis: 45%; display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; overflow: hidden; min-height: 100px; }
 .right-col-logo-area .logo { max-width: 100%; max-height: 100%; height: auto; object-fit: contain; display: block; }
 .right-col-blinds-area { flex-basis: 35%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 15px; border-top: 1px solid var(--live-split-border); border-bottom: 1px solid var(--live-split-border); box-sizing: border-box; text-align: center; }
-.right-col-blinds-area h3 { color: inherit; /* Inherit text color */ opacity: 0.8; margin: 0 0 10px 0; font-size: 1.4em; text-transform: uppercase; font-weight: normal; }
-#blinds-display { font-size: 7.5em; /* Increased */ font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
+.right-col-blinds-area h3 { color: inherit; opacity: 0.8; margin: 0 0 10px 0; font-size: 1.4em; text-transform: uppercase; font-weight: normal; }
+#blinds-display { font-size: 7.5em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
 #blinds-display .value { margin: 0 8px; } #blinds-display .label { font-size: 0.3em; margin-right: 4px; color: inherit; opacity: 0.7; font-weight: normal; vertical-align: middle; } #blinds-display .break-text { font-size: 0.5em; color: #FFEB3B; }
-.right-col-info-area { flex-basis: 20%; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; padding: 10px 15px; box-sizing: border-box; font-size: 1em; background-color: rgba(0,0,0,0.1); color: inherit; opacity: 0.9; }
+.right-col-info-area { flex-basis: 20%; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; padding: 10px 15px; box-sizing: border-box; font-size: 1.1em; /* Increased font size */ background-color: rgba(0,0,0,0.1); color: inherit; opacity: 0.9; border-top: none; /* Removed border */ }
 .right-col-info-area p { margin: 3px 10px; white-space: nowrap; }
 .timer-section { text-align: center; width: 100%; }
 .timer-section h2 { font-size: 1.8em; margin: 0 0 10px 0; color: inherit; opacity: 0.8; text-transform: uppercase; font-weight: normal; }
