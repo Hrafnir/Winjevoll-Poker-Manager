@@ -251,14 +251,380 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleBackToMain() { /* ... */ if(state&&state.live.status!=='finished')saveTournamentState(currentTournamentId,state); window.location.href='index.html';}
     // === 10: EVENT HANDLERS - CONTROLS END ===
 
-    // === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
-    function handleRebuy(event){ /* ... */ const pId=parseInt(event.target.dataset.playerId); const p=state.live.players.find(pl=>pl.id===pId); const cLN=state.live.currentLevelIndex+1; if(!p||state.config.type!=='rebuy'||!(cLN<=state.config.rebuyLevels)){alert("Re-buy N/A.");return;} if(confirm(`Re-buy (${state.config.rebuyCost} kr) for ${p.name}?`)){ p.rebuys=(p.rebuys||0)+1; state.live.totalPot+=state.config.rebuyCost; state.live.totalEntries++; state.live.totalRebuys++; logActivity(state.live.activityLog,`${p.name} tok Re-buy.`); updateUI(); saveTournamentState(currentTournamentId,state);}}
-    function handleAddon(event){ /* ... */ const pId=parseInt(event.target.dataset.playerId); const p=state.live.players.find(pl=>pl.id===pId); const cLN=state.live.currentLevelIndex+1; const isAP=cLN>state.config.rebuyLevels; if(!p||state.config.type!=='rebuy'||!isAP||p.addon){alert("Add-on N/A.");return;} if(confirm(`Add-on (${state.config.addonCost} kr) for ${p.name}?`)){ p.addon=true; state.live.totalPot+=state.config.addonCost; state.live.totalAddons++; logActivity(state.live.activityLog,`${p.name} tok Add-on.`); updateUI(); saveTournamentState(currentTournamentId,state);}}
-    function handleEliminate(event){ /* ... */ if(state.live.status==='finished')return; const pId=parseInt(event.target.dataset.playerId); const ap=state.live.players; const pI=ap.findIndex(p=>p.id===pId); if(pI===-1)return; if(ap.length<=1){alert("Kan ikke eliminere siste spiller.");return;} const p=ap[pI]; let eById=null; let eName=null; if(state.config.type==='knockout'&&(state.config.bountyAmount||0)>0&&ap.length>1){const op=ap.filter(pl=>pl.id!==pId).map(pl=>`${pl.name} (B${pl.table}S${pl.seat})`); const pm=`Hvem slo ut ${p.name}?\n\nAktive:\n - ${op.join("\n - ")}`; const eIn=prompt(pm); if(eIn?.trim()){const eL=eIn.trim().toLowerCase(); const el=ap.find(pl=>pl.id!==pId&&pl.name.toLowerCase()===eL); if(el){eById=el.id; el.knockouts=(el.knockouts||0)+1; eName=el.name; state.live.knockoutLog.push({eliminatedPlayerId:p.id,eliminatedByPlayerId:el.id});} else{alert(`Fant ikke "${eIn}".`);}}} if(confirm(`Eliminere ${p.name}?`)){ p.eliminated=true; p.eliminatedBy=eById; p.place=ap.length; state.live.eliminatedPlayers.push(p); ap.splice(pI,1); const et=eName?` av ${eName}`:''; logActivity(state.live.activityLog,`${p.name} slått ut (${p.place}.plass${et}).`); const broke=checkAndHandleTableBreak(); if(!broke){const balanced=balanceTables(); if(!balanced) {updateUI(); saveTournamentState(currentTournamentId, state);}} else {updateUI(); saveTournamentState(currentTournamentId, state);} if(state.live.players.length<=1){finishTournament();}}}
-    function handleRestore(event){ /* ... */ if(state.live.status==='finished'){alert("Kan ikke gjenopprette.");return;} const pId=parseInt(event.target.dataset.playerId); const pI=state.live.eliminatedPlayers.findIndex(p=>p.id===pId); if(pI===-1)return; const p=state.live.eliminatedPlayers[pI]; if(confirm(`Gjenopprette ${p.name} (${p.place}.plass)?`)){const eBy=p.eliminatedBy; const oP=p.place; p.eliminated=false; p.eliminatedBy=null; p.place=null; state.live.eliminatedPlayers.splice(pI,1); state.live.players.push(p); if(state.config.type==='knockout'&&eBy){const el=state.live.players.find(pl=>pl.id===eBy)||state.live.eliminatedPlayers.find(pl=>pl.id===eBy); if(el?.knockouts>0)el.knockouts--; const lI=state.live.knockoutLog.findIndex(l=>l.eliminatedPlayerId===p.id&&l.eliminatedByPlayerId===eBy); if(lI>-1)state.live.knockoutLog.splice(lI,1);} assignTableSeat(p); logActivity(state.live.activityLog,`${p.name} gjenopprettet fra ${oP}.plass.`); const broke=checkAndHandleTableBreak(); if(!broke){const balanced=balanceTables(); if(!balanced){updateUI(); saveTournamentState(currentTournamentId, state);}} else { updateUI(); saveTournamentState(currentTournamentId, state); } }}
-    function handleEditPlayer(event){ /* ... */ if(state.live.status==='finished')return; const pId=parseInt(event.target.dataset.playerId); const p=state.live.players.find(pl=>pl.id===pId); if(!p)return; const oN=p.name; const nN=prompt(`Endre navn for ${oN}:`,oN); if(nN?.trim()&&nN.trim()!==oN){p.name=nN.trim(); logActivity(state.live.activityLog,`Navn endret: ${oN} -> ${p.name}.`); renderPlayerList(); saveTournamentState(currentTournamentId,state);}else if(nN==="")alert("Navn tomt.");}
-    function handleLateRegClick() { /* ... */ if(state.live.status==='finished')return; const cLN=state.live.currentLevelIndex+1; const lRO=cLN<=state.config.lateRegLevel&&state.config.lateRegLevel>0; if(!lRO){alert("Late reg stengt.");return;} if(state.live.status!=='running'){alert("Start klokke for late reg.");return;} const name=prompt("Navn for late reg:"); if(name?.trim()){const cost=state.config.buyIn; const p={id:generateUniqueId('p'),name:name.trim(),stack:state.config.startStack,table:0,seat:0,rebuys:0,addon:false,eliminated:false,eliminatedBy:null,place:null,knockouts:0}; state.live.players.push(p); assignTableSeat(p); state.live.totalPot+=cost; state.live.totalEntries++; logActivity(state.live.activityLog,`${p.name} registrert (Late Reg).`); const broke=checkAndHandleTableBreak(); if(!broke){const balanced=balanceTables(); if(!balanced){updateUI(); saveTournamentState(currentTournamentId, state);}} else {updateUI(); saveTournamentState(currentTournamentId, state);}}}
-    // === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
+// === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
+    function handleRebuy(event){
+        const playerId = parseInt(event.target.dataset.playerId);
+        const player = state.live.players.find(pl => pl.id === playerId);
+        const currentLevelNum = state.live.currentLevelIndex + 1;
+
+        // Validation
+        if (!player) { console.error("Rebuy failed: Player not found", playerId); return; }
+        if (state.config.type !== 'rebuy') { alert("Re-buy er ikke tilgjengelig for denne turneringstypen."); return; }
+        if (!(currentLevelNum <= state.config.rebuyLevels)) { alert(`Re-buy er kun tilgjengelig t.o.m. nivå ${state.config.rebuyLevels}. Nåværende nivå: ${currentLevelNum}.`); return; }
+        if (state.live.status === 'finished') { alert("Kan ikke utføre handlinger i en fullført turnering."); return; }
+
+        // Confirmation
+        if (confirm(`Re-buy (${state.config.rebuyCost} kr / ${state.config.rebuyChips} sjetonger) for ${player.name}?`)) {
+            player.rebuys = (player.rebuys || 0) + 1;
+            state.live.totalPot += state.config.rebuyCost;
+            state.live.totalEntries++; // Rebuy counts as an entry for prize pool calculation
+            state.live.totalRebuys++;
+            logActivity(state.live.activityLog, `${player.name} tok Re-buy (+${state.config.rebuyChips} chips, +${state.config.rebuyCost} kr).`);
+            updateUI(); // Update counts, pot, avg stack etc.
+            saveTournamentState(currentTournamentId, state);
+        }
+    }
+
+    function handleAddon(event){
+        const playerId = parseInt(event.target.dataset.playerId);
+        const player = state.live.players.find(pl => pl.id === playerId);
+        const currentLevelNum = state.live.currentLevelIndex + 1;
+        const isAddonPeriod = currentLevelNum > state.config.rebuyLevels; // Addon typically after rebuy period
+
+        // Validation
+        if (!player) { console.error("Addon failed: Player not found", playerId); return; }
+        if (state.config.type !== 'rebuy') { alert("Add-on er ikke tilgjengelig for denne turneringstypen."); return; }
+        if (!isAddonPeriod) { alert(`Add-on er vanligvis tilgjengelig ETTER re-buy perioden (etter nivå ${state.config.rebuyLevels}). Nåværende nivå: ${currentLevelNum}.`); return; }
+        if (player.addon) { alert(`${player.name} har allerede tatt Add-on.`); return; }
+        if (state.live.status === 'finished') { alert("Kan ikke utføre handlinger i en fullført turnering."); return; }
+        // Optional: Add check if tournament clock must be paused for addon? Usually done during first break after rebuy period.
+
+        // Confirmation
+        if (confirm(`Add-on (${state.config.addonCost} kr / ${state.config.addonChips} sjetonger) for ${player.name}?`)) {
+            player.addon = true;
+            state.live.totalPot += state.config.addonCost;
+            state.live.totalAddons++;
+            // Note: Addon does NOT usually increase totalEntries count, only totalPot and chips
+            logActivity(state.live.activityLog, `${player.name} tok Add-on (+${state.config.addonChips} chips, +${state.config.addonCost} kr).`);
+            updateUI(); // Update counts, pot, avg stack etc.
+            saveTournamentState(currentTournamentId, state);
+        }
+    }
+
+    function handleEliminate(event){
+        if(state.live.status==='finished') return;
+
+        const playerIdToEliminate = parseInt(event.target.dataset.playerId);
+        const activePlayers = state.live.players;
+        const playerIndex = activePlayers.findIndex(p => p.id === playerIdToEliminate);
+
+        if(playerIndex === -1) {
+            console.error("Player to eliminate not found in active list:", playerIdToEliminate);
+            return; // Player not found
+        }
+
+        // Check if trying to eliminate the last player
+        if (activePlayers.length <= 1) {
+            alert("Kan ikke eliminere siste spiller. Fullfør turneringen for å kåre vinner.");
+            console.warn("Attempted to eliminate the last remaining player.");
+            return; // Prevent elimination
+        }
+
+        const player = activePlayers[playerIndex]; // The player to be eliminated
+
+        // --- Knockout Logic ---
+        let potentialEliminatorId = null; // Store selected KO player ID here
+
+        // Check if it's a KO tournament with a bounty and more than one player left
+        if (state.config.type === 'knockout' && (state.config.bountyAmount || 0) > 0) {
+            const potentialAssigners = activePlayers.filter(p => p.id !== playerIdToEliminate);
+
+            // --- Create Temporary Dialog ---
+            const dialogOverlay = document.createElement('div');
+            dialogOverlay.style.position = 'fixed';
+            dialogOverlay.style.top = '0';
+            dialogOverlay.style.left = '0';
+            dialogOverlay.style.width = '100%';
+            dialogOverlay.style.height = '100%';
+            dialogOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+            dialogOverlay.style.display = 'flex';
+            dialogOverlay.style.justifyContent = 'center';
+            dialogOverlay.style.alignItems = 'center';
+            dialogOverlay.style.zIndex = '200'; // Above modals
+
+            const dialogBox = document.createElement('div');
+            dialogBox.style.background = '#fff';
+            dialogBox.style.color = '#333';
+            dialogBox.style.padding = '25px';
+            dialogBox.style.borderRadius = '5px';
+            dialogBox.style.textAlign = 'center';
+            dialogBox.style.maxWidth = '400px';
+            dialogBox.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+
+            dialogBox.innerHTML = `
+                <h3 style="margin-top: 0; margin-bottom: 15px; color: #333;">Hvem slo ut ${player.name}?</h3>
+                <select id="ko-assigner-select" style="padding: 8px; margin: 10px 0 20px 0; min-width: 250px; max-width: 100%; border: 1px solid #ccc; border-radius: 4px; font-size: 1em;">
+                    <option value="">-- Velg spiller --</option>
+                    <option value="none">Ingen KO / Feil / Annet</option>
+                    ${potentialAssigners.map(p =>
+                        `<option value="${p.id}">${p.name} (B${p.table}S${p.seat})</option>`
+                    ).join('')}
+                </select>
+                <div>
+                    <button id="ko-confirm-btn" class="success-button" style="margin-right: 10px; padding: 8px 15px; font-size: 0.95em;">Bekreft Eliminering</button>
+                    <button id="ko-cancel-btn" style="padding: 8px 15px; font-size: 0.95em;">Avbryt</button>
+                </div>
+            `;
+
+            dialogOverlay.appendChild(dialogBox);
+            document.body.appendChild(dialogOverlay);
+
+            // --- Dialog Button Handlers ---
+            const confirmBtn = document.getElementById('ko-confirm-btn');
+            const cancelBtn = document.getElementById('ko-cancel-btn');
+            const selectElement = document.getElementById('ko-assigner-select');
+
+            // Function to close the dialog
+            const closeKoDialog = () => {
+                if (document.body.contains(dialogOverlay)) {
+                    document.body.removeChild(dialogOverlay);
+                }
+            }
+
+            confirmBtn.onclick = () => {
+                const selectedValue = selectElement.value;
+                if (!selectedValue || selectedValue === "") {
+                     alert("Vennligst velg en spiller eller 'Ingen KO'.");
+                     return; // Don't close dialog yet
+                }
+                if (selectedValue === "none") {
+                    potentialEliminatorId = null; // Explicitly null if "Ingen KO"
+                } else {
+                    potentialEliminatorId = parseInt(selectedValue);
+                }
+                closeKoDialog();
+                proceedWithElimination(); // Call the next step
+            };
+
+            cancelBtn.onclick = () => {
+                closeKoDialog();
+                console.log("Elimination cancelled by user during KO selection.");
+                // Do not proceed
+            };
+
+            // Close on overlay click (optional)
+            dialogOverlay.onclick = (e) => {
+                 if (e.target === dialogOverlay) {
+                      //closeKoDialog(); // Allow closing on overlay click
+                      //console.log("Elimination cancelled by clicking overlay.");
+                 }
+            };
+            // --- End Temporary Dialog ---
+
+        } else {
+            // Not a KO tournament (or no bounty), proceed directly
+            potentialEliminatorId = null; // Ensure it's null if not KO
+            proceedWithElimination();
+        }
+
+        // --- Function to handle the actual elimination after KO is decided ---
+        function proceedWithElimination() {
+            let eliminatorName = null;
+            let eliminatorObject = null;
+
+            // Find eliminator object if an ID was selected
+            if (potentialEliminatorId !== null) {
+                 eliminatorObject = activePlayers.find(p => p.id === potentialEliminatorId);
+                 if (eliminatorObject) {
+                     eliminatorName = eliminatorObject.name;
+                 } else {
+                      console.warn("Selected eliminator ID not found in active players:", potentialEliminatorId, " Maybe eliminated during dialog?");
+                      potentialEliminatorId = null; // Reset if object not found
+                 }
+            }
+
+            // Final confirmation before state change
+            const confirmMsg = `Eliminere ${player.name}?` + (eliminatorName ? ` (KO tildeles ${eliminatorName})` : '');
+
+            if (confirm(confirmMsg)) {
+                // Update the player being eliminated
+                player.eliminated = true;
+                player.eliminatedBy = potentialEliminatorId; // Use the stored ID (null if none)
+                player.place = activePlayers.length; // Place is current number of active players
+
+                // Update the eliminator player (if one was selected and found)
+                if (eliminatorObject) {
+                    eliminatorObject.knockouts = (eliminatorObject.knockouts || 0) + 1;
+                    state.live.knockoutLog.push({
+                         eliminatedPlayerId: player.id,
+                         eliminatedByPlayerId: eliminatorObject.id,
+                         level: state.live.currentLevelIndex + 1,
+                         timestamp: new Date().toISOString()
+                    });
+                     console.log(`Knockout recorded: ${eliminatorObject.name} eliminated ${player.name}`);
+                }
+
+                // Move player from active to eliminated list
+                state.live.eliminatedPlayers.push(player);
+                activePlayers.splice(playerIndex, 1); // Remove from active list
+
+                // Log the activity
+                const eliminationLogText = eliminatorName ? ` av ${eliminatorName}` : '';
+                logActivity(state.live.activityLog, `${player.name} slått ut (${player.place}. plass${eliminationLogText}).`);
+                console.log(`Player ${player.name} eliminated. ${activePlayers.length} players remaining.`);
+
+                // Check for table breaks/balancing and update UI/save
+                // checkAndHandleTableBreak now handles balancing and saving internally if needed
+                const structureChanged = checkAndHandleTableBreak();
+
+                // If structure didn't change (no break/balance), we still need to update UI and save
+                if (!structureChanged) {
+                    updateUI();
+                    saveTournamentState(currentTournamentId, state);
+                }
+
+                // Check if tournament is finished (last player standing)
+                if (state.live.players.length <= 1) {
+                     console.log("Only one player remaining, finishing tournament...");
+                    finishTournament();
+                }
+            } else {
+                 console.log("Elimination cancelled by user confirmation.");
+            }
+        } // --- End proceedWithElimination ---
+    } // --- End handleEliminate ---
+
+
+    function handleRestore(event){
+        if(state.live.status==='finished'){ alert("Kan ikke gjenopprette spillere i en fullført turnering."); return; }
+
+        const playerId = parseInt(event.target.dataset.playerId);
+        const eliminatedIndex = state.live.eliminatedPlayers.findIndex(p => p.id === playerId);
+
+        if (eliminatedIndex === -1) {
+            console.error("Player to restore not found in eliminated list:", playerId);
+            return;
+        }
+
+        const player = state.live.eliminatedPlayers[eliminatedIndex];
+        const oldPlace = player.place; // Store old place for logging
+
+        if (confirm(`Gjenopprette ${player.name} (var ${oldPlace}. plass)?`)) {
+            const eliminatorId = player.eliminatedBy; // ID of player who got the KO bounty
+
+            // Reset player state
+            player.eliminated = false;
+            player.eliminatedBy = null;
+            player.place = null;
+
+            // Move player back to active list
+            state.live.eliminatedPlayers.splice(eliminatedIndex, 1);
+            state.live.players.push(player);
+
+            // Reverse Knockout (if applicable)
+            if (state.config.type === 'knockout' && eliminatorId) {
+                 // Find the player who got the KO (could be active or already eliminated now)
+                let eliminator = state.live.players.find(p => p.id === eliminatorId) || state.live.eliminatedPlayers.find(p => p.id === eliminatorId);
+                if (eliminator && eliminator.knockouts > 0) {
+                    eliminator.knockouts--;
+                    console.log(`Knockout reversed for ${eliminator.name}.`);
+                    // Remove the corresponding entry from knockoutLog
+                    const logIndex = state.live.knockoutLog.findIndex(log => log.eliminatedPlayerId === player.id && log.eliminatedByPlayerId === eliminatorId);
+                    if (logIndex > -1) {
+                        state.live.knockoutLog.splice(logIndex, 1);
+                        console.log("Knockout log entry removed.");
+                    }
+                } else {
+                     console.warn("Could not find player who got KO or their KO count was already 0:", eliminatorId);
+                }
+            }
+
+            // Assign a new table and seat
+            assignTableSeat(player); // Let the function find the best spot
+
+            logActivity(state.live.activityLog, `${player.name} gjenopprettet fra ${oldPlace}. plass (nå B${player.table}S${player.seat}).`);
+
+            // Check for table breaks/balancing
+             const structureChanged = checkAndHandleTableBreak();
+             if (!structureChanged) {
+                 updateUI();
+                 saveTournamentState(currentTournamentId, state);
+             }
+        }
+    }
+
+    function handleEditPlayer(event){
+        if(state.live.status === 'finished') { alert("Kan ikke redigere spillere i en fullført turnering."); return; }
+
+        const playerId = parseInt(event.target.dataset.playerId);
+        // Look for player in active list first, then eliminated (though usually only active are editable this way)
+        const player = state.live.players.find(pl => pl.id === playerId) || state.live.eliminatedPlayers.find(pl => pl.id === playerId);
+
+        if (!player) {
+            console.error("Player to edit not found:", playerId);
+            return;
+        }
+
+        const oldName = player.name;
+        const newName = prompt(`Endre navn for ${oldName}:`, oldName);
+
+        if (newName && newName.trim().length > 0 && newName.trim() !== oldName) {
+            player.name = newName.trim();
+            logActivity(state.live.activityLog, `Navn endret: ${oldName} -> ${player.name}.`);
+            renderPlayerList(); // Only need to re-render player lists for name change
+            saveTournamentState(currentTournamentId, state); // Save the change
+        } else if (newName !== null && newName.trim().length === 0) {
+            alert("Navn kan ikke være tomt.");
+        } else {
+             console.log("Player name edit cancelled or no change made.");
+        }
+    }
+
+    function handleLateRegClick() {
+        if (state.live.status === 'finished') { alert("Kan ikke registrere spillere i en fullført turnering."); return; }
+
+        const currentLevelNum = state.live.currentLevelIndex + 1;
+        const lateRegOpen = currentLevelNum <= state.config.lateRegLevel && state.config.lateRegLevel > 0;
+
+        if (!lateRegOpen) {
+             const reason = state.config.lateRegLevel > 0 ? `stengte etter nivå ${state.config.lateRegLevel}` : "er ikke aktivert for denne turneringen";
+            alert(`Sen registrering ${reason}. Nåværende nivå: ${currentLevelNum}.`);
+            return;
+        }
+
+        // Optional: Check if clock is running? Some TDs prefer paused clock for new entries.
+        // if (state.live.status !== 'running') { alert("Start klokken før du legger til spillere via Late Reg."); return; }
+
+        const name = prompt("Navn for spiller (Late Reg):");
+
+        if (name && name.trim().length > 0) {
+            const newPlayer = {
+                id: generateUniqueId('p'), // Ensure unique ID from storage.js
+                name: name.trim(),
+                stack: state.config.startStack, // Give starting stack
+                table: 0, // Will be assigned
+                seat: 0,  // Will be assigned
+                rebuys: 0, addon: false, eliminated: false, eliminatedBy: null, place: null, knockouts: 0
+            };
+
+            // Assign table and seat
+            assignTableSeat(newPlayer);
+
+            // Add player to active list
+            state.live.players.push(newPlayer);
+
+            // Update tournament state
+            state.live.totalPot += state.config.buyIn;
+            state.live.totalEntries++;
+
+            logActivity(state.live.activityLog, `${newPlayer.name} registrert (Late Reg, B${newPlayer.table}S${newPlayer.seat}).`);
+
+            // Sort player list after adding
+            state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table);
+
+            // Check for table breaks/balancing
+            const structureChanged = checkAndHandleTableBreak();
+            if (!structureChanged) {
+                updateUI();
+                saveTournamentState(currentTournamentId, state);
+            }
+        } else if (name !== null) {
+            alert("Navn kan ikke være tomt.");
+        } else {
+             console.log("Late registration cancelled.");
+        }
+    }
+// === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
 
     // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS START ===
     function openTournamentModal() { /* ... */ if(state.live.status==='finished'||isModalOpen)return; console.log("Opening tournament settings modal"); editBlindStructureBody.innerHTML=''; editBlindLevelCounter=0; state.config.blindLevels.forEach(level=>addEditBlindLevelRow(level)); updateEditLevelNumbers(); editPaidPlacesInput.value=state.config.paidPlaces; editPrizeDistTextarea.value=state.config.prizeDistribution.join(', '); tournamentSettingsModal.classList.remove('hidden'); isModalOpen=true; currentOpenModal = tournamentSettingsModal; }
