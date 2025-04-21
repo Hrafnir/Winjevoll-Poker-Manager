@@ -7,33 +7,59 @@ document.addEventListener('DOMContentLoaded', () => {
     let blockSliderUpdates = false;
     // === 02: STATE VARIABLES END ===
 
-    // === 03: DOM REFERENCES START ===
-    const nameDisplay = document.getElementById('tournament-name-display'); const currentTimeDisplay = document.getElementById('current-time');
-    const btnEditTournamentSettings = document.getElementById('btn-edit-tournament-settings'); // New
-    const btnEditUiSettings = document.getElementById('btn-edit-ui-settings'); // New
-    const btnBackToMainLive = document.getElementById('btn-back-to-main-live');
-    const liveCanvas = document.getElementById('live-canvas'); // Canvas container
-    const timerElement = document.getElementById('timer-element'); const timerDisplay = document.getElementById('timer-display'); const breakInfo = document.getElementById('break-info');
-    const blindsElement = document.getElementById('blinds-element'); const currentLevelDisplay = document.getElementById('current-level'); const blindsDisplay = document.getElementById('blinds-display');
-    const logoElement = document.getElementById('logo-element'); const logoImg = logoElement?.querySelector('.logo');
-    const infoElement = document.getElementById('info-element'); const nextBlindsDisplay = document.getElementById('next-blinds'); const averageStackDisplay = document.getElementById('average-stack'); const playersRemainingDisplay = document.getElementById('players-remaining'); const totalEntriesDisplay = document.getElementById('total-entries'); const lateRegStatusDisplay = document.getElementById('late-reg-status');
-    const prizeDisplayLive = document.getElementById('prize-display-live'); const totalPotPrizeSpan = document.getElementById('total-pot'); const startPauseButton = document.getElementById('btn-start-pause'); const prevLevelButton = document.getElementById('btn-prev-level'); const nextLevelButton = document.getElementById('btn-next-level'); const adjustTimeMinusButton = document.getElementById('btn-adjust-time-minus'); const adjustTimePlusButton = document.getElementById('btn-adjust-time-plus'); const lateRegButton = document.getElementById('btn-late-reg'); const playerListUl = document.getElementById('player-list'); const eliminatedPlayerListUl = document.getElementById('eliminated-player-list'); const activePlayerCountSpan = document.getElementById('active-player-count'); const eliminatedPlayerCountSpan = document.getElementById('eliminated-player-count'); const tableBalanceInfo = document.getElementById('table-balance-info'); const btnForceSave = document.getElementById('btn-force-save'); const endTournamentButton = document.getElementById('btn-end-tournament'); const activityLogUl = document.getElementById('activity-log-list');
+// === 03: DOM REFERENCES START ===
+    // ... (andre referanser før modalene) ...
+
     // Tournament Modal Refs
-    tournamentModal = document.getElementById('tournament-settings-modal'); // Assign
+    // BRUK KORREKT NAVN HER:
+    const tournamentSettingsModal = document.getElementById('tournament-settings-modal'); // Endret fra tournamentModal
     const closeTournamentModalButton = document.getElementById('close-tournament-modal-button');
-    const editBlindStructureBody = document.getElementById('edit-blind-structure-body'); const btnAddEditLevel = document.getElementById('btn-add-edit-level'); const editPaidPlacesInput = document.getElementById('edit-paid-places'); const editPrizeDistTextarea = document.getElementById('edit-prize-distribution'); const btnGenerateEditPayout = document.getElementById('btn-generate-edit-payout'); const btnSaveTournamentSettings = document.getElementById('btn-save-tournament-settings');
+    const editBlindStructureBody = document.getElementById('edit-blind-structure-body');
+    const btnAddEditLevel = document.getElementById('btn-add-edit-level');
+    const editPaidPlacesInput = document.getElementById('edit-paid-places');
+    const editPrizeDistTextarea = document.getElementById('edit-prize-distribution');
+    const btnGenerateEditPayout = document.getElementById('btn-generate-edit-payout');
+    const btnSaveTournamentSettings = document.getElementById('btn-save-tournament-settings');
     const btnCancelTournamentEdit = document.getElementById('btn-cancel-tournament-edit');
+
     // UI Modal Refs
-    uiModal = document.getElementById('ui-settings-modal'); // Assign
+    // BRUK KORREKT NAVN HER:
+    const uiSettingsModal = document.getElementById('ui-settings-modal'); // Endret fra uiModal
     const closeUiModalButton = document.getElementById('close-ui-modal-button');
-    const bgRedSlider = document.getElementById('bgRedSlider'); const bgGreenSlider = document.getElementById('bgGreenSlider'); const bgBlueSlider = document.getElementById('bgBlueSlider'); const bgRedInput = document.getElementById('bgRedInput'); const bgGreenInput = document.getElementById('bgGreenInput'); const bgBlueInput = document.getElementById('bgBlueInput'); const bgColorPreview = document.getElementById('bg-color-preview'); const textRedSlider = document.getElementById('textRedSlider'); const textGreenSlider = document.getElementById('textGreenSlider'); const textBlueSlider = document.getElementById('textBlueSlider'); const textRedInput = document.getElementById('textRedInput'); const textGreenInput = document.getElementById('textGreenInput'); const textBlueInput = document.getElementById('textBlueInput'); const textColorPreview = document.getElementById('text-color-preview');
-    const bgHueSlider = document.getElementById('bgHueSlider'); const bgHueInput = document.getElementById('bgHueInput'); const bgSatSlider = document.getElementById('bgSatSlider'); const bgSatInput = document.getElementById('bgSatInput'); const bgLigSlider = document.getElementById('bgLigSlider'); const bgLigInput = document.getElementById('bgLigInput'); const textHueSlider = document.getElementById('textHueSlider'); const textHueInput = document.getElementById('textHueInput'); const textSatSlider = document.getElementById('textSatSlider'); const textSatInput = document.getElementById('textSatInput'); const textLigSlider = document.getElementById('textLigSlider'); const textLigInput = document.getElementById('textLigInput');
-    const themeFavoritesSelect = document.getElementById('themeFavoritesSelect'); const btnLoadThemeFavorite = document.getElementById('btnLoadThemeFavorite'); const newThemeFavoriteNameInput = document.getElementById('newThemeFavoriteName'); const btnSaveThemeFavorite = document.getElementById('btnSaveThemeFavorite'); const btnDeleteThemeFavorite = document.getElementById('btnDeleteThemeFavorite');
+    const bgRedSlider = document.getElementById('bgRedSlider'); const bgGreenSlider = document.getElementById('bgGreenSlider'); const bgBlueSlider = document.getElementById('bgBlueSlider');
+    const bgRedInput = document.getElementById('bgRedInput'); const bgGreenInput = document.getElementById('bgGreenInput'); const bgBlueInput = document.getElementById('bgBlueInput');
+    const bgColorPreview = document.getElementById('bg-color-preview');
+    const textRedSlider = document.getElementById('textRedSlider'); const textGreenSlider = document.getElementById('textGreenSlider'); const textBlueSlider = document.getElementById('textBlueSlider');
+    const textRedInput = document.getElementById('textRedInput'); const textGreenInput = document.getElementById('textGreenInput'); const textBlueInput = document.getElementById('textBlueInput');
+    const textColorPreview = document.getElementById('text-color-preview');
+    const bgHueSlider = document.getElementById('bgHueSlider'); const bgHueInput = document.getElementById('bgHueInput');
+    const bgSatSlider = document.getElementById('bgSatSlider'); const bgSatInput = document.getElementById('bgSatInput');
+    const bgLigSlider = document.getElementById('bgLigSlider'); const bgLigInput = document.getElementById('bgLigInput');
+    const textHueSlider = document.getElementById('textHueSlider'); const textHueInput = document.getElementById('textHueInput');
+    const textSatSlider = document.getElementById('textSatSlider'); const textSatInput = document.getElementById('textSatInput');
+    const textLigSlider = document.getElementById('textLigSlider'); const textLigInput = document.getElementById('textLigInput');
+    const themeFavoritesSelect = document.getElementById('themeFavoritesSelect');
+    const btnLoadThemeFavorite = document.getElementById('btnLoadThemeFavorite');
+    const newThemeFavoriteNameInput = document.getElementById('newThemeFavoriteName');
+    const btnSaveThemeFavorite = document.getElementById('btnSaveThemeFavorite');
+    const btnDeleteThemeFavorite = document.getElementById('btnDeleteThemeFavorite');
     const canvasHeightSlider = document.getElementById('canvasHeightSlider'); const canvasHeightInput = document.getElementById('canvasHeightInput');
-    const timerXSlider = document.getElementById('timerXSlider'); const timerXInput = document.getElementById('timerXInput'); const timerYSlider = document.getElementById('timerYSlider'); const timerYInput = document.getElementById('timerYInput'); const timerWidthSlider = document.getElementById('timerWidthSlider'); const timerWidthInput = document.getElementById('timerWidthInput'); const timerFontSizeSlider = document.getElementById('timerFontSizeSlider'); const timerFontSizeInput = document.getElementById('timerFontSizeInput');
-    const blindsXSlider = document.getElementById('blindsXSlider'); const blindsXInput = document.getElementById('blindsXInput'); const blindsYSlider = document.getElementById('blindsYSlider'); const blindsYInput = document.getElementById('blindsYInput'); const blindsWidthSlider = document.getElementById('blindsWidthSlider'); const blindsWidthInput = document.getElementById('blindsWidthInput'); const blindsFontSizeSlider = document.getElementById('blindsFontSizeSlider'); const blindsFontSizeInput = document.getElementById('blindsFontSizeInput');
-    const logoXSlider = document.getElementById('logoXSlider'); const logoXInput = document.getElementById('logoXInput'); const logoYSlider = document.getElementById('logoYSlider'); const logoYInput = document.getElementById('logoYInput'); const logoWidthSlider = document.getElementById('logoWidthSlider'); const logoWidthInput = document.getElementById('logoWidthInput'); const logoHeightSlider = document.getElementById('logoHeightSlider'); const logoHeightInput = document.getElementById('logoHeightInput');
-    const infoXSlider = document.getElementById('infoXSlider'); const infoXInput = document.getElementById('infoXInput'); const infoYSlider = document.getElementById('infoYSlider'); const infoYInput = document.getElementById('infoYInput'); const infoWidthSlider = document.getElementById('infoWidthSlider'); const infoWidthInput = document.getElementById('infoWidthInput'); const infoFontSizeSlider = document.getElementById('infoFontSizeSlider'); const infoFontSizeInput = document.getElementById('infoFontSizeInput');
+    const timerXSlider = document.getElementById('timerXSlider'); const timerXInput = document.getElementById('timerXInput');
+    const timerYSlider = document.getElementById('timerYSlider'); const timerYInput = document.getElementById('timerYInput');
+    const timerWidthSlider = document.getElementById('timerWidthSlider'); const timerWidthInput = document.getElementById('timerWidthInput');
+    const timerFontSizeSlider = document.getElementById('timerFontSizeSlider'); const timerFontSizeInput = document.getElementById('timerFontSizeInput');
+    const blindsXSlider = document.getElementById('blindsXSlider'); const blindsXInput = document.getElementById('blindsXInput');
+    const blindsYSlider = document.getElementById('blindsYSlider'); const blindsYInput = document.getElementById('blindsYInput');
+    const blindsWidthSlider = document.getElementById('blindsWidthSlider'); const blindsWidthInput = document.getElementById('blindsWidthInput');
+    const blindsFontSizeSlider = document.getElementById('blindsFontSizeSlider'); const blindsFontSizeInput = document.getElementById('blindsFontSizeInput');
+    const logoXSlider = document.getElementById('logoXSlider'); const logoXInput = document.getElementById('logoXInput');
+    const logoYSlider = document.getElementById('logoYSlider'); const logoYInput = document.getElementById('logoYInput');
+    const logoWidthSlider = document.getElementById('logoWidthSlider'); const logoWidthInput = document.getElementById('logoWidthInput');
+    const logoHeightSlider = document.getElementById('logoHeightSlider'); const logoHeightInput = document.getElementById('logoHeightInput');
+    const infoXSlider = document.getElementById('infoXSlider'); const infoXInput = document.getElementById('infoXInput');
+    const infoYSlider = document.getElementById('infoYSlider'); const infoYInput = document.getElementById('infoYInput');
+    const infoWidthSlider = document.getElementById('infoWidthSlider'); const infoWidthInput = document.getElementById('infoWidthInput');
+    const infoFontSizeSlider = document.getElementById('infoFontSizeSlider'); const infoFontSizeInput = document.getElementById('infoFontSizeInput');
     const btnSaveUiSettings = document.getElementById('btn-save-ui-settings');
     const btnCancelUiEdit = document.getElementById('btn-cancel-ui-edit');
     const btnResetLayoutTheme = document.getElementById('btnResetLayoutTheme');
@@ -41,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleInfoNextBlinds = document.getElementById('toggleInfoNextBlinds'); const toggleInfoNextPause = document.getElementById('toggleInfoNextPause'); const toggleInfoAvgStack = document.getElementById('toggleInfoAvgStack'); const toggleInfoPlayers = document.getElementById('toggleInfoPlayers'); const toggleInfoLateReg = document.getElementById('toggleInfoLateReg');
     const infoParagraphs = { showNextBlinds: document.getElementById('info-next-blinds'), showNextPause: document.getElementById('info-next-pause'), showAvgStack: document.getElementById('info-avg-stack'), showPlayers: document.getElementById('info-players'), showLateReg: document.getElementById('info-late-reg') };
     // === 03: DOM REFERENCES END ===
+
 
     // === 04: INITIALIZATION & VALIDATION START ===
     if (!currentTournamentId) { alert("Ingen aktiv turnering valgt."); window.location.href = 'index.html'; return; }
