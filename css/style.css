@@ -1,51 +1,161 @@
 /* === 01: GENERAL BODY & LAYOUT SECTION START === */
 :root {
+    /* Standard Colors */
     --primary-color: #007bff; --secondary-color: #6c757d; --success-color: #28a745; --danger-color: #dc3545; --warning-color: #ffc107; --info-color: #17a2b8; --light-color: #f8f9fa; --dark-color: #343a40; --text-color: #212529; --border-color: #dee2e6; --background-color: #f0f2f5;
-    /* Theme Variables */
+
+    /* Live Page Theme Variables (Defaults from storage.js) */
     --live-page-bg: rgb(65, 65, 65);
     --live-page-text: rgb(235, 235, 235);
-    --live-ui-border: rgba(255, 255, 255, 0.15);
-    /* Element Layout Variables (Defaults updated) */
+    --live-ui-border: rgba(255, 255, 255, 0.15); /* Auto-calculated based on bg */
+
+    /* Element Layout Variables (Defaults from storage.js) */
+    /* Values controlled by JS applyThemeAndLayout */
     --canvas-height: 65vh;
-    --timer-x: 5%; --timer-y: 5%; --timer-width: 55%; --timer-font-size: 18em;
+    --title-x: 5%; --title-y: 2%; --title-width: 90%; --title-font-size: 3.5em;
+    --timer-x: 5%; --timer-y: 20%; --timer-width: 55%; --timer-font-size: 18em;
     --blinds-x: 65%; --blinds-y: 40%; --blinds-width: 30%; --blinds-font-size: 9em;
     --logo-x: 65%; --logo-y: 5%; --logo-width: 30%; --logo-height: 30%;
-    --info-x: 65%; --info-y: 78%; --info-width: 30%; --info-font-size: 1.2em;
+    --info-x: 65%; --info-y: 75%; --info-width: 30%; --info-font-size: 1.2em;
 }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; background-color: var(--background-color); font-size: 16px; color: var(--text-color); }
-main { padding: 0; flex-grow: 1; display: flex; flex-direction: column; position: relative; }
-h1, h2, h3, h4 { color: var(--dark-color); margin: 1.2em 0 0.6em 0; } h5 { font-size: 1em; margin: 0 0 10px 0; color: #555; } /* Styling for sub-headers in modal */
-h1 { font-size: 1.8em; } h2 { font-size: 1.5em; } h3 { font-size: 1.2em; } h4 { font-size: 1.05em; margin-bottom: 8px;}
-button { padding: 8px 15px; font-size: 0.95em; border-radius: 4px; border: 1px solid #ccc; background-color: #e9e9e9; cursor: pointer; transition: all 0.2s ease; margin: 2px; vertical-align: middle; line-height: 1.4; text-align: center; }
-button:hover:not(:disabled) { background-color: #dcdcdc; border-color: #bbb; transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--background-color); /* Default page background */
+    font-size: 16px;
+    color: var(--text-color); /* Default text color */
+    line-height: 1.5;
+}
+
+main {
+    padding: 0; /* No padding on main for live view */
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative; /* Needed for absolute positioning inside */
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--dark-color); /* Default heading color */
+    margin: 1.2em 0 0.6em 0;
+    line-height: 1.2;
+}
+h1 { font-size: 1.8em; }
+h2 { font-size: 1.5em; }
+h3 { font-size: 1.2em; }
+h4 { font-size: 1.05em; margin-bottom: 8px;}
+h5 { font-size: 1em; margin: 0 0 10px 0; color: #555; } /* Sub-headers in modal */
+
+/* Buttons */
+button {
+    padding: 8px 15px;
+    font-size: 0.95em;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #e9e9e9;
+    color: #333; /* Default button text color */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 2px;
+    vertical-align: middle;
+    line-height: 1.4;
+    text-align: center;
+    white-space: nowrap;
+}
+button:hover:not(:disabled) {
+    background-color: #dcdcdc;
+    border-color: #bbb;
+    transform: translateY(-1px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
 button:disabled { cursor: not-allowed; opacity: 0.6; }
-button.primary-button { background-color: var(--primary-color); color: white; border-color: var(--primary-color); } button.primary-button:hover:not(:disabled) { background-color: #0056b3; border-color: #0056b3; }
-button.danger-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); } button.danger-button:hover:not(:disabled) { background-color: #c82333; border-color: #bd2130; }
-button.success-button { background-color: var(--success-color); color: white; border-color: var(--success-color); } button.success-button:hover:not(:disabled) { background-color: #218838; border-color: #1e7e34; }
-button.info-button { background-color: var(--info-color); color: white; border-color: var(--info-color); } button.info-button:hover:not(:disabled) { background-color: #138496; border-color: #117a8b; }
-button.warning-button { background-color: var(--warning-color); color: var(--text-color); border-color: var(--warning-color); } button.warning-button:hover:not(:disabled) { background-color: #e0a800; border-color: #d39e00; }
+button.primary-button { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+button.primary-button:hover:not(:disabled) { background-color: #0056b3; border-color: #0056b3; }
+button.danger-button { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
+button.danger-button:hover:not(:disabled) { background-color: #c82333; border-color: #bd2130; }
+button.success-button { background-color: var(--success-color); color: white; border-color: var(--success-color); }
+button.success-button:hover:not(:disabled) { background-color: #218838; border-color: #1e7e34; }
+button.info-button { background-color: var(--info-color); color: white; border-color: var(--info-color); }
+button.info-button:hover:not(:disabled) { background-color: #138496; border-color: #117a8b; }
+button.warning-button { background-color: var(--warning-color); color: var(--text-color); border-color: var(--warning-color); }
+button.warning-button:hover:not(:disabled) { background-color: #e0a800; border-color: #d39e00; }
 button.small-button { padding: 4px 8px; font-size: 0.85em; }
-input[type="text"], input[type="number"], select, textarea { padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 1em; width: 100%; max-width: 450px; box-sizing: border-box; }
-input[type="number"] { max-width: 120px; } #tournament-name, #prize-distribution, #player-names, #newThemeFavoriteName { max-width: 450px; }
+
+/* Forms */
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    font-size: 1em;
+    width: 100%;
+    max-width: 450px; /* Limit width for specific inputs */
+    box-sizing: border-box;
+}
+input[type="number"] { max-width: 120px; } /* Smaller default for numbers */
+#tournament-name, #prize-distribution, #player-names, #newThemeFavoriteName { max-width: 450px; }
 textarea { min-height: 60px; vertical-align: top; }
 label { display: block; margin-bottom: 4px; font-weight: 500; }
 small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin-bottom: 10px; }
+input.invalid, textarea.invalid { border-color: red !important; box-shadow: 0 0 3px red; }
+
+/* Utilities */
 .hidden { display: none !important; }
 .warning { color: #856404; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; padding: 8px 12px; margin-bottom: 10px; font-size: 0.9em;}
 .active-indicator { font-weight: bold; color: var(--success-color); margin-left: 10px; font-style: italic;}
-hr { border: none; border-top: 1px dashed #ccc; margin: 10px 0;}
+hr { border: none; border-top: 1px dashed #ccc; margin: 15px 0;}
 /* === 01: GENERAL BODY & LAYOUT SECTION END === */
 
+
 /* === 02: HEADER & FOOTER SECTION START === */
-header { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; }
-header .logo { height: 40px; margin-right: 15px; content: url('placeholder-logo.png'); background-color: #555; object-fit: contain; }
+/* Header is not used on tournament page, keep for other pages */
+header {
+    background-color: var(--dark-color);
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    z-index: 10; /* Ensure header is above content */
+}
+header .logo {
+    height: 40px;
+    margin-right: 15px;
+    content: url('../placeholder-logo.png'); /* Relative path for CSS */
+    background-color: #555; /* Fallback color */
+    object-fit: contain;
+}
 header h1 { color: white; margin: 0; font-size: 1.5em; }
-footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; margin-top: auto; font-size: 0.9em; } footer p { margin: 0; } footer div { display: flex; gap: 10px;}
+
+/* Footer */
+footer {
+    background-color: var(--dark-color);
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    margin-top: auto; /* Push footer to bottom */
+    font-size: 0.9em;
+    z-index: 10; /* Ensure footer is above content */
+}
+footer p { margin: 0; }
+footer div { display: flex; gap: 10px;}
 /* === 02: HEADER & FOOTER SECTION END === */
+
 
 /* === 03: START PAGE SECTION START === */
 main.start-page { padding: 15px; }
-.start-page { text-align: left; max-width: 900px; margin: 15px auto; }
+.start-page { max-width: 900px; margin: 15px auto; }
 .start-section { background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .start-section h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;}
 #btn-new-tournament-setup { padding: 12px 25px; font-size: 1.1em; margin-bottom: 15px; }
@@ -58,6 +168,7 @@ main.start-page { padding: 15px; }
 #btn-clear-all-data { margin-top: 10px; }
 /* === 03: START PAGE SECTION END === */
 
+
 /* === 04: SETUP PAGE SECTION START === */
 main.setup-page { padding: 15px; }
 .setup-page { max-width: 800px; margin: 15px auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
@@ -65,155 +176,600 @@ main.setup-page { padding: 15px; }
 .setup-page form h2:first-of-type { margin-top: 0; }
 .config-section { border-left: 3px solid var(--primary-color); padding-left: 15px; margin: 15px 0; }
 .form-actions { margin-top: 30px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;}
-.form-actions button { padding: 12px 25px; font-size: 1.1em; }
-#btn-save-template { background-color: var(--info-color); color: white; border-color: var(--info-color); }
-#btn-start-tournament { background-color: var(--success-color); color: white; border-color: var(--success-color); }
-#btn-back-to-main { background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+/* Style setup page buttons specifically if needed */
+#btn-start-tournament { padding: 12px 25px; font-size: 1.1em; }
+#btn-save-template { padding: 12px 25px; font-size: 1.1em; background-color: var(--info-color); color: white; border-color: var(--info-color); }
+#btn-back-to-main { padding: 12px 25px; font-size: 1.1em; background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); }
+
 .blind-structure-controls { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap;}
 .blind-table-container { max-height: 400px; overflow-y: auto; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px;}
 #blind-structure-table, #edit-blind-structure-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
-#blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: center; vertical-align: middle; }
-#blind-structure-table th, #edit-blind-structure-table th { background-color: #e9ecef; position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; font-weight: 600;}
-#blind-structure-table td:last-child, #blind-structure-table th:last-child, #edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
-#blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0; border-color: #ccc; text-align: center; }
-#blind-structure-table input.invalid, #edit-blind-structure-table input.invalid { border-color: red !important; box-shadow: 0 0 3px red; }
-#blind-structure-table input:disabled, #edit-blind-structure-table input:disabled { background-color: #eee; cursor: not-allowed;}
-#blind-structure-table .pause-duration-input, #edit-blind-structure-table .pause-duration-input { width: 60px; }
-#blind-structure-table .btn-remove-level, #edit-blind-structure-table .btn-remove-level { padding: 3px 8px; font-size: 1.1em; background-color: transparent; border: none; color: var(--danger-color); font-weight: bold; line-height: 1;}
-#blind-structure-table .btn-remove-level:hover, #edit-blind-structure-table .btn-remove-level:hover { background-color: var(--danger-color); color: white; border-radius: 3px;}
+#blind-structure-table th, #blind-structure-table td,
+#edit-blind-structure-table th, #edit-blind-structure-table td {
+    border-bottom: 1px solid #eee; border-right: 1px solid #eee;
+    padding: 6px 8px; text-align: center; vertical-align: middle;
+}
+#blind-structure-table th, #edit-blind-structure-table th {
+    background-color: #e9ecef; position: sticky; top: 0; z-index: 1;
+    border-bottom-width: 2px; font-weight: 600;
+}
+#blind-structure-table td:last-child, #blind-structure-table th:last-child,
+#edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
+
+#blind-structure-table input[type="number"],
+#edit-blind-structure-table input[type="number"] {
+     width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0;
+     border-color: #ccc; text-align: center;
+}
+#blind-structure-table .pause-duration-input,
+#edit-blind-structure-table .pause-duration-input { width: 60px; }
+
+#blind-structure-table .btn-remove-level,
+#edit-blind-structure-table .btn-remove-level {
+    padding: 3px 8px; font-size: 1.1em; background-color: transparent;
+    border: none; color: var(--danger-color); font-weight: bold; line-height: 1;
+    cursor: pointer;
+}
+#blind-structure-table .btn-remove-level:hover,
+#edit-blind-structure-table .btn-remove-level:hover {
+    background-color: var(--danger-color); color: white; border-radius: 3px;
+}
+#blind-structure-table input:disabled,
+#edit-blind-structure-table input:disabled { background-color: #eee; cursor: not-allowed;}
+#edit-blind-structure-table td small { font-size: 0.8em; color: #666; display: block; }
+
 /* === 04: SETUP PAGE SECTION END === */
 
+
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION START === */
-main.tournament-live { display: flex; flex-direction: column; flex-grow: 1; background-color: var(--live-page-bg); color: var(--live-page-text); }
-.main-tournament-title { font-size: 3em; text-align: center; padding: 10px 20px 5px 20px; margin: 0; color: inherit; background-color: transparent; flex-shrink: 0; position: relative; z-index: 5; }
-.header-right-controls { position: absolute; top: 15px; right: 20px; display: flex; align-items: center; gap: 8px; z-index: 15; }
-.header-right-controls p { margin: 0; white-space: nowrap; color: inherit; opacity: 0.7; font-size: 0.9em;}
-.header-right-controls button { background-color: rgba(128, 128, 128, 0.5); border-color: rgba(128, 128, 128, 0.7); color: inherit; opacity: 0.8;}
-.header-right-controls button:hover:not(:disabled) { background-color: rgba(160, 160, 160, 0.6); border-color: rgba(160, 160, 160, 0.8); opacity: 1;}
+main.tournament-live {
+    background-color: var(--live-page-bg); /* Use theme variable */
+    color: var(--live-page-text); /* Use theme variable */
+    /* display, flex-direction, flex-grow already set in general main */
+}
+
+/* Styling for the controls moved below the canvas */
+.sub-canvas-controls.header-right-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Align items to the right */
+    gap: 10px;
+    padding: 8px 15px; /* Add some padding */
+    background-color: rgba(0,0,0, 0.1); /* Slight background */
+    border-bottom: 1px solid var(--live-ui-border); /* Separator line */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+.sub-canvas-controls p { margin: 0; white-space: nowrap; opacity: 0.8; font-size: 0.9em;}
+.sub-canvas-controls button {
+    background-color: rgba(128, 128, 128, 0.5);
+    border-color: rgba(128, 128, 128, 0.7);
+    color: inherit; /* Inherit text color from theme */
+    opacity: 0.8;
+}
+.sub-canvas-controls button:hover:not(:disabled) {
+    background-color: rgba(160, 160, 160, 0.6);
+    border-color: rgba(160, 160, 160, 0.8);
+    opacity: 1;
+}
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION END === */
+
 
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT START === */
 #live-canvas {
-    flex-grow: 1; position: relative; overflow: hidden;
-    background-color: inherit; color: inherit;
-    height: var(--canvas-height, 65vh); /* Use CSS Variable for height */
-    width: 100%; flex-shrink: 0;
-    /* Optional background image for canvas */
+    flex-grow: 1; /* Takes up available space */
+    position: relative; /* Container for absolutely positioned elements */
+    overflow: hidden; /* Hide elements moved outside */
+    background-color: inherit; /* Inherit background from main */
+    color: inherit; /* Inherit text color */
+    height: var(--canvas-height); /* Controlled by JS/CSS var */
+    width: 100%;
+    flex-shrink: 0; /* Don't shrink canvas */
+    /* Optional background image/styling for canvas itself */
     /* background-image: url('path/to/canvas_bg.jpg'); background-size: cover; */
 }
+
 .draggable-element {
     position: absolute;
-    left: var(--x-pos); top: var(--y-pos); width: var(--width);
-    font-size: var(--font-size);
-    box-sizing: border-box; padding: 5px; background-color: transparent; border: none; color: inherit;
+    /* Use CSS vars set by JS based on saved layout */
+    left: var(--x-pos);
+    top: var(--y-pos);
+    width: var(--width);
+    height: var(--height, auto); /* Height is optional, defaults to auto */
+    font-size: var(--font-size); /* Base font size for the element */
+    box-sizing: border-box;
+    padding: 5px; /* Default padding, can be overridden */
+    background-color: transparent;
+    border: none;
+    color: inherit; /* Inherit text color from canvas/main */
+    /* Add transition for smoother movement? */
+    /* transition: left 0.1s linear, top 0.1s linear, width 0.1s linear, height 0.1s linear; */
 }
-.clickable-element { cursor: pointer; /* Indicate clickable for UI edit */ }
-.clickable-element:hover { outline: 1px dashed rgba(255, 255, 255, 0.5); /* Visual feedback on hover */ }
 
-/* Specific element positioning and styling */
-#timer-element { left: var(--timer-x); top: var(--timer-y); width: var(--timer-width); font-size: var(--timer-font-size); text-align: center; }
-#timer-element .timer-section h2 { font-size: 0.1em; margin-bottom: 0.1em; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit;}
-#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-#break-info { font-size: 0.4em; color: #FFEB3B; font-weight: bold; margin-top: 0.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+/* Make elements clickable for opening UI modal */
+.clickable-element {
+    cursor: pointer;
+}
+.clickable-element:hover {
+    outline: 1px dashed rgba(255, 255, 255, 0.5); /* Visual feedback */
+}
 
-#blinds-element { left: var(--blinds-x); top: var(--blinds-y); width: var(--blinds-width); font-size: var(--blinds-font-size); text-align: center; }
-#blinds-element .blinds-section h3 { font-size: 0.2em; margin-bottom: 0.1em; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit;}
-#blinds-display { font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
-#blinds-display .value { margin: 0 0.1em; } #blinds-display .label { font-size: 0.3em; margin-right: 0.1em; opacity: 0.7; font-weight: normal; vertical-align: middle; }
+/* --- Styling for individual canvas elements --- */
 
-#logo-element { left: var(--logo-x); top: var(--logo-y); width: var(--logo-width); height: var(--logo-height); padding: 0; display: flex; justify-content: center; align-items: center; }
-#logo-element .logo-area { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;}
-#logo-element .logo { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+/* Title Element */
+#title-element {
+    /* Positioning/Size vars set by JS */
+    left: var(--title-x);
+    top: var(--title-y);
+    width: var(--title-width);
+    font-size: var(--title-font-size); /* Controls the base size of H1 inside */
+    text-align: center;
+    padding: 0; /* Remove default padding if needed */
+    line-height: 1.1;
+    height: auto; /* Let h1 determine height */
+    z-index: 5; /* Ensure it's above others if overlapping */
+}
+#title-element h1#tournament-name-display {
+    font-size: 1em; /* Inherit size from parent #title-element */
+    margin: 0;
+    padding: 5px 0; /* Add some vertical padding inside */
+    color: inherit;
+    background-color: transparent;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+}
 
-#info-element { left: var(--info-x); top: var(--info-y); width: var(--info-width); font-size: var(--info-font-size); background-color: transparent; /* Removed background */ color: inherit; opacity: 0.9; padding: 10px; border-radius: 4px; border: none; /* Removed border */ }
-#info-element p { margin: 3px 0; white-space: nowrap; font-size: 1em; line-height: 1.4; }
-#info-element p.hidden { display: none; } /* Hide toggled off info items */
+/* Timer Element */
+#timer-element {
+    left: var(--timer-x); top: var(--timer-y); width: var(--timer-width);
+    font-size: var(--timer-font-size); /* Controls size of text inside */
+    text-align: center;
+}
+#timer-element .timer-section h2 { /* "Tid Igjen" label */
+    font-size: 0.1em; /* Relative to parent font-size */
+    margin: 0 0 0.05em 0;
+    opacity: 0.8;
+    text-transform: uppercase;
+    font-weight: normal;
+    color: inherit;
+}
+#timer-display { /* The actual clock digits */
+    font-family: 'Orbitron', monospace, sans-serif; /* Digital-style font */
+    font-size: 1em; /* Inherit size from #timer-element */
+    font-weight: bold;
+    line-height: 1.0;
+    color: inherit;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+#break-info { /* "PAUSE" text */
+    font-size: 0.4em; /* Relative to parent font-size */
+    color: var(--warning-color); /* Yellowish */
+    font-weight: bold;
+    margin-top: 0.1em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Blinds Element */
+#blinds-element {
+    left: var(--blinds-x); top: var(--blinds-y); width: var(--blinds-width);
+    font-size: var(--blinds-font-size); /* Controls size of text inside */
+    text-align: center;
+}
+#blinds-element .blinds-section h3 { /* "Blinds (Nivå X)" label */
+    font-size: 0.2em; /* Relative to parent font-size */
+    margin: 0 0 0.1em 0;
+    opacity: 0.8;
+    text-transform: uppercase;
+    font-weight: normal;
+    color: inherit;
+}
+#blinds-display { /* The blinds values SB/BB/A */
+    font-size: 1em; /* Inherit size */
+    font-weight: bold;
+    line-height: 1.0;
+    color: inherit;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    white-space: nowrap; /* Prevent wrapping */
+}
+#blinds-display .value { margin: 0 0.1em; }
+#blinds-display .label { font-size: 0.3em; margin: 0 0.1em; opacity: 0.7; font-weight: normal; vertical-align: middle; }
+
+/* Logo Element */
+#logo-element {
+    left: var(--logo-x); top: var(--logo-y); width: var(--logo-width); height: var(--logo-height);
+    padding: 0; /* No padding on the container itself */
+    display: flex; /* Use flex to center image */
+    justify-content: center;
+    align-items: center;
+    font-size: 1em; /* Reset font size */
+}
+#logo-element .logo-area {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#logo-element .logo {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto; /* Let image scale maintaining aspect ratio */
+    height: auto;
+    object-fit: contain; /* Ensure whole logo is visible */
+    display: block;
+}
+
+/* Info Element */
+#info-element {
+    left: var(--info-x); top: var(--info-y); width: var(--info-width);
+    font-size: var(--info-font-size); /* Controls size of text inside */
+    background-color: rgba(0, 0, 0, 0.1); /* Slight background for readability? */
+    color: inherit;
+    opacity: 0.9;
+    padding: 10px; /* Padding inside the box */
+    border-radius: 4px;
+    border: 1px solid var(--live-ui-border);
+    height: auto; /* Let content determine height */
+}
+#info-element p {
+    margin: 3px 0;
+    white-space: nowrap;
+    font-size: 1em; /* Relative to parent font-size */
+    line-height: 1.4;
+}
+#info-element p.hidden { /* Style for hidden info items */
+    display: none;
+}
 
 /* Hide old structure completely */
 .live-split-container, .live-left-column, .live-right-column, .right-col-logo-area, .right-col-blinds-area, .right-col-info-area { display: none; }
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT END === */
 
-/* === 07: TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION START === */
-.live-info-secondary { display: none; }
-/* === 07: TOURNAMENT LIVE PAGE - SECONDARY INFO SECTION END === */
 
-/* === 08: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION START === */
-.live-info-prizes { padding: 15px 20px; background-color: rgba(255,255,255, 0.05); color: inherit; border: none; border-radius: 4px; margin: 15px; flex-shrink: 0; }
-.live-info-prizes h3 { margin-top: 0; margin-bottom: 8px; font-size: 1.1em; color: inherit; opacity: 0.9; border-bottom: 1px solid var(--live-ui-border); padding-bottom: 5px;}
-.live-info-prizes ol { margin: 5px 0 0 0; padding-left: 25px; } .live-info-prizes li { margin-bottom: 4px; font-size: 0.95em; }
+/* === 07: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION START === */
+.live-info-prizes {
+    padding: 15px 20px;
+    background-color: rgba(0,0,0, 0.05); /* Darker theme background */
+    color: inherit;
+    border: 1px solid var(--live-ui-border);
+    border-radius: 4px;
+    margin: 15px; /* Space around */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+.live-info-prizes h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+    color: inherit;
+    opacity: 0.9;
+    border-bottom: 1px solid var(--live-ui-border);
+    padding-bottom: 5px;
+}
+.live-info-prizes ol { margin: 5px 0 0 0; padding-left: 25px; }
+.live-info-prizes li { margin-bottom: 4px; font-size: 0.95em; }
 .live-info-prizes p { font-style: italic; color: inherit; opacity: 0.7; margin: 5px 0; }
-/* === 08: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION END === */
+/* === 07: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION END === */
 
-/* === 09: TOURNAMENT LIVE PAGE - CONTROLS SECTION START === */
-.controls { text-align: center; margin-bottom: 15px; padding: 10px 15px; border-top: 1px solid var(--live-ui-border); border-bottom: 1px solid var(--live-ui-border); flex-shrink: 0; background-color: rgba(0,0,0,0.1); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-.controls button { margin: 5px 8px; background-color: #e9e9e9; color: #333; border-color: #ccc;}
-.controls button:hover:not(:disabled) { background-color: #dcdcdc; border-color: #bbb;}
-.controls button:disabled { background-color: #e9e9e9; border-color: #ccc;}
-/* === 09: TOURNAMENT LIVE PAGE - CONTROLS SECTION END === */
 
-/* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION START === */
-.player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; padding: 0 15px 15px 15px; min-height: 30vh; }
-.player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 1px solid var(--live-ui-border); border-radius: 4px; background-color: rgba(255,255,255, 0.03); }
-.player-column h2 { position: sticky; top: 0; background-color: rgba(0,0,0,0.2); padding: 10px; margin: 0; border-bottom: 1px solid var(--live-ui-border); z-index: 1; font-size: 1.2em; color: inherit; opacity: 0.9;}
-.player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
-.player-list-live li { border-bottom: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; }
+/* === 08: TOURNAMENT LIVE PAGE - CONTROLS SECTION START === */
+.controls {
+    text-align: center;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-top: 1px solid var(--live-ui-border);
+    border-bottom: 1px solid var(--live-ui-border);
+    flex-shrink: 0;
+    background-color: rgba(0,0,0,0.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.controls button {
+    margin: 5px 8px;
+    /* Use default button styles, override if needed */
+    background-color: #d0d0d0; /* Slightly lighter default for controls? */
+    color: #222;
+    border-color: #bbb;
+}
+.controls button:hover:not(:disabled) {
+    background-color: #c0c0c0;
+    border-color: #aaa;
+}
+.controls button:disabled {
+    background-color: #e0e0e0;
+    border-color: #ccc;
+    color: #777;
+}
+/* === 08: TOURNAMENT LIVE PAGE - CONTROLS SECTION END === */
+
+
+/* === 09: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION START === */
+.player-management {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex-grow: 1; /* Take remaining space */
+    overflow: hidden; /* Prevent content spill */
+    padding: 0 15px 15px 15px; /* Padding around columns */
+    min-height: 30vh; /* Ensure some height */
+}
+.player-column {
+    flex-basis: 50%; /* Equal width columns */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Hide overflow within column */
+    padding: 0;
+    border: 1px solid var(--live-ui-border);
+    border-radius: 4px;
+    background-color: rgba(0,0,0, 0.03); /* Very subtle bg */
+}
+.player-column h2 {
+    position: sticky; /* Keep header visible on scroll */
+    top: 0;
+    background-color: rgba(0,0,0,0.2);
+    padding: 10px 15px; /* More padding */
+    margin: 0;
+    border-bottom: 1px solid var(--live-ui-border);
+    z-index: 1; /* Above list content */
+    font-size: 1.2em;
+    color: inherit;
+    opacity: 0.9;
+}
+.player-list-live {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1; /* Allow list to take space */
+    overflow-y: auto; /* Enable scrolling for the list */
+}
+.player-list-live li {
+    border-bottom: 1px solid var(--live-ui-border); /* Use theme border */
+    padding: 8px 15px; /* More padding */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95em;
+}
 .player-list-live li:last-child { border-bottom: none; }
-.player-actions { white-space: nowrap; flex-shrink: 0; margin-left: 10px; display: flex; gap: 4px;}
-.player-actions button { margin-left: 0; cursor: pointer; padding: 3px 8px; font-size: 0.9em; border-radius: 3px; }
+
+.player-actions {
+    white-space: nowrap;
+    flex-shrink: 0; /* Prevent shrinking */
+    margin-left: 10px;
+    display: flex;
+    gap: 4px;
+}
+.player-actions button { /* Specific styling for player action buttons */
+    margin-left: 0;
+    cursor: pointer;
+    padding: 3px 8px;
+    font-size: 0.9em;
+    border-radius: 3px;
+    /* Use default button colors or specific ones below */
+}
+/* Example specific colors */
 .btn-edit-player { background-color: #e2e3e5; border-color: #d6d8db;} .btn-edit-player:hover { background-color: #d6d8db;}
 .btn-rebuy { background-color: #cfe2ff; border-color: #b6d4fe;} .btn-rebuy:hover { background-color: #b6d4fe;}
 .btn-addon { background-color: #d1e7dd; border-color: #badbcc;} .btn-addon:hover { background-color: #badbcc;}
 .btn-eliminate { background-color: #f8d7da; border-color: #f5c2c7;} .btn-eliminate:hover { background-color: #f5c2c7;}
 .btn-restore { background-color: #fff3cd; border-color: #ffeeba;} .btn-restore:hover { background-color: #ffeeba;}
-.player-details { font-size: 0.85em; color: inherit; opacity: 0.7; margin-left: 8px; }
-/* === 10: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION END === */
 
-/* === 10b: ACTIVITY LOG SECTION START === */
-#activity-log-container { margin: 0 15px 15px 15px; padding: 15px; background-color: rgba(255,255,255, 0.03); border: 1px solid var(--live-ui-border); border-radius: 4px; flex-shrink: 0; }
-#activity-log-container h3 { margin-top: 0; font-size: 1.1em; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 10px; color: inherit; opacity: 0.9; }
-#activity-log-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; font-size: 0.9em; color: inherit; opacity: 0.85;}
-#activity-log-list li { padding: 4px 0; border-bottom: 1px dotted rgba(255,255,255,0.1); } #activity-log-list li:last-child { border-bottom: none; }
-#activity-log-list .log-time { color: inherit; opacity: 0.6; margin-right: 8px; font-size: 0.9em; }
-/* === 10b: ACTIVITY LOG SECTION END === */
+.player-details { font-size: 0.85em; color: inherit; opacity: 0.7; margin-left: 8px; }
+#table-balance-info { margin: 5px 15px; padding: 5px 10px; } /* Position warning */
+/* === 09: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION END === */
+
+
+/* === 10: ACTIVITY LOG SECTION START === */
+#activity-log-container {
+    margin: 0 15px 15px 15px; /* Match player management padding */
+    padding: 15px;
+    background-color: rgba(0,0,0, 0.03);
+    border: 1px solid var(--live-ui-border);
+    border-radius: 4px;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+#activity-log-container h3 {
+    margin-top: 0;
+    font-size: 1.1em;
+    border-bottom: 1px solid var(--live-ui-border);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    color: inherit;
+    opacity: 0.9;
+}
+#activity-log-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px; /* Limit height and make scrollable */
+    overflow-y: auto;
+    font-size: 0.9em;
+    color: inherit;
+    opacity: 0.85;
+}
+#activity-log-list li {
+    padding: 4px 0;
+    border-bottom: 1px dotted rgba(255,255,255,0.1); /* Very subtle separator */
+}
+#activity-log-list li:last-child { border-bottom: none; }
+#activity-log-list .log-time {
+    color: inherit;
+    opacity: 0.6;
+    margin-right: 8px;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+/* === 10: ACTIVITY LOG SECTION END === */
+
 
 /* === 11: MODAL STYLES SECTION START === */
-.modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
-.modal-content { background-color: #fefefe; color: var(--text-color); margin: auto; padding: 25px; border: 1px solid #888; border-radius: 5px; width: 90%; max-width: 850px; position: relative; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow-y: auto; /* Allow modal content to scroll */}
-.modal-content h2 { margin-top: 0; color: var(--dark-color); border-bottom: 1px solid #eee; padding-bottom: 10px;} .modal-content h3 { color: var(--dark-color); border-bottom: 1px dashed #eee; padding-bottom: 5px;}
-.modal-content div[id^="edit-"] { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; flex-shrink: 0; /* Removed overflow-y */ }
-.modal-content div[id^="edit-"]:last-of-type { border-bottom: none; }
-.modal-content #edit-blinds-section .blind-table-container { max-height: 250px; flex-grow: 1; min-height: 150px; }
-.close-button { color: #aaa; position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; line-height: 1; cursor: pointer; }
+.modal {
+    position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+    overflow: auto; /* Enable scroll if modal content overflows */
+    background-color: rgba(0,0,0,0.6);
+    display: flex; /* Use flexbox for centering */
+    align-items: center;
+    justify-content: center;
+    padding: 20px; /* Padding around modal content */
+    box-sizing: border-box;
+}
+.modal-content {
+    background-color: #fefefe; /* Light background for modal */
+    color: var(--text-color); /* Use default text color */
+    margin: auto; /* Center horizontally */
+    padding: 25px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    width: 100%; /* Take full width within padding */
+    max-width: 900px; /* Limit maximum width */
+    position: relative;
+    max-height: 90vh; /* Limit maximum height */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    overflow-y: auto; /* Allow modal content itself to scroll if needed */
+}
+.modal-content h2 { margin-top: 0; color: var(--dark-color); border-bottom: 1px solid #eee; padding-bottom: 10px;}
+.modal-content h3 { color: var(--dark-color); border-bottom: 1px dashed #eee; padding-bottom: 5px; margin-top: 20px;}
+
+.modal-content div[id^="edit-"] { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+.modal-content div[id^="edit-"]:last-of-type { border-bottom: none; padding-bottom: 0; margin-bottom: 0;}
+
+.modal-content #edit-blinds-section .blind-table-container { max-height: 250px; }
+
+.close-button {
+    color: #aaa; position: absolute; top: 10px; right: 15px;
+    font-size: 28px; font-weight: bold; line-height: 1; cursor: pointer;
+}
 .close-button:hover, .close-button:focus { color: black; text-decoration: none; }
-.modal-actions { margin-top: 20px; text-align: right; flex-shrink: 0; padding-top: 15px; border-top: 1px solid #eee;} .modal-actions button { margin-left: 10px; }
-/* Theme/Layout/Logo editor styles */
-#edit-theme-section h4, #edit-logo-section h4, #edit-layout-section h4, #edit-blinds-section h3, #edit-prizes-section h3 { margin-top: 15px; margin-bottom: 10px; font-size: 1.1em;}
+.modal-actions { margin-top: 20px; text-align: right; padding-top: 15px; border-top: 1px solid #eee;}
+.modal-actions button { margin-left: 10px; }
+
+/* --- UI Settings Modal Specific Styles --- */
+#edit-layout-section h4 { margin-top: 15px; margin-bottom: 10px; font-size: 1.1em; }
+.element-layout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; } /* Grid layout for element controls */
+.element-layout-controls { border: 1px solid #eee; padding: 15px; border-radius: 4px; }
+.element-layout-controls h5 { margin-top: 0; margin-bottom: 15px; background-color: #f0f0f0; padding: 8px; border-radius: 3px; color: #333;}
+.layout-control { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: nowrap; } /* Prevent wrapping */
+.layout-control label { flex-basis: 80px; flex-shrink: 0; text-align: right; margin-bottom: 0; font-size: 0.9em;}
+.layout-control input[type="range"] { flex-grow: 1; min-width: 80px; height: 6px;}
+.layout-control input[type="number"] { width: 65px; margin-left: 0; padding: 4px; font-size: 0.9em;}
+.layout-control span { width: 20px; text-align: left; font-size: 0.9em; }
+.info-toggles { margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;}
+.info-toggles label { display: inline-block; margin-right: 15px; font-weight: normal; font-size: 0.95em;}
+.info-toggles input[type="checkbox"] { margin-right: 5px; vertical-align: middle;}
+
+/* Theme Editor */
+#edit-theme-section h4 { margin-top: 15px; margin-bottom: 10px; font-size: 1.1em;}
+.theme-favorites-section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;}
+.theme-favorites-section select { max-width: 180px; flex-grow: 1;}
+.theme-favorites-section input[type="text"] { max-width: 160px; flex-grow: 1;}
+.theme-favorites-section button { flex-shrink: 0;}
+
 .theme-editor-row { display: flex; gap: 20px; margin-bottom: 15px; align-items: flex-start; flex-wrap: wrap;}
-.theme-editor-color { flex: 2; min-width: 280px;} .theme-editor-preview { flex: 1; min-width: 120px; text-align: center; }
+.theme-editor-color { flex: 2; min-width: 280px;}
+.theme-editor-preview { flex: 1; min-width: 120px; text-align: center; padding-top: 25px; }
 .theme-editor-color .control-group { display: flex; align-items: center; margin-bottom: 8px; gap: 5px;}
 .theme-editor-color label { flex-basis: 20px; margin-bottom: 0; text-align: right; font-size: 0.9em;}
 .theme-editor-color input[type="range"] { flex-grow: 1; height: 6px;}
 .theme-editor-color input[type="number"] { width: 60px; margin-left: 5px; padding: 4px; font-size: 0.9em; }
 .theme-editor-color input[type="number"] + span { font-size: 0.9em; width: 15px; display: inline-block; }
 .color-preview-box { width: 100%; height: 50px; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
-#text-color-preview span { padding: 5px; background-color: rgba(255,255,255,0.7); border-radius: 3px; color: initial; }
-.layout-control { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.layout-control label { flex-basis: 150px; flex-shrink: 0; text-align: right; margin-bottom: 0;}
-.layout-control input[type="range"] { flex-grow: 1; min-width: 100px;}
-.layout-control input[type="number"] { width: 60px; margin-left: 0; }
-.layout-control span { width: 20px; text-align: left; }
-.element-layout-controls { border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
-.element-layout-controls h5 { margin-top: 0; margin-bottom: 10px; background-color: #f0f0f0; padding: 5px; border-radius: 3px;}
-.theme-favorites-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;}
-.theme-favorites-section select { max-width: 180px; flex-grow: 1;}
-.theme-favorites-section input[type="text"] { max-width: 160px; flex-grow: 1;}
-.theme-favorites-section button { flex-shrink: 0;}
-.info-toggles label { display: inline-block; margin-right: 15px; font-weight: normal;} /* Styling for info toggles */
-.info-toggles input[type="checkbox"] { margin-right: 5px; }
+#text-color-preview span { padding: 5px; background-color: rgba(255,255,255,0.7); border-radius: 3px; color: initial; /* Will be overridden by JS */ }
+.hue-slider { /* Add gradient background to hue sliders */
+    background: linear-gradient(to right, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%));
+    border-radius: 3px;
+    appearance: none; -webkit-appearance: none; /* Override default */
+    height: 6px;
+}
 /* === 11: MODAL STYLES SECTION END === */
 
+
 /* === 12: UTILITY & RESPONSIVE SECTION START === */
-@media (max-width: 992px) { #timer-display { font-size: 11em !important; } #blinds-display { font-size: 5em !important; } .player-management { flex-direction: column; overflow: visible; padding: 10px; } .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;} .player-column .player-list-live { overflow-y: auto; } .modal-content { width: 90%; } #blind-structure-table, #edit-blind-structure-table { font-size: 0.85em; } }
-@media (max-width: 768px) { #live-canvas { display: block; height: auto !important; min-height: 0;} .draggable-element { position: relative !important; width: 95% !important; left: 2.5% !important; top: auto !important; margin-bottom: 15px; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px; font-size: inherit !important; height: auto !important; } #timer-element { order: 1; } #blinds-element { order: 2; } #logo-element { order: 3; height: 15vh !important; } #info-element { order: 4; } #timer-display { font-size: 8em !important; } #blinds-display { font-size: 4em !important; } .live-info-secondary { font-size: 1em; padding: 8px 10px; margin: 10px; border-radius: 4px;} .controls { margin-bottom: 10px; padding: 8px 10px;} .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;} .player-column { max-height: none; } .header-right-controls { display: none; } .player-management { padding: 10px; gap: 10px; flex-direction: column;} #activity-log-container { margin: 10px;} .theme-editor-row {flex-direction: column;} .theme-favorites-section { flex-direction: column; align-items: stretch;} .theme-favorites-section > * {width: 100%; max-width: none; margin: 5px 0 !important;} .element-layout-grid {display: block;} } /* Stack element controls */
-@media (max-width: 480px) { body { font-size: 14px; } .main-tournament-title { font-size: 1.8em; padding: 10px;} #timer-display { font-size: 6em !important; } #blinds-display { font-size: 3.5em !important; } #blinds-display .value { margin: 0 5px; } .live-info-secondary { font-size: 0.9em; } .player-list-live li { flex-direction: column; align-items: flex-start; } .player-actions { margin-left: 0; margin-top: 5px; } .player-actions button { margin-left: 0; margin-right: 4px; } .modal-content { width: 95%; padding: 15px; } #blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { padding: 4px; } #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 60px; } .form-actions { justify-content: center;} .layout-control { flex-direction: column; align-items: stretch;} .layout-control label {text-align: left;} }
+/* Larger Screens (adjust breakpoint as needed) */
+@media (min-width: 1200px) {
+     /* Potentially increase canvas height or element font sizes */
+     /* :root { --canvas-height: 70vh; } */
+}
+
+/* Medium Screens / Tablets */
+@media (max-width: 992px) {
+    .element-layout-grid { grid-template-columns: 1fr; } /* Stack controls */
+    .player-management { flex-direction: column; overflow: visible; padding: 10px; min-height: auto; }
+    .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;} /* Limit height */
+    .player-column .player-list-live { overflow-y: auto; } /* Enable scroll in list */
+    .modal-content { max-width: 700px; }
+}
+
+/* Small Screens / Landscape Phones */
+@media (max-width: 768px) {
+    #live-canvas {
+        display: flex; /* Use flexbox for stacking on mobile */
+        flex-direction: column;
+        height: auto !important; /* Let content determine height */
+        min-height: 0;
+        position: static; /* Remove absolute positioning container */
+        overflow: visible;
+    }
+    .draggable-element {
+        position: static !important; /* Remove absolute positioning */
+        width: auto !important; /* Let width be natural or 100% */
+        margin: 10px 15px; /* Add margin between elements */
+        padding: 10px;
+        background-color: rgba(0,0,0,0.1);
+        border-radius: 5px;
+        font-size: inherit !important; /* Reset font size scaling */
+        height: auto !important; /* Reset height */
+        /* Reset transforms if any */
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+    }
+    /* Define stacking order */
+    #title-element { order: 1; font-size: 2.2em !important; }
+    #timer-element { order: 2; font-size: 12em !important; }
+    #blinds-element { order: 3; font-size: 6em !important; }
+    #info-element { order: 4; }
+    #logo-element { order: 5; height: 15vh !important; max-height: 100px; }
+
+    .sub-canvas-controls.header-right-controls {
+        justify-content: center; /* Center buttons */
+        padding: 8px 10px;
+        border-bottom: none;
+        border-top: 1px solid var(--live-ui-border);
+        margin-top: 10px;
+        order: 9; /* Place after canvas elements */
+    }
+
+    .controls { margin-bottom: 10px; padding: 8px 10px;}
+    .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;}
+    .player-column { max-height: none; } /* Remove height limit */
+    .player-management { padding: 10px; gap: 10px; }
+    #activity-log-container { margin: 10px;}
+
+    /* Modal adjustments */
+    .modal-content { width: 95%; max-height: 85vh; padding: 15px; }
+    .theme-editor-row { flex-direction: column; }
+    .theme-favorites-section { flex-direction: column; align-items: stretch;}
+    .theme-favorites-section > * {width: 100%; max-width: none; margin: 5px 0 !important;}
+    .layout-control { flex-wrap: wrap; } /* Allow wrapping within controls */
+    .layout-control label { flex-basis: 100px; }
+}
+
+/* Very Small Screens / Portrait Phones */
+@media (max-width: 480px) {
+    body { font-size: 14px; }
+    #title-element h1#tournament-name-display { font-size: 1.8em !important; }
+    #timer-display { font-size: 8em !important; }
+    #blinds-display { font-size: 4em !important; }
+    #blinds-display .value { margin: 0 5px; }
+    .player-list-live li { flex-direction: column; align-items: flex-start; padding: 10px; }
+    .player-actions { margin-left: 0; margin-top: 8px; }
+    .player-actions button { margin-left: 0; margin-right: 4px; }
+    .modal-content { width: 98%; padding: 10px; }
+    .layout-control { flex-direction: column; align-items: stretch;}
+    .layout-control label {text-align: left; margin-bottom: 3px;}
+    .layout-control input[type="number"] { width: 80px; }
+    .form-actions { justify-content: center;}
+    #blind-structure-table th, #blind-structure-table td,
+    #edit-blind-structure-table th, #edit-blind-structure-table td { padding: 4px; font-size: 0.9em;}
+    #blind-structure-table input[type="number"],
+    #edit-blind-structure-table input[type="number"] { width: 60px; }
+}
 /* === 12: UTILITY & RESPONSIVE SECTION END === */
