@@ -5,17 +5,18 @@ const ACTIVE_TOURNAMENT_ID_KEY = 'winjevollActiveTournamentId_v1';
 const ACTIVE_TEMPLATE_ID_KEY = 'winjevollActiveTemplateId_v1';
 const THEME_BG_COLOR_KEY = 'winjevollThemeBgColor_v1';
 const THEME_TEXT_COLOR_KEY = 'winjevollThemeTextColor_v1';
-const ELEMENT_LAYOUTS_KEY = 'winjevollElementLayouts_v1'; // NEW for element pos/size
-const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1'; // NEW for favorites
+const ELEMENT_LAYOUTS_KEY = 'winjevollElementLayouts_v1'; // Combined layout settings
+const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
 
 const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
 const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
-// *** ADJUSTED DEFAULT LAYOUT VALUES ***
+// *** UPDATED DEFAULT LAYOUT VALUES ***
 const DEFAULT_ELEMENT_LAYOUTS = {
-    timer:  { x: 5,  y: 5,  width: 55, fontSize: 15 }, // Larger font, takes more width
-    blinds: { x: 65, y: 40, width: 30, fontSize: 7 },  // Adjusted position/size
-    logo:   { x: 65, y: 5,  width: 30, height: 25 },   // Smaller height, adjusted pos
-    info:   { x: 65, y: 75, width: 30, fontSize: 1.1 } // Adjusted position
+    canvas: { height: 65 }, // Default canvas height in vh
+    timer:  { x: 5,  y: 5,  width: 55, fontSize: 18 }, // Larger Font, Adjusted pos
+    blinds: { x: 65, y: 45, width: 30, fontSize: 9 },  // Larger Font, Adjusted pos
+    logo:   { x: 65, y: 5,  width: 30, height: 30 },   // Adjusted pos/size
+    info:   { x: 65, y: 80, width: 30, fontSize: 1.2 } // Adjusted pos, larger font
 };
 // === 01: CONSTANTS SECTION END ===
 
@@ -50,7 +51,7 @@ function clearActiveTemplateId() { localStorage.removeItem(ACTIVE_TEMPLATE_ID_KE
 // === 05: ACTIVE ID FUNCTIONS END ===
 
 // === 06: CLEAR ALL DATA FUNCTION START ===
-function clearAllData() { try { localStorage.removeItem(TOURNAMENT_COLLECTION_KEY); localStorage.removeItem(TEMPLATE_COLLECTION_KEY); localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); localStorage.removeItem(THEME_BG_COLOR_KEY); localStorage.removeItem(THEME_TEXT_COLOR_KEY); localStorage.removeItem(ELEMENT_LAYOUTS_KEY); /* Use new key */ localStorage.removeItem(THEME_FAVORITES_KEY); console.log("All app data cleared."); } catch (e) { console.error("Error clearing all data:", e); alert("Kunne ikke slette all lagret data!"); } }
+function clearAllData() { try { localStorage.removeItem(TOURNAMENT_COLLECTION_KEY); localStorage.removeItem(TEMPLATE_COLLECTION_KEY); localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); localStorage.removeItem(THEME_BG_COLOR_KEY); localStorage.removeItem(THEME_TEXT_COLOR_KEY); localStorage.removeItem(ELEMENT_LAYOUTS_KEY); localStorage.removeItem(THEME_FAVORITES_KEY); console.log("All app data cleared."); } catch (e) { console.error("Error clearing all data:", e); alert("Kunne ikke slette all lagret data!"); } }
 // === 06: CLEAR ALL DATA FUNCTION END ===
 
 // === 06b: ACTIVITY LOG HELPER START ===
@@ -67,18 +68,20 @@ function rgbToHsl(r, g, b) { r /= 255; g /= 255; b /= 255; const max = Math.max(
 function hslToRgb(h, s, l) { s /= 100; l /= 100; let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c/2, r = 0, g = 0, b = 0; if (0 <= h && h < 60) { r = c; g = x; b = 0; } else if (60 <= h && h < 120) { r = x; g = c; b = 0; } else if (120 <= h && h < 180) { r = 0; g = c; b = x; } else if (180 <= h && h < 240) { r = 0; g = x; b = c; } else if (240 <= h && h < 300) { r = x; g = 0; b = c; } else if (300 <= h && h < 360) { r = c; g = 0; b = x; } r = Math.round((r + m) * 255); g = Math.round((g + m) * 255); b = Math.round((b + m) * 255); return `rgb(${r}, ${g}, ${b})`; }
 // === 06c: THEME COLOR FUNCTIONS END ===
 
-// === 06d: ELEMENT LAYOUT FUNCTIONS (NEW) START ===
+// === 06d: ELEMENT LAYOUT FUNCTIONS START ===
 function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); }
 function loadElementLayouts() {
     const loaded = loadObject(ELEMENT_LAYOUTS_KEY);
-    // Merge with defaults to ensure all elements have settings and handle potential missing keys
-    const mergedLayouts = {};
+    // Merge with defaults, ensuring all keys exist in sub-objects too
+    const merged = {};
     for (const key in DEFAULT_ELEMENT_LAYOUTS) {
-        mergedLayouts[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key], ...(loaded[key] || {}) };
+        merged[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key], ...(loaded[key] || {}) };
     }
-    return mergedLayouts;
+     // Ensure canvas height exists
+    merged.canvas = { height: loaded.canvas?.height ?? DEFAULT_ELEMENT_LAYOUTS.canvas.height };
+    return merged;
 }
-// === 06d: ELEMENT LAYOUT FUNCTIONS (NEW) END ===
+// === 06d: ELEMENT LAYOUT FUNCTIONS END ===
 
 // === 06e: THEME FAVORITES FUNCTIONS START ===
 function loadThemeFavorites() { return loadObject(THEME_FAVORITES_KEY, []); }
