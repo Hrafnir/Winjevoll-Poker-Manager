@@ -93,67 +93,68 @@ main.tournament-live { display: flex; flex-direction: column; flex-grow: 1; back
 
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT START === */
 #live-canvas {
-    flex-grow: 1; /* Takes up available vertical space */
-    position: relative; /* Anchor for absolute children */
-    overflow: hidden; /* Hide elements moved outside */
-    background-color: inherit; /* Inherit from main */
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    background-color: inherit;
     color: inherit;
-    min-height: 60vh; /* Ensure a good minimum height */
-    width: 100%; /* Ensure it takes full width */
+    min-height: 60vh;
+    width: 100%;
 }
 
-.draggable-element { /* Common style for elements to be positioned */
+.draggable-element {
     position: absolute;
-    /* Use CSS Variables for positioning and sizing */
-    left: var(--x-pos, 10%);
-    top: var(--y-pos, 10%);
-    width: var(--width, 30%);
-    font-size: var(--font-size, 1em); /* Base font size for the element */
+    left: var(--x-pos); /* Use variable */
+    top: var(--y-pos);  /* Use variable */
+    width: var(--width); /* Use variable */
     box-sizing: border-box;
-    padding: 5px; /* Minimal padding for the container */
-    background-color: transparent; /* Make containers transparent */
-    border: none; /* No border on containers */
-    color: inherit; /* Inherit text color set on body/main */
+    padding: 5px;
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    /* Font size variable will be applied specifically below */
 }
 
-/* Specific element styling using CSS Variables */
+/* --- Timer --- */
 #timer-element {
-    left: var(--timer-x); top: var(--timer-y); width: var(--timer-width); font-size: var(--timer-font-size);
+    left: var(--timer-x); top: var(--timer-y); width: var(--timer-width);
+    font-size: var(--timer-font-size); /* Apply base font size */
     text-align: center;
 }
 #timer-element .timer-section h2 { font-size: 0.1em; margin-bottom: 0.1em; opacity: 0.8; text-transform: uppercase; font-weight: normal; }
-#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
-#break-info { font-size: 0.4em; /* Relative */ color: #FFEB3B; font-weight: bold; margin-top: 0.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; /* Inherit from parent #timer-element */ font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+#break-info { font-size: 0.4em; color: #FFEB3B; font-weight: bold; margin-top: 0.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 
+/* --- Blinds --- */
 #blinds-element {
-    left: var(--blinds-x); top: var(--blinds-y); width: var(--blinds-width); font-size: var(--blinds-font-size);
+    left: var(--blinds-x); top: var(--blinds-y); width: var(--blinds-width);
+    font-size: var(--blinds-font-size); /* Apply base font size */
     text-align: center;
 }
 #blinds-element .blinds-section h3 { font-size: 0.2em; margin-bottom: 0.1em; opacity: 0.8; text-transform: uppercase; font-weight: normal; }
-#blinds-display { font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
+#blinds-display { font-size: 1em; /* Inherit */ font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
 #blinds-display .value { margin: 0 0.1em; }
 #blinds-display .label { font-size: 0.3em; margin-right: 0.1em; opacity: 0.7; font-weight: normal; vertical-align: middle; }
 
+/* --- Logo --- */
 #logo-element {
     left: var(--logo-x); top: var(--logo-y); width: var(--logo-width); height: var(--logo-height);
     padding: 0; display: flex; justify-content: center; align-items: center;
 }
 #logo-element .logo-area { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;}
-#logo-element .logo { max-width: 100%; max-height: 100%; width: auto; /* Let height control */ height: auto; object-fit: contain; display: block; }
+#logo-element .logo { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
 
+/* --- Info Box --- */
 #info-element {
-    left: var(--info-x); top: var(--info-y); width: var(--info-width); font-size: var(--info-font-size);
+    left: var(--info-x); top: var(--info-y); width: var(--info-width);
+    font-size: var(--info-font-size); /* Apply base font size */
     background-color: rgba(0,0,0,0.1); color: inherit; opacity: 0.9; padding: 10px; border-radius: 4px;
 }
-#info-element p { margin: 3px 0; white-space: nowrap; font-size: inherit; line-height: 1.4; }
+#info-element p { margin: 3px 0; white-space: nowrap; font-size: 1em; /* Inherit */ line-height: 1.4; }
 
-/* Remove old split container styles */
+/* Remove old split container styles completely */
 .live-split-container, .live-left-column, .live-right-column, .right-col-logo-area, .right-col-blinds-area, .right-col-info-area {
-   flex-basis: auto; /* Reset flex basis */
-   border: none !important; /* Remove all borders */
-   padding: 0; /* Reset padding */
-   background-color: transparent; /* Ensure transparency */
-   min-height: 0; /* Reset min height */
+   display: none; /* Hide old layout structure entirely */
 }
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT END === */
 
