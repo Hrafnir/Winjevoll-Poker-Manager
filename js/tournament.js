@@ -287,13 +287,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (level.ante > 0) {
             anteHtml = `<span class="label">A:</span><span class="value">${level.ante.toLocaleString('nb-NO')}</span>`;
         }
-        return `<span class="value">${level.sb.toLocaleString('nb-NO')}</span>/<span class="value">${level.bb.toLocaleString('nb-NO')}</span>${anteHtml}`;
+        // Ensure sb and bb exist before formatting
+        const sbFormatted = (level.sb ?? '--').toLocaleString('nb-NO');
+        const bbFormatted = (level.bb ?? '--').toLocaleString('nb-NO');
+        return `<span class="value">${sbFormatted}</span>/<span class="value">${bbFormatted}</span>${anteHtml}`;
     }
+
 
     function formatNextBlindsText(level) {
         if (!level) return "Slutt";
         const anteText = level.ante > 0 ? ` / A:${level.ante.toLocaleString('nb-NO')}` : '';
-        return `${level.sb.toLocaleString('nb-NO')}/${level.bb.toLocaleString('nb-NO')}${anteText}`;
+         // Ensure sb and bb exist before formatting
+        const sbFormatted = (level.sb ?? '--').toLocaleString('nb-NO');
+        const bbFormatted = (level.bb ?? '--').toLocaleString('nb-NO');
+        return `${sbFormatted}/${bbFormatted}${anteText}`;
     }
 
     function getPlayerNameById(playerId) {
@@ -339,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
         prizePot = Math.max(0, prizePot); // Ensure pot is not negative
 
         if (prizePot <= 0 || paidPlaces <= 0 || distributionPercentages.length !== paidPlaces) {
-             console.warn("Cannot calculate prizes. Invalid input:", { prizePot, paidPlaces, distributionPercentages });
+             //console.warn("Cannot calculate prizes. Invalid input:", { prizePot, paidPlaces, distributionPercentages });
             return prizes; // Return empty array if invalid input
         }
 
@@ -375,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function findNextPauseInfo() {
         const currentLevelIndex = state.live.currentLevelIndex;
         const blindLevels = state.config.blindLevels;
+        if (!blindLevels) return null; // No levels defined
 
         // Start searching from the level *after* the current one
         const searchStartIndex = state.live.isOnBreak ? currentLevelIndex + 1 : currentLevelIndex;
@@ -394,536 +402,284 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT START ===
-    function assignTableSeat(player, excludeTableNum = null) { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function reassignAllSeats(targetTableNum) { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function checkAndHandleTableBreak() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function balanceTables() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
+    function assignTableSeat(player, excludeTableNum = null) {
+        console.log(`Assigning seat for ${player.name}, excluding table ${excludeTableNum}`);
+        const tables = {}; // { tableNum: count }
+        let validTables = []; // [{ tableNum: number, count: number }]
+
+        // Count players per table, excluding the excluded table
+        state.live.players.forEach(p => {
+            // Make sure player has a table assigned before counting
+            if (p.id !== player.id && p.table && p.table !== excludeTableNum) {
+                tables[p.table] = (tables[p.table] || 0) + 1;
+            }
+        });
+
+        // Convert to array and filter out potentially excluded tables
+        validTables = Object.entries(tables)
+            .map(([num, count]) => ({ tableNum: parseInt(num), count: count }))
+            .filter(t => t.tableNum !== excludeTableNum);
+
+        // Sort tables by player count (ascending)
+        validTables.sort((a, b) => a.count - b.count);
+
+        let targetTableNum = -1;
+
+        // Find the first table with space
+        for (const tableInfo of validTables) {
+            if (tableInfo.count < state.config.playersPerTable) {
+                targetTableNum = tableInfo.tableNum;
+                break;
+            }
+        }
+
+        // If no existing table has space, find the next available table number
+        if (targetTableNum === -1) {
+             const allExistingTableNumbers = [...new Set(state.live.players.map(p => p.table).filter(t => t > 0))]; // Filter out 0/undefined
+             let nextTable = allExistingTableNumbers.length > 0 ? Math.max(0, ...allExistingTableNumbers) + 1 : 1; // Ensure at least 1
+             if (nextTable === excludeTableNum) {
+                 nextTable++;
+             }
+             targetTableNum = nextTable;
+             console.log(`No space on existing tables (excluding ${excludeTableNum}). Creating/using table: ${targetTableNum}`);
+        }
+
+        // Find the first available seat number on the target table
+        const occupiedSeats = state.live.players
+                                .filter(p => p.table === targetTableNum)
+                                .map(p => p.seat);
+        let seatNum = 1;
+        while (occupiedSeats.includes(seatNum)) {
+            seatNum++;
+        }
+
+        // Assign table and seat (handle unlikely case where seat > max)
+        if (seatNum > state.config.playersPerTable && occupiedSeats.length >= state.config.playersPerTable) {
+             console.error(`CRITICAL ERROR: No seat available on table ${targetTableNum}! Assigning seat ${occupiedSeats.length + 1}`);
+              seatNum = occupiedSeats.length + 1;
+        }
+        player.table = targetTableNum;
+        player.seat = seatNum;
+
+        console.log(`Assigned ${player.name} to T${player.table} S${player.seat}`);
+    }
+
+    function reassignAllSeats(targetTableNum) {
+        logActivity(state.live.activityLog, `Finalebord (Bord ${targetTableNum})! Trekker nye seter...`);
+        const playersToReseat = state.live.players;
+        const numPlayers = playersToReseat.length;
+        if (numPlayers === 0) return;
+
+        const seats = Array.from({ length: numPlayers }, (_, i) => i + 1);
+        // Fisher-Yates Shuffle
+        for (let i = seats.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [seats[i], seats[j]] = [seats[j], seats[i]];
+        }
+
+        playersToReseat.forEach((player, index) => {
+            player.table = targetTableNum;
+            player.seat = seats[index];
+            logActivity(state.live.activityLog, ` -> ${player.name} får sete ${player.seat}.`);
+        });
+        state.live.players.sort((a, b) => a.seat - b.seat);
+        console.log("Final table seats reassigned and players sorted.");
+    }
+
+    function checkAndHandleTableBreak() {
+        if (state.live.status === 'finished') return false;
+
+        const activePlayersCount = state.live.players.length;
+        const maxPlayersPerTable = state.config.playersPerTable;
+        const currentTableNumbers = new Set(state.live.players.map(p => p.table).filter(t => t > 0)); // Ignore players not seated yet
+        const currentTableCount = currentTableNumbers.size;
+        const targetTableCount = Math.ceil(activePlayersCount / maxPlayersPerTable);
+        const finalTableSize = maxPlayersPerTable;
+
+        console.log(`Table check: Players=${activePlayersCount}, Tables=${currentTableCount}, TargetTables=${targetTableCount}, FinalTableSize=${finalTableSize}`);
+
+        let actionTaken = false;
+
+        // 1. Check for Final Table merge
+        if (currentTableCount > 1 && activePlayersCount <= finalTableSize) {
+            const targetFinalTableNum = 1;
+            logActivity(state.live.activityLog, `Finalebord (${activePlayersCount} spillere)! Flytter alle til Bord ${targetFinalTableNum}...`);
+            alert(`Finalebord (${activePlayersCount} spillere)! Flytter alle til Bord ${targetFinalTableNum}.`);
+            state.live.players.forEach(p => p.table = targetFinalTableNum); // Move all first
+            reassignAllSeats(targetFinalTableNum);
+            actionTaken = true;
+            console.log("Final table merge executed.");
+        }
+        // 2. Check for regular table break
+        else if (currentTableCount > targetTableCount && currentTableCount > 1) {
+            const tables = {};
+            state.live.players.forEach(p => { if(p.table > 0) tables[p.table] = (tables[p.table] || 0) + 1; });
+            const sortedTables = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).sort((a, b) => a.count - b.count);
+
+            if (sortedTables.length > 0) {
+                const tableToBreakNum = sortedTables[0].tableNum;
+                const msg = `Slår sammen bord! Flytter spillere fra Bord ${tableToBreakNum}.`;
+                logActivity(state.live.activityLog, msg);
+                alert(msg);
+                const playersToMove = state.live.players.filter(p => p.table === tableToBreakNum);
+                playersToMove.forEach(player => {
+                    const oldTable = player.table; const oldSeat = player.seat;
+                    player.table = 0; player.seat = 0; // Mark as unseated temporarily
+                    assignTableSeat(player, tableToBreakNum);
+                    logActivity(state.live.activityLog, ` -> Flyttet ${player.name} (B${oldTable}S${oldSeat}) til B${player.table}S${player.seat}.`);
+                });
+                state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); // Re-sort after moves
+                actionTaken = true;
+                console.log(`Table ${tableToBreakNum} broken and players reassigned.`);
+            } else { console.warn("Table break condition met, but couldn't identify table to break."); }
+        }
+
+        // Run balancing AFTER potential merge/break, or if no merge/break happened
+        const balancingDone = balanceTables(); // balanceTables handles UI/Save internally if it balances
+
+        // If merge/break happened but no balancing was needed after, still update UI and save
+        if (actionTaken && !balancingDone) {
+             updateUI();
+             saveTournamentState(currentTournamentId, state);
+        } else if (!actionTaken && !balancingDone) {
+            // If nothing happened (no merge/break, no balancing), ensure warning is hidden
+            if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden');
+        }
+
+        return actionTaken || balancingDone; // Return true if any structural change occurred
+    }
+
+
+    function balanceTables() {
+        if (state.live.status === 'finished' || state.live.players.length <= state.config.playersPerTable) {
+            if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden');
+            return false;
+        }
+
+        let balancingPerformed = false;
+        const maxDifference = 1;
+
+        while (true) {
+            const tables = {};
+            state.live.players.forEach(p => { if(p.table > 0) tables[p.table] = (tables[p.table] || 0) + 1; });
+            const tableCounts = Object.entries(tables).map(([num, count]) => ({ tableNum: parseInt(num), count: count })).filter(tc => tc.count > 0);
+
+            if (tableCounts.length < 2) { if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden'); break; }
+
+            tableCounts.sort((a, b) => a.count - b.count);
+            const minTable = tableCounts[0];
+            const maxTable = tableCounts[tableCounts.length - 1];
+
+            if (maxTable.count - minTable.count <= maxDifference) { if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden'); break; }
+
+            // --- Imbalance detected ---
+            balancingPerformed = true;
+            if (tableBalanceInfo) tableBalanceInfo.classList.remove('hidden');
+            console.log(`Balancing needed: Max T${maxTable.tableNum}(${maxTable.count}), Min T${minTable.tableNum}(${minTable.count})`);
+
+            const playersOnMaxTable = state.live.players.filter(p => p.table === maxTable.tableNum);
+            if (playersOnMaxTable.length === 0) { console.error(`Balancing Error: No players found on max table ${maxTable.tableNum}!`); if (tableBalanceInfo) tableBalanceInfo.textContent = "Balanseringsfeil!"; break; }
+
+            // Simplest: move a random player. Could be smarter (e.g., avoid moving big blind).
+            const playerToMove = playersOnMaxTable[Math.floor(Math.random() * playersOnMaxTable.length)];
+
+            const occupiedSeatsMin = state.live.players.filter(p => p.table === minTable.tableNum).map(p => p.seat);
+            let newSeat = 1;
+            while(occupiedSeatsMin.includes(newSeat)) { newSeat++; }
+            if(newSeat > state.config.playersPerTable) { console.error(`Balancing Error: No seat found on target table ${minTable.tableNum}.`); alert(`Balanseringsfeil: Fant ikke ledig sete på bord ${minTable.tableNum}.`); if (tableBalanceInfo) tableBalanceInfo.textContent = "Balanseringsfeil!"; break; }
+
+            const oldTable = playerToMove.table; const oldSeat = playerToMove.seat;
+            const message = `Balansering: ${playerToMove.name} flyttes fra B${oldTable} S${oldSeat} til B${minTable.tableNum} S${newSeat}.`;
+
+            playerToMove.table = minTable.tableNum; playerToMove.seat = newSeat;
+            logActivity(state.live.activityLog, message);
+            state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table);
+
+            // Update UI and save state *inside the loop* for each move
+            updateUI();
+            saveTournamentState(currentTournamentId, state);
+            console.log(`Player ${playerToMove.name} moved. Re-evaluating balance...`);
+            // Loop continues
+
+        } // End while loop
+
+        if (balancingPerformed) console.log("Balancing process finished.");
+        return balancingPerformed;
+    }
     // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT END ===
 
 
     // === 07b: HELPER FUNCTIONS - LOGGING START ===
-    function logActivity(logArray, message) {
-        // Ensure logArray is initialized if it wasn't
-        if (!logArray) {
-             console.warn("Activity log array was undefined, initializing.");
-             logArray = state.live.activityLog = []; // Initialize in state too
-        }
-        const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        logArray.unshift({ timestamp, message }); // Add to the beginning
-
-        // Limit log size
-        const MAX_LOG_ENTRIES = 100; // Increased limit
-        if (logArray.length > MAX_LOG_ENTRIES) {
-            logArray.pop(); // Remove the oldest entry
-        }
-        console.log(`[Log ${timestamp}] ${message}`);
-        // Re-rendering happens in updateUI or specific calls
-    }
-
-    function renderActivityLog() {
-        if (!activityLogUl) return;
-        activityLogUl.innerHTML = ''; // Clear existing logs
-        const logEntries = state?.live?.activityLog || [];
-
-        if (logEntries.length === 0) {
-            activityLogUl.innerHTML = '<li>Loggen er tom.</li>';
-            return;
-        }
-
-        logEntries.forEach(entry => {
-            const li = document.createElement('li');
-            li.innerHTML = `<span class="log-time">[${entry.timestamp}]</span> ${entry.message}`;
-            activityLogUl.appendChild(li);
-        });
-    }
+    // logActivity defined earlier
+    // renderActivityLog defined earlier
     // === 07b: HELPER FUNCTIONS - LOGGING END ===
 
 
     // === 08: UI UPDATE FUNCTIONS START ===
-    function renderPlayerList() {
-        if (!playerListUl || !eliminatedPlayerListUl || !activePlayerCountSpan || !eliminatedPlayerCountSpan) {
-             console.error("Player list elements not found!");
-             return;
-        }
-
-        playerListUl.innerHTML = ''; // Clear active list
-        eliminatedPlayerListUl.innerHTML = ''; // Clear eliminated list
-
-        const currentLevelNum = state.live.currentLevelIndex + 1;
-        const canRebuy = state.config.type === 'rebuy' && currentLevelNum <= state.config.rebuyLevels;
-        const canAddon = state.config.type === 'rebuy' && currentLevelNum > state.config.rebuyLevels;
-        const canPerformActions = state.live.status !== 'finished';
-
-        // --- Render Active Players ---
-        const sortedActivePlayers = [...state.live.players].sort((a, b) =>
-            a.table === b.table ? a.seat - b.seat : a.table - b.table
-        );
-
-        sortedActivePlayers.forEach(p => {
-            const li = document.createElement('li');
-            let playerInfoHtml = `${p.name} <span class="player-details">(B${p.table}S${p.seat})</span>`;
-            if (p.rebuys > 0) playerInfoHtml += ` <span class="player-details">[${p.rebuys}R]</span>`;
-            if (p.addon) playerInfoHtml += ` <span class="player-details">[A]</span>`;
-            if (state.config.type === 'knockout' && p.knockouts > 0) playerInfoHtml += ` <span class="player-details">(KOs: ${p.knockouts})</span>`;
-
-            let actionsHtml = '';
-            if (canPerformActions) {
-                actionsHtml += `<button class="btn-edit-player small-button" data-player-id="${p.id}" title="Rediger Navn">✏️</button>`;
-                if (canRebuy) {
-                    actionsHtml += `<button class="btn-rebuy small-button" data-player-id="${p.id}" title="Rebuy">R</button>`;
-                }
-                if (canAddon && !p.addon) { // Only show Addon if available and not yet taken
-                    actionsHtml += `<button class="btn-addon small-button" data-player-id="${p.id}" title="Addon">A</button>`;
-                }
-                actionsHtml += `<button class="btn-eliminate small-button danger-button" data-player-id="${p.id}" title="Eliminer">X</button>`;
-            }
-
-            li.innerHTML = `<span class="item-name">${playerInfoHtml}</span><div class="list-actions player-actions">${actionsHtml}</div>`;
-            playerListUl.appendChild(li);
-        });
-
-        // --- Render Eliminated Players ---
-        const sortedEliminatedPlayers = [...state.live.eliminatedPlayers].sort((a, b) =>
-            (a.place ?? Infinity) - (b.place ?? Infinity) // Sort by place ascending
-        );
-
-        sortedEliminatedPlayers.forEach(p => {
-            const li = document.createElement('li');
-            let playerInfoHtml = `${p.place ?? '?'}. ${p.name}`;
-            if (p.rebuys > 0) playerInfoHtml += ` <span class="player-details">[${p.rebuys}R]</span>`;
-            if (p.addon) playerInfoHtml += ` <span class="player-details">[A]</span>`;
-            if (state.config.type === 'knockout' && p.knockouts > 0) playerInfoHtml += ` <span class="player-details">(KOs: ${p.knockouts})</span>`;
-            if (p.eliminatedBy) playerInfoHtml += ` <span class="player-details">(av ${getPlayerNameById(p.eliminatedBy)})</span>`;
-
-            let actionsHtml = '';
-            if (canPerformActions) {
-                actionsHtml += `<button class="btn-restore small-button warning-button" data-player-id="${p.id}" title="Gjenopprett">↩️</button>`;
-            }
-
-            li.innerHTML = `<span class="item-name">${playerInfoHtml}</span><div class="list-actions player-actions">${actionsHtml}</div>`;
-            eliminatedPlayerListUl.appendChild(li);
-        });
-
-        // Update counts
-        activePlayerCountSpan.textContent = state.live.players.length;
-        eliminatedPlayerCountSpan.textContent = state.live.eliminatedPlayers.length;
-
-        // Add event listeners to newly created buttons
-        playerListUl.querySelectorAll('.btn-edit-player').forEach(btn => btn.onclick = handleEditPlayer);
-        playerListUl.querySelectorAll('.btn-rebuy').forEach(btn => btn.onclick = handleRebuy);
-        playerListUl.querySelectorAll('.btn-addon').forEach(btn => btn.onclick = handleAddon);
-        playerListUl.querySelectorAll('.btn-eliminate').forEach(btn => btn.onclick = handleEliminate);
-        eliminatedPlayerListUl.querySelectorAll('.btn-restore').forEach(btn => btn.onclick = handleRestore);
-    }
-
-    function displayPrizes() {
-        if (!prizeDisplayLive || !totalPotPrizeSpan) return;
-
-        const prizeData = calculatePrizes(); // Get calculated prize amounts/places
-        const totalPotFormatted = (state.live.totalPot || 0).toLocaleString('nb-NO');
-        prizeDisplayLive.querySelector('h3').innerHTML = `Premiefordeling (Totalpott: <span id="total-pot">${totalPotFormatted}</span> kr)`; // Update total pot in heading
-
-        // Clear previous prize list/message
-        const existingOl = prizeDisplayLive.querySelector('ol');
-        const existingP = prizeDisplayLive.querySelector('p');
-        if(existingOl) existingOl.remove();
-        if(existingP) existingP.remove();
-
-        if (prizeData.length > 0) {
-            const ol = document.createElement('ol');
-            prizeData.forEach(p => {
-                const li = document.createElement('li');
-                li.textContent = `${p.place}. Plass: ${p.amount.toLocaleString('nb-NO')} kr (${p.percentage}%)`;
-                ol.appendChild(li);
-            });
-            prizeDisplayLive.appendChild(ol);
-            prizeDisplayLive.classList.remove('hidden'); // Show prize section
-        } else {
-            // Show message if no prizes calculated
-            const p = document.createElement('p');
-            // Determine why no prizes are shown
-             const paidPlaces = state.config.paidPlaces || 0;
-             const distributionPercentages = state.config.prizeDistribution || [];
-             const totalPot = state.live.totalPot || 0;
-             let prizePot = totalPot;
-             if (state.config.type === 'knockout') prizePot -= (state.live.totalEntries || 0) * (state.config.bountyAmount || 0);
-
-             if (prizePot <= 0) {
-                 p.textContent = 'Ingen premiepott å fordele (etter evt. bounty).';
-             } else if (paidPlaces <= 0) {
-                 p.textContent = 'Antall betalte plasser er ikke definert.';
-             } else if (distributionPercentages.length !== paidPlaces) {
-                 p.textContent = 'Antall premier i fordelingen matcher ikke antall betalte plasser.';
-             } else {
-                  p.textContent = 'Premiefordeling ikke tilgjengelig (ukjent årsak).';
-             }
-            prizeDisplayLive.appendChild(p);
-            prizeDisplayLive.classList.add('hidden'); // Hide prize section if no prizes
-        }
-    }
-
-    function updateUI() {
-        if (!state || !state.config || !state.live) {
-            console.error("State is missing or invalid in updateUI");
-            if(nameDisplay) nameDisplay.textContent = "Error: State Missing!";
-            return;
-        }
-
-        // Update Title (inside titleElement)
-        if (nameDisplay) {
-             nameDisplay.textContent = state.config.name;
-        }
-
-        // Update Real Time Clock
-        if(currentTimeDisplay) {
-            currentTimeDisplay.textContent = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-
-        const currentLevelIndex = state.live.currentLevelIndex;
-        const currentLevelData = state.config.blindLevels?.[currentLevelIndex];
-        const nextLevelData = state.config.blindLevels?.[currentLevelIndex + 1];
-        const nextPauseInfo = findNextPauseInfo();
-
-        // Update Timer and Blinds display
-        if (state.live.isOnBreak) {
-            if(timerDisplay) timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak);
-            if(blindsElement) blindsElement.classList.add('hidden');
-            if(breakInfo) breakInfo.classList.remove('hidden');
-        } else {
-            if(timerDisplay) timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel);
-            if(blindsElement) blindsElement.classList.remove('hidden');
-            if(breakInfo) breakInfo.classList.add('hidden');
-            if(currentLevelDisplay) currentLevelDisplay.textContent = `(Nivå ${currentLevelData ? currentLevelData.level : 'N/A'})`;
-             if(blindsDisplay) blindsDisplay.innerHTML = formatBlindsHTML(currentLevelData);
-        }
-
-        // Update Info Box content (visibility handled by applyThemeAndLayout)
-        if(nextBlindsDisplay) nextBlindsDisplay.textContent = formatNextBlindsText(nextLevelData);
-        if(averageStackDisplay) averageStackDisplay.textContent = calculateAverageStack().toLocaleString('nb-NO');
-        if(playersRemainingDisplay) playersRemainingDisplay.textContent = state.live.players.length;
-        if(totalEntriesDisplay) totalEntriesDisplay.textContent = state.live.totalEntries;
-
-        const currentLevelNumForLateReg = currentLevelIndex + 1;
-        const lateRegStillOpen = currentLevelNumForLateReg <= state.config.lateRegLevel && state.config.lateRegLevel > 0 && state.live.status !== 'finished';
-        if (lateRegStatusDisplay) {
-            if (state.config.lateRegLevel > 0) {
-                lateRegStatusDisplay.textContent = `${lateRegStillOpen ? `Åpen t.o.m. nivå ${state.config.lateRegLevel}` : 'Stengt'}`;
-            } else { lateRegStatusDisplay.textContent = 'Ikke aktiv'; }
-        }
-        if (infoNextPauseParagraph) {
-            const nextPauseTimeSpan = infoNextPauseParagraph.querySelector('#next-pause-time');
-            if (nextPauseTimeSpan) {
-                 nextPauseTimeSpan.textContent = nextPauseInfo ? `Etter nivå ${nextPauseInfo.level} (${nextPauseInfo.duration} min)` : 'Ingen flere';
-            }
-        }
-
-        // Update Button States
-        const isFinished = state.live.status === 'finished';
-        if(startPauseButton) { startPauseButton.textContent = state.live.status === 'running' ? 'Pause Klokke' : 'Start Klokke'; startPauseButton.disabled = isFinished; }
-        if(prevLevelButton) prevLevelButton.disabled = currentLevelIndex <= 0 || isFinished;
-        if(nextLevelButton) nextLevelButton.disabled = currentLevelIndex >= state.config.blindLevels.length - 1 || isFinished;
-        if(adjustTimeMinusButton) adjustTimeMinusButton.disabled = isFinished;
-        if(adjustTimePlusButton) adjustTimePlusButton.disabled = isFinished;
-        if(lateRegButton) lateRegButton.disabled = !lateRegStillOpen || isFinished; // || state.live.status === 'paused'; // Keep enabled even if paused?
-        if(btnEditTournamentSettings) btnEditTournamentSettings.disabled = isFinished;
-        if(endTournamentButton) endTournamentButton.disabled = isFinished;
-
-        // Re-render dynamic lists and displays
-        renderPlayerList();
-        displayPrizes();
-        renderActivityLog();
-    }
-// === 08: UI UPDATE FUNCTIONS END ===
+    // renderPlayerList defined earlier
+    // displayPrizes defined earlier
+    // updateUI defined earlier
+    // === 08: UI UPDATE FUNCTIONS END ===
 
 
     // === 09: TIMER LOGIC START ===
-    function tick() {
-        if (state.live.status !== 'running') return; // Only tick if running
-
-        if (state.live.isOnBreak) {
-            // --- Break Timer ---
-            state.live.timeRemainingInBreak--;
-            if (timerDisplay) timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak);
-
-            if (state.live.timeRemainingInBreak < 0) {
-                // Break finished, move to next level
-                state.live.isOnBreak = false;
-                state.live.currentLevelIndex++;
-
-                if (state.live.currentLevelIndex >= state.config.blindLevels.length) {
-                    // End of blind structure
-                    logActivity(state.live.activityLog, "Siste pause ferdig. Turneringens blindstruktur er fullført.");
-                    finishTournament(); // Or maybe just pause clock? Decide behavior. For now, finish.
-                    return;
-                }
-
-                const newLevel = state.config.blindLevels[state.live.currentLevelIndex];
-                state.live.timeRemainingInLevel = newLevel.duration * 60;
-                logActivity(state.live.activityLog, `Pause over. Nivå ${newLevel.level} (${formatBlindsHTML(newLevel)}) starter.`);
-                updateUI();
-                saveTournamentState(currentTournamentId, state); // Save state change
-            } else if (state.live.timeRemainingInBreak % 15 === 0) {
-                 // Save periodically during break
-                 saveTournamentState(currentTournamentId, state);
-            }
-
-        } else {
-            // --- Level Timer ---
-            state.live.timeRemainingInLevel--;
-             if (timerDisplay) timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel);
-
-            if (state.live.timeRemainingInLevel < 0) {
-                // Level finished, check for break or next level
-                const currentLevel = state.config.blindLevels[state.live.currentLevelIndex];
-                const pauseDuration = currentLevel?.pauseMinutes || 0;
-
-                if (pauseDuration > 0) {
-                    // Start break
-                    state.live.isOnBreak = true;
-                    state.live.timeRemainingInBreak = pauseDuration * 60;
-                    logActivity(state.live.activityLog, `Nivå ${currentLevel.level} ferdig. Starter ${pauseDuration} min pause.`);
-                    updateUI();
-                    saveTournamentState(currentTournamentId, state);
-                } else {
-                    // No break, move directly to next level
-                    state.live.currentLevelIndex++;
-
-                    if (state.live.currentLevelIndex >= state.config.blindLevels.length) {
-                         logActivity(state.live.activityLog, `Nivå ${currentLevel.level} ferdig. Turneringens blindstruktur er fullført.`);
-                        finishTournament(); // End of structure
-                        return;
-                    }
-
-                    const newLevel = state.config.blindLevels[state.live.currentLevelIndex];
-                    state.live.timeRemainingInLevel = newLevel.duration * 60;
-                    logActivity(state.live.activityLog, `Nivå ${currentLevel.level} ferdig. Nivå ${newLevel.level} (${formatBlindsHTML(newLevel)}) starter.`);
-                    updateUI();
-                    saveTournamentState(currentTournamentId, state);
-                }
-            } else if (state.live.timeRemainingInLevel > 0 && state.live.timeRemainingInLevel % 30 === 0) {
-                // Save periodically during level
-                saveTournamentState(currentTournamentId, state);
-            }
-        }
-    }
-
-    function startRealTimeClock() {
-        if (realTimeInterval) clearInterval(realTimeInterval); // Clear existing if any
-        realTimeInterval = setInterval(() => {
-            if (currentTimeDisplay) {
-                currentTimeDisplay.textContent = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            }
-        }, 1000);
-    }
+    // tick defined earlier
+    // startRealTimeClock defined earlier
     // === 09: TIMER LOGIC END ===
 
 
     // === 10: EVENT HANDLERS - CONTROLS START ===
-    function handleStartPause() {
-        if (state.live.status === 'finished') return;
-
-        if (state.live.status === 'paused') {
-            // --- Start Timer ---
-            state.live.status = 'running';
-            if (!timerInterval) { // Start interval only if not already running
-                timerInterval = setInterval(tick, 1000);
-            }
-            logActivity(state.live.activityLog, "Klokke startet.");
-        } else {
-            // --- Pause Timer ---
-            state.live.status = 'paused';
-             // Interval will stop checking status internally, no need to clear here
-            logActivity(state.live.activityLog, "Klokke pauset.");
-            saveTournamentState(currentTournamentId, state); // Save paused state
-        }
-        updateUI(); // Update button text etc.
-    }
-
-    function handleAdjustTime(deltaSeconds) {
-        if (state.live.status === 'finished') return;
-
-        let targetTimeKey = state.live.isOnBreak ? 'timeRemainingInBreak' : 'timeRemainingInLevel';
-        let maxTime = Infinity;
-
-        // Set max time if adjusting level time (prevent exceeding level duration)
-        if (!state.live.isOnBreak) {
-             const currentLevel = state.config.blindLevels[state.live.currentLevelIndex];
-             if (currentLevel) {
-                 maxTime = currentLevel.duration * 60;
-             }
-        }
-
-        state.live[targetTimeKey] += deltaSeconds;
-        // Clamp between 0 and maxTime
-        state.live[targetTimeKey] = Math.max(0, Math.min(state.live[targetTimeKey], maxTime));
-
-        const adjustmentMinutes = deltaSeconds / 60;
-        logActivity(state.live.activityLog, `Tid justert ${adjustmentMinutes > 0 ? '+' : ''}${adjustmentMinutes} min.`);
-
-        updateUI(); // Update display immediately
-        saveTournamentState(currentTournamentId, state); // Save the change
-    }
-
-    function handleAdjustLevel(deltaIndex) {
-        if (state.live.status === 'finished') return;
-
-        const newIndex = state.live.currentLevelIndex + deltaIndex;
-
-        // Check if new index is valid
-        if (newIndex >= 0 && newIndex < state.config.blindLevels.length) {
-            const oldLevelNum = state.config.blindLevels[state.live.currentLevelIndex]?.level || '?';
-            const newLevel = state.config.blindLevels[newIndex];
-
-            // Confirmation before changing level
-            if (!confirm(`Endre til Nivå ${newLevel.level} (${formatBlindsHTML(newLevel)})? \nKlokken nullstilles for nivået.`)) {
-                 return; // User cancelled
-            }
-
-            state.live.currentLevelIndex = newIndex;
-            state.live.timeRemainingInLevel = newLevel.duration * 60; // Reset time for new level
-            state.live.isOnBreak = false; // Ensure not on break
-            state.live.timeRemainingInBreak = 0;
-
-            logActivity(state.live.activityLog, `Nivå manuelt endret: ${oldLevelNum} -> ${newLevel.level}. Klokke nullstilt.`);
-            updateUI();
-            saveTournamentState(currentTournamentId, state);
-        } else {
-            console.warn("Cannot adjust level: Index out of bounds.", newIndex);
-            alert("Kan ikke gå til nivået (første eller siste nivå nådd).");
-        }
-    }
-
-    function handleEndTournament() {
-        if (state.live.status === 'finished') {
-            alert("Turneringen er allerede markert som fullført.");
-            return;
-        }
-        if (confirm("Er du sikker på at du vil markere turneringen som fullført?\nDette kan ikke enkelt angres.")) {
-            finishTournament();
-        }
-    }
-
-    function handleForceSave() {
-        if (state) {
-            console.log("Forcing save...");
-            if (saveTournamentState(currentTournamentId, state)) {
-                 if(btnForceSave) btnForceSave.textContent = "Lagret!";
-                 // Optional: Disable button briefly?
-                 setTimeout(() => { if(btnForceSave) btnForceSave.textContent = "Lagre Nå"; }, 1500);
-            } else {
-                 alert("Lagring feilet!");
-            }
-        } else {
-             console.error("Cannot force save, state is null.");
-        }
-    }
-
-    function handleBackToMain() {
-        // Save current state before leaving, unless finished
-        if (state && state.live.status !== 'finished') {
-            saveTournamentState(currentTournamentId, state);
-            console.log("State saved before returning to main.");
-        }
-        window.location.href = 'index.html';
-    }
+    // handleStartPause defined earlier
+    // handleAdjustTime defined earlier
+    // handleAdjustLevel defined earlier
+    // handleEndTournament defined earlier
+    // handleForceSave defined earlier
+    // handleBackToMain defined earlier
     // === 10: EVENT HANDLERS - CONTROLS END ===
 
 
     // === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
-    function handleRebuy(event){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleAddon(event){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleEliminate(event){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleRestore(event){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleEditPlayer(event){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleLateRegClick() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
+    // handleRebuy defined earlier
+    // handleAddon defined earlier
+    // handleEliminate defined earlier
+    // handleRestore defined earlier
+    // handleEditPlayer defined earlier
+    // handleLateRegClick defined earlier
     // === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
 
 
     // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS START ===
-    function openTournamentModal() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function closeTournamentModal() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function openUiModal() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function closeUiModal(revert = false) { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function addEditBlindLevelRow(levelData={}){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function updateEditLevelNumbers(){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function generateEditPayout(){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function syncRgbFromHsl(typePrefix) { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function syncHslFromRgb(typePrefix) { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function updateColorAndLayoutPreviews() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleThemeLayoutControlChange(e) { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function addThemeAndLayoutListeners(){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function removeThemeAndLayoutListeners(){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function populateThemeFavorites() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function enableDisableDeleteButton(){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleLoadFavorite() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleSaveFavorite() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleDeleteFavorite() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleSaveTournamentSettings(){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleSaveUiSettings(){ /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
-    function handleResetLayoutTheme() { /* ... (Behold eksisterende funksjon fra forrige svar) ... */ }
+    // openTournamentModal defined earlier
+    // closeTournamentModal defined earlier
+    // openUiModal defined earlier
+    // closeUiModal defined earlier
+    // addEditBlindLevelRow defined earlier
+    // updateEditLevelNumbers defined earlier
+    // generateEditPayout defined earlier
+    // syncRgbFromHsl defined earlier
+    // syncHslFromRgb defined earlier
+    // updateColorAndLayoutPreviews defined earlier
+    // handleThemeLayoutControlChange defined earlier
+    // addThemeAndLayoutListeners defined earlier
+    // removeThemeAndLayoutListeners defined earlier
+    // populateThemeFavorites defined earlier
+    // enableDisableDeleteButton defined earlier
+    // handleLoadFavorite defined earlier
+    // handleSaveFavorite defined earlier
+    // handleDeleteFavorite defined earlier
+    // handleSaveTournamentSettings defined earlier
+    // handleSaveUiSettings defined earlier
+    // handleResetLayoutTheme defined earlier
     // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS END ===
 
 
     // === 13: TOURNAMENT FINISH LOGIC START ===
-    function finishTournament() {
-        if (state.live.status === 'finished') return; // Already finished
-
-        console.log("Finishing tournament...");
-        logActivity(state.live.activityLog, "Turnering markeres som fullført.");
-
-        // Stop timers
-        if (timerInterval) clearInterval(timerInterval);
-        timerInterval = null;
-        if (realTimeInterval) clearInterval(realTimeInterval); // Stop wall clock too? Or let it run? Stop for now.
-        realTimeInterval = null;
-
-        // Update state
-        state.live.status = 'finished';
-        state.live.isOnBreak = false; // Ensure break status is off
-        state.live.timeRemainingInLevel = 0; // Reset timers
-        state.live.timeRemainingInBreak = 0;
-
-        // Assign final place to the winner if exactly one player remains
-        if (state.live.players.length === 1) {
-            const winner = state.live.players[0];
-            winner.place = 1; // Assign 1st place
-            state.live.eliminatedPlayers.push(winner); // Move winner to eliminated list
-            state.live.players.splice(0, 1); // Remove from active list
-            logActivity(state.live.activityLog, `Vinner: ${winner.name}!`);
-            console.log(`Winner declared: ${winner.name}`);
-        } else if (state.live.players.length > 1) {
-             // Multiple players left - log as potential chop or undecided outcome
-             logActivity(state.live.activityLog, `Turnering fullført med ${state.live.players.length} spillere igjen (Deal / Chop?).`);
-             console.warn(`Tournament finished with ${state.live.players.length} players remaining.`);
-             // Move remaining players to eliminated list without assigning place? Or assign joint place?
-             // For simplicity, move them without place for now.
-             state.live.players.forEach(p => {
-                p.eliminated = true; // Mark as eliminated conceptually
-                p.place = null; // No specific place assigned if > 1 left
-                state.live.eliminatedPlayers.push(p);
-             });
-             state.live.players = []; // Clear active players
-        } else {
-             // No players left active? Log it.
-             logActivity(state.live.activityLog, `Turnering fullført uten aktive spillere.`);
-             console.warn("Tournament finished with 0 active players.");
-        }
-
-        // Sort eliminated list finally by place
-        state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity));
-
-        // Update UI to reflect finished state (buttons disabled etc.)
-        updateUI();
-        // Final save
-        saveTournamentState(currentTournamentId, state);
-
-        alert("Turneringen er fullført!");
-    }
+    // finishTournament defined earlier
     // === 13: TOURNAMENT FINISH LOGIC END ===
 
 
     // === 14: EVENT LISTENER ATTACHMENT (General) START ===
-    // Ensure all elements exist before adding listeners
+    // Add listeners (ensure all elements exist)
     if(startPauseButton) startPauseButton.addEventListener('click', handleStartPause);
     if(prevLevelButton) prevLevelButton.addEventListener('click', () => handleAdjustLevel(-1));
     if(nextLevelButton) nextLevelButton.addEventListener('click', () => handleAdjustLevel(1));
@@ -933,48 +689,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if(endTournamentButton) endTournamentButton.addEventListener('click', handleEndTournament);
     if(btnForceSave) btnForceSave.addEventListener('click', handleForceSave);
     if(btnBackToMainLive) btnBackToMainLive.addEventListener('click', handleBackToMain);
-
-    // Modal Triggers
     if(btnEditTournamentSettings) btnEditTournamentSettings.addEventListener('click', openTournamentModal);
     if(btnEditUiSettings) btnEditUiSettings.addEventListener('click', openUiModal);
-
-    // Canvas Element Click Triggers (Timer, Blinds, Logo, Info, Title)
-    if(liveCanvas) {
-        liveCanvas.addEventListener('click', (e) => {
-            const clickedElement = e.target.closest('.clickable-element');
-            if (clickedElement && isModalOpen === false) { // Only open if no modal is already open
-                 console.log("Clicked on canvas element:", clickedElement.id, "Opening UI modal.");
-                openUiModal();
-                // Optionally scroll/focus the relevant controls in the modal here
-                // e.g., const elementId = clickedElement.dataset.elementId; focusElementControls(elementId);
-            }
-        });
-    }
-
-    // Tournament Modal Buttons
+    if(liveCanvas) { liveCanvas.addEventListener('click', (e) => { const clickedElement = e.target.closest('.clickable-element'); if (clickedElement && !isModalOpen) { openUiModal(); } }); }
     if(closeTournamentModalButton) closeTournamentModalButton.addEventListener('click', closeTournamentModal);
     if(btnCancelTournamentEdit) btnCancelTournamentEdit.addEventListener('click', closeTournamentModal);
-    if(btnAddEditLevel) btnAddEditLevel.addEventListener('click', () => addEditBlindLevelRow()); // Add empty row
+    if(btnAddEditLevel) btnAddEditLevel.addEventListener('click', () => addEditBlindLevelRow());
     if(btnGenerateEditPayout) btnGenerateEditPayout.addEventListener('click', generateEditPayout);
     if(btnSaveTournamentSettings) btnSaveTournamentSettings.addEventListener('click', handleSaveTournamentSettings);
-
-    // UI Modal Buttons
-    if(closeUiModalButton) closeUiModalButton.addEventListener('click', () => closeUiModal(true)); // Revert on X click
-    if(btnCancelUiEdit) btnCancelUiEdit.addEventListener('click', () => closeUiModal(true)); // Revert on Cancel
+    if(closeUiModalButton) closeUiModalButton.addEventListener('click', () => closeUiModal(true));
+    if(btnCancelUiEdit) btnCancelUiEdit.addEventListener('click', () => closeUiModal(true));
     if(btnSaveUiSettings) btnSaveUiSettings.addEventListener('click', handleSaveUiSettings);
     if(btnResetLayoutTheme) btnResetLayoutTheme.addEventListener('click', handleResetLayoutTheme);
-
-    // Close modals on outside click
-    window.addEventListener('click', (e) => {
-        if (isModalOpen && currentOpenModal && e.target === currentOpenModal) {
-            console.log("Clicked outside modal content.");
-            if (currentOpenModal === uiSettingsModal) {
-                closeUiModal(true); // Revert UI changes on outside click
-            } else if (currentOpenModal === tournamentSettingsModal) {
-                closeTournamentModal(); // Just close tournament modal
-            }
-        }
-    });
+    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { if (currentOpenModal === uiSettingsModal) closeUiModal(true); else if (currentOpenModal === tournamentSettingsModal) closeTournamentModal(); } });
     // === 14: EVENT LISTENER ATTACHMENT (General) END ===
 
 
@@ -988,7 +715,6 @@ document.addEventListener('DOMContentLoaded', () => {
         timerInterval = setInterval(tick, 1000); // Start level/break timer if already running
     } else if (state.live.status === 'finished') {
         console.log("Tournament state is 'finished'. Final UI state applied.");
-        // No timer needed, UI update already handled disabled states.
     } else {
          console.log(`Tournament state is '${state.live.status}'. Timer not started.`);
     }
