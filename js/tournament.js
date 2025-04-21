@@ -626,64 +626,605 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 // === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
 
-    // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS START ===
-    function openTournamentModal() { /* ... */ if(state.live.status==='finished'||isModalOpen)return; console.log("Opening tournament settings modal"); editBlindStructureBody.innerHTML=''; editBlindLevelCounter=0; state.config.blindLevels.forEach(level=>addEditBlindLevelRow(level)); updateEditLevelNumbers(); editPaidPlacesInput.value=state.config.paidPlaces; editPrizeDistTextarea.value=state.config.prizeDistribution.join(', '); tournamentSettingsModal.classList.remove('hidden'); isModalOpen=true; currentOpenModal = tournamentSettingsModal; }
-    function closeTournamentModal() { /* ... */ tournamentSettingsModal.classList.add('hidden'); isModalOpen=false; currentOpenModal = null; }
-    function openUiModal() { /* ... */ if(isModalOpen) return; console.log("Opening UI settings modal"); originalThemeBg=loadThemeBgColor(); originalThemeText=loadThemeTextColor(); originalElementLayouts=loadElementLayouts(); const [bgR,bgG,bgB]=parseRgbString(originalThemeBg); const bgHSL=rgbToHsl(bgR,bgG,bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; const [textR,textG,textB]=parseRgbString(originalThemeText); const textHSL=rgbToHsl(textR,textG,textB); textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB; textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l; canvasHeightInput.value = canvasHeightSlider.value = originalElementLayouts.canvas.height; timerXInput.value = timerXSlider.value = originalElementLayouts.timer.x; timerYInput.value = timerYSlider.value = originalElementLayouts.timer.y; timerWidthInput.value = timerWidthSlider.value = originalElementLayouts.timer.width; timerFontSizeInput.value = timerFontSizeSlider.value = originalElementLayouts.timer.fontSize; blindsXInput.value = blindsXSlider.value = originalElementLayouts.blinds.x; blindsYInput.value = blindsYSlider.value = originalElementLayouts.blinds.y; blindsWidthInput.value = blindsWidthSlider.value = originalElementLayouts.blinds.width; blindsFontSizeInput.value = blindsFontSizeSlider.value = originalElementLayouts.blinds.fontSize; logoXInput.value = logoXSlider.value = originalElementLayouts.logo.x; logoYInput.value = logoYSlider.value = originalElementLayouts.logo.y; logoWidthInput.value = logoWidthSlider.value = originalElementLayouts.logo.width; logoHeightInput.value = logoHeightSlider.value = originalElementLayouts.logo.height; infoXInput.value = infoXSlider.value = originalElementLayouts.info.x; infoYInput.value = infoYSlider.value = originalElementLayouts.info.y; infoWidthInput.value = infoWidthSlider.value = originalElementLayouts.info.width; infoFontSizeInput.value = infoFontSizeSlider.value = originalElementLayouts.info.fontSize;
-        // Populate info toggles
-        for (const key in infoParagraphs) { const checkbox = document.getElementById(`toggleInfo${key.substring(4)}`); if(checkbox) checkbox.checked = originalElementLayouts.info[key] ?? true; }
-        populateThemeFavorites(); updateColorAndLayoutPreviews(); addThemeAndLayoutListeners(); uiSettingsModal.classList.remove('hidden'); isModalOpen=true; currentOpenModal = uiSettingsModal; }
-    function closeUiModal(revert=false) { /* ... */ if(revert) applyThemeAndLayout(originalThemeBg, originalThemeText, originalElementLayouts); removeThemeAndLayoutListeners(); uiSettingsModal.classList.add('hidden'); isModalOpen = false; currentOpenModal = null; }
-    function addEditBlindLevelRow(levelData={}){/* ... */ editBlindLevelCounter++; const row=editBlindStructureBody.insertRow(); row.dataset.levelNumber=editBlindLevelCounter; const sb=levelData.sb??''; const bb=levelData.bb??''; const ante=levelData.ante??0; const duration=levelData.duration??(state.config.blindLevels?.[0]?.duration||20); const pauseMinutes=levelData.pauseMinutes??0; const isPastLevel=levelData.level<=state.live.currentLevelIndex+1&&!state.live.isOnBreak; row.innerHTML=`<td><span class="level-number">${editBlindLevelCounter}</span> ${isPastLevel?'<small>(Låst)</small>':''}</td><td><input type="number" class="sb-input" value="${sb}" min="0" step="100" ${isPastLevel?'disabled':''}></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="100" ${isPastLevel?'disabled':''}></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="25" ${isPastLevel?'disabled':''}></td><td><input type="number" class="duration-input" value="${duration}" min="1" ${isPastLevel?'disabled':''}></td><td><input type="number" class="pause-duration-input" value="${pauseMinutes}" min="0" ${isPastLevel?'disabled':''}></td><td><button type="button" class="btn-remove-level" title="Fjern nivå ${editBlindLevelCounter}" ${isPastLevel?'disabled':''}>X</button></td>`; const removeBtn=row.querySelector('.btn-remove-level'); const bbInput=row.querySelector('.bb-input'); const sbInput=row.querySelector('.sb-input'); if(!isPastLevel){removeBtn.onclick=()=>{row.remove(); updateEditLevelNumbers();}; bbInput.onchange=()=>{const bbVal=parseInt(bbInput.value); if(!isNaN(bbVal)&&bbVal>0)sbInput.value=roundToNearestValid(Math.floor(bbVal/2),100);};} else{row.querySelectorAll('input').forEach(inp=>inp.disabled=true); removeBtn.disabled=true;}}
-    function updateEditLevelNumbers(){/* ... */ const rows=editBlindStructureBody.querySelectorAll('tr'); rows.forEach((row,index)=>{const levelNum=index+1; row.dataset.levelNumber=levelNum; row.querySelector('.level-number').textContent=levelNum; row.querySelector('.btn-remove-level').title=`Fjern nivå ${levelNum}`;}); editBlindLevelCounter=rows.length;}
-    function generateEditPayout(){/* ... */ const places=parseInt(editPaidPlacesInput.value)||0; if(places>0&&standardPayouts[places]){editPrizeDistTextarea.value=standardPayouts[places].join(', ');}else{editPrizeDistTextarea.value='';}}
-    function syncRgbFromHsl(typePrefix) { /* ... */ if(blockSliderUpdates)return; const h=parseInt(document.getElementById(`${typePrefix}HueInput`).value); const s=parseInt(document.getElementById(`${typePrefix}SatInput`).value); const l=parseInt(document.getElementById(`${typePrefix}LigInput`).value); const rgbString=hslToRgb(h,s,l); const [r,g,b]=parseRgbString(rgbString); blockSliderUpdates=true; document.getElementById(`${typePrefix}RedSlider`).value=document.getElementById(`${typePrefix}RedInput`).value=r; document.getElementById(`${typePrefix}GreenSlider`).value=document.getElementById(`${typePrefix}GreenInput`).value=g; document.getElementById(`${typePrefix}BlueSlider`).value=document.getElementById(`${typePrefix}BlueInput`).value=b; blockSliderUpdates=false; return rgbString;}
-    function syncHslFromRgb(typePrefix) { /* ... */ if(blockSliderUpdates)return; const r=parseInt(document.getElementById(`${typePrefix}RedInput`).value); const g=parseInt(document.getElementById(`${typePrefix}GreenInput`).value); const b=parseInt(document.getElementById(`${typePrefix}BlueInput`).value); const hsl=rgbToHsl(r,g,b); blockSliderUpdates=true; document.getElementById(`${typePrefix}HueSlider`).value=document.getElementById(`${typePrefix}HueInput`).value=hsl.h; document.getElementById(`${typePrefix}SatSlider`).value=document.getElementById(`${typePrefix}SatInput`).value=hsl.s; document.getElementById(`${typePrefix}LigSlider`).value=document.getElementById(`${typePrefix}LigInput`).value=hsl.l; blockSliderUpdates=false; return `rgb(${r}, ${g}, ${b})`;}
-    function updateColorAndLayoutPreviews() { /* ... */ const currentBgColor=syncHslFromRgb('bg'); const currentTextColor=syncHslFromRgb('text'); const currentElementLayouts = { canvas: {height: parseInt(canvasHeightSlider.value)}, timer: { x: parseInt(timerXSlider.value), y: parseInt(timerYSlider.value), width: parseInt(timerWidthSlider.value), fontSize: parseFloat(timerFontSizeSlider.value) }, blinds: { x: parseInt(blindsXSlider.value), y: parseInt(blindsYSlider.value), width: parseInt(blindsWidthSlider.value), fontSize: parseFloat(blindsFontSizeSlider.value) }, logo: { x: parseInt(logoXSlider.value), y: parseInt(logoYSlider.value), width: parseInt(logoWidthSlider.value), height: parseInt(logoHeightSlider.value) }, info: { x: parseInt(infoXSlider.value), y: parseInt(infoYSlider.value), width: parseInt(infoWidthSlider.value), fontSize: parseFloat(infoFontSizeSlider.value), showNextBlinds: toggleInfoNextBlinds.checked, showNextPause: toggleInfoNextPause.checked, showAvgStack: toggleInfoAvgStack.checked, showPlayers: toggleInfoPlayers.checked, showLateReg: toggleInfoLateReg.checked } }; if(bgColorPreview)bgColorPreview.style.backgroundColor=currentBgColor; if(textColorPreview){textColorPreview.style.backgroundColor=currentBgColor; textColorPreview.querySelector('span').style.color=currentTextColor;} applyThemeAndLayout(currentBgColor, currentTextColor, currentElementLayouts); }
-    function handleThemeLayoutSliderInput(e){ /* ... */ const id=e.target.id; const inputElement=document.getElementById(id.replace('Slider','Input')); if(inputElement)inputElement.value=e.target.value; if (id.includes('Hue') || id.includes('Sat') || id.includes('Lig')) syncRgbFromHsl(id.startsWith('bg') ? 'bg' : 'text'); else if (id.includes('Red') || id.includes('Green') || id.includes('Blue')) syncHslFromRgb(id.startsWith('bg') ? 'bg' : 'text'); updateColorAndLayoutPreviews();}
-    function handleThemeLayoutNumberInput(e){ /* ... */ const id=e.target.id; const sliderElement=document.getElementById(id.replace('Input','Slider')); let value=parseFloat(e.target.value); const min=parseFloat(e.target.min||'0'); const max=parseFloat(e.target.max|| (id.includes('FontSize') ? '30' : id.includes('Hue') ? '360' : '100')); let step = parseFloat(e.target.step || '1'); value=isNaN(value)?min:Math.max(min,Math.min(max,value)); e.target.value= Number.isInteger(step) ? Math.round(value) : value.toFixed(1); if(sliderElement)sliderElement.value=value; if (id.includes('Hue') || id.includes('Sat') || id.includes('Lig')) syncRgbFromHsl(id.startsWith('bg') ? 'bg' : 'text'); else if (id.includes('Red') || id.includes('Green') || id.includes('Blue')) syncHslFromRgb(id.startsWith('bg') ? 'bg' : 'text'); updateColorAndLayoutPreviews();}
-    // Add ALL sliders/inputs including new element layout ones
-    const allSliders = [ bgRedSlider, bgGreenSlider, bgBlueSlider, textRedSlider, textGreenSlider, textBlueSlider, bgHueSlider, bgSatSlider, bgLigSlider, textHueSlider, textSatSlider, textLigSlider, timerXSlider, timerYSlider, timerWidthSlider, timerFontSizeSlider, blindsXSlider, blindsYSlider, blindsWidthSlider, blindsFontSizeSlider, logoXSlider, logoYSlider, logoWidthSlider, logoHeightSlider, infoXSlider, infoYSlider, infoWidthSlider, infoFontSizeSlider, canvasHeightSlider ];
-    const allInputs = [ bgRedInput, bgGreenInput, bgBlueInput, textRedInput, textGreenInput, textBlueInput, bgHueInput, bgSatInput, bgLigInput, textHueInput, textSatInput, textLigInput, timerXInput, timerYInput, timerWidthInput, timerFontSizeInput, blindsXInput, blindsYInput, blindsWidthInput, blindsFontSizeInput, logoXInput, logoYInput, logoWidthInput, logoHeightInput, infoXInput, infoYInput, infoWidthInput, infoFontSizeInput, canvasHeightInput ];
-    const infoToggles = [toggleInfoNextBlinds, toggleInfoNextPause, toggleInfoAvgStack, toggleInfoPlayers, toggleInfoLateReg]; // Add info toggles
-    function addThemeAndLayoutListeners(){ allSliders.forEach(slider=>slider?.addEventListener('input', handleThemeLayoutSliderInput)); allInputs.forEach(input=>input?.addEventListener('input', handleThemeLayoutNumberInput)); infoToggles.forEach(toggle => toggle?.addEventListener('change', updateColorAndLayoutPreviews)); /* Update preview on toggle change */ btnLoadThemeFavorite.addEventListener('click', handleLoadFavorite); btnSaveThemeFavorite.addEventListener('click', handleSaveFavorite); btnDeleteThemeFavorite.addEventListener('click', handleDeleteFavorite); themeFavoritesSelect.addEventListener('change', enableDisableDeleteButton); }
-    function removeThemeAndLayoutListeners(){ allSliders.forEach(slider=>slider?.removeEventListener('input', handleThemeLayoutSliderInput)); allInputs.forEach(input=>input?.removeEventListener('input', handleThemeLayoutNumberInput)); infoToggles.forEach(toggle => toggle?.removeEventListener('change', updateColorAndLayoutPreviews)); btnLoadThemeFavorite.removeEventListener('click', handleLoadFavorite); btnSaveThemeFavorite.removeEventListener('click', handleSaveFavorite); btnDeleteThemeFavorite.removeEventListener('click', handleDeleteFavorite); themeFavoritesSelect.removeEventListener('change', enableDisableDeleteButton); }
-    function populateThemeFavorites() { /* ... */ const favorites = loadThemeFavorites(); themeFavoritesSelect.innerHTML = '<option value="">Velg favoritt...</option>'; favorites.forEach(fav => { const option = document.createElement('option'); option.value = fav.id; option.textContent = fav.name; themeFavoritesSelect.appendChild(option); }); enableDisableDeleteButton(); }
-    function enableDisableDeleteButton(){ btnDeleteThemeFavorite.disabled = !themeFavoritesSelect.value; }
-    function handleLoadFavorite() { /* ... */ const selectedId = themeFavoritesSelect.value; if (!selectedId) return; const favorites = loadThemeFavorites(); const fav = favorites.find(f => f.id === selectedId); if (fav) { const [bgR, bgG, bgB] = parseRgbString(fav.bg); const bgHSL = rgbToHsl(bgR, bgG, bgB); const [textR, textG, textB] = parseRgbString(fav.text); const textHSL = rgbToHsl(textR, textG, textB); blockSliderUpdates = true; bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB; textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l; blockSliderUpdates = false; updateColorAndLayoutPreviews(); logActivity(state.live.activityLog, `Lastet tema: ${fav.name}`); } }
-    function handleSaveFavorite() { /* ... */ const name = newThemeFavoriteNameInput.value.trim(); const currentBgColor = `rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`; const currentTextColor = `rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`; const savedFav = addThemeFavorite(name, currentBgColor, currentTextColor); newThemeFavoriteNameInput.value = ''; populateThemeFavorites(); themeFavoritesSelect.value = savedFav.id; enableDisableDeleteButton(); alert(`Tema '${savedFav.name}' lagret!`); }
-    function handleDeleteFavorite() { /* ... */ const selectedId = themeFavoritesSelect.value; if (!selectedId) return; const favorites = loadThemeFavorites(); const fav = favorites.find(f => f.id === selectedId); if (fav && confirm(`Slette favorittema '${fav.name}'?`)) { deleteThemeFavorite(selectedId); populateThemeFavorites(); } }
-    function handleSaveTournamentSettings(){ /* ... (Saves only Blinds/Prizes) ... */ console.log("Saving tournament rule edits..."); let changesMade=false; let needsUIUpdate=false; const cLI=state.live.currentLevelIndex; let overallValid=true; const newBlindLevels=[]; const editBlindRows=editBlindStructureBody.querySelectorAll('tr'); if(editBlindRows.length===0){alert("Minst ett nivå kreves.");return;} editBlindRows.forEach((row,index)=>{ const levelNum=index+1; let rowValid=true; const sbInput=row.querySelector('.sb-input'); const bbInput=row.querySelector('.bb-input'); const anteInput=row.querySelector('.ante-input'); const durationInput=row.querySelector('.duration-input'); const pauseInput=row.querySelector('.pause-duration-input'); const sb=parseInt(sbInput.value); const bb=parseInt(bbInput.value); const ante=parseInt(anteInput.value)||0; const duration=parseInt(durationInput.value); const pauseMinutes=parseInt(pauseInput.value)||0; const isPastLevel=levelNum<=cLI+1&&!state.live.isOnBreak; [sbInput,bbInput,anteInput,durationInput,pauseInput].forEach(el=>el.classList.remove('invalid')); if(!isPastLevel){if(isNaN(duration)||duration<=0){rowValid=false;durationInput.classList.add('invalid');} if(isNaN(sb)||sb<0){rowValid=false;sbInput.classList.add('invalid');} if(isNaN(bb)||bb<=0){rowValid=false;bbInput.classList.add('invalid');} else if(bb>0&&sb<=0){rowValid=false;sbInput.classList.add('invalid');} else if(bb>0&&sb!==roundToNearestValid(Math.floor(bb/2),100)){rowValid=false;sbInput.classList.add('invalid'); bbInput.classList.add('invalid');} if(isNaN(ante)||ante<0){rowValid=false;anteInput.classList.add('invalid');} if(isNaN(pauseMinutes)||pauseMinutes<0){rowValid=false;pauseInput.classList.add('invalid');}} if(!rowValid)overallValid=false; newBlindLevels.push({level:levelNum,sb:sb,bb:bb,ante:ante,duration:duration,pauseMinutes:pauseMinutes});}); if(!overallValid){alert("Ugyldige verdier i blindstruktur."); return;} if(JSON.stringify(state.config.blindLevels)!==JSON.stringify(newBlindLevels)){state.config.blindLevels=newBlindLevels; changesMade=true; needsUIUpdate=true; logActivity(state.live.activityLog,"Blindstruktur endret.");}
-        const newPaidPlaces=parseInt(editPaidPlacesInput.value); const newPrizeDist=editPrizeDistTextarea.value.split(',').map(p=>parseFloat(p.trim())).filter(p=>!isNaN(p)&&p>=0); let prizesValid=true; if(isNaN(newPaidPlaces)||newPaidPlaces<=0){prizesValid=false;alert("Ugyldig antall betalte.");}else if(newPrizeDist.length!==newPaidPlaces){prizesValid=false;alert("Antall %!=Antall betalte.");}else{const sum=newPrizeDist.reduce((a,b)=>a+b,0); if(Math.abs(sum-100)>0.1){prizesValid=false;alert(`% sum (${sum.toFixed(1)})!=100.`);}} if(prizesValid&&(state.config.paidPlaces!==newPaidPlaces||JSON.stringify(state.config.prizeDistribution)!==JSON.stringify(newPrizeDist))){const pIM=state.live.eliminatedPlayers.filter(p=>p.place<=state.config.paidPlaces).length; if(pIM===0||confirm(`Advarsel: ${pIM} i pengene. Endre premier?`)){state.config.paidPlaces=newPaidPlaces; state.config.prizeDistribution=newPrizeDist; changesMade=true; needsUIUpdate=true; logActivity(state.live.activityLog,"Premiestruktur endret.");}else{prizesValid=false;}} if(!overallValid||!prizesValid){console.warn("Rule edits not saved."); return;}
-        if(changesMade){ if(saveTournamentState(currentTournamentId,state)){alert("Regelendringer lagret!"); if(needsUIUpdate)updateUI(); closeTournamentModal();} else{alert("Lagring av regelendringer feilet!");} } else{alert("Ingen regelendringer å lagre."); closeTournamentModal();}
+// === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS START ===
+    function openTournamentModal() {
+        if (state.live.status === 'finished' || isModalOpen) return;
+        console.log("Opening tournament settings modal");
+
+        // Populate Blinds Table
+        editBlindStructureBody.innerHTML = '';
+        editBlindLevelCounter = 0; // Reset counter
+        state.config.blindLevels.forEach(level => addEditBlindLevelRow(level)); // Add rows based on current state
+        updateEditLevelNumbers(); // Ensure numbers are sequential
+
+        // Populate Prizes
+        editPaidPlacesInput.value = state.config.paidPlaces;
+        editPrizeDistTextarea.value = state.config.prizeDistribution.join(', ');
+
+        tournamentSettingsModal.classList.remove('hidden');
+        isModalOpen = true;
+        currentOpenModal = tournamentSettingsModal; // Track open modal
     }
-     function handleSaveUiSettings(){ console.log("Saving UI settings..."); let changesMade = false;
-        // --- Save Theme & Element Layouts ---
-        const finalBgColor=`rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`; const finalTextColor=`rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`;
-        const finalElementLayouts={ canvas: {height: parseInt(canvasHeightInput.value)}, timer: { x: parseInt(timerXInput.value), y: parseInt(timerYInput.value), width: parseInt(timerWidthInput.value), fontSize: parseFloat(timerFontSizeInput.value) }, blinds: { x: parseInt(blindsXInput.value), y: parseInt(blindsYInput.value), width: parseInt(blindsWidthInput.value), fontSize: parseFloat(blindsFontSizeInput.value) }, logo: { x: parseInt(logoXInput.value), y: parseInt(logoYInput.value), width: parseInt(logoWidthInput.value), height: parseInt(logoHeightInput.value) }, info: { x: parseInt(infoXInput.value), y: parseInt(infoYInput.value), width: parseInt(infoWidthInput.value), fontSize: parseFloat(infoFontSizeInput.value), showNextBlinds: toggleInfoNextBlinds.checked, showNextPause: toggleInfoNextPause.checked, showAvgStack: toggleInfoAvgStack.checked, showPlayers: toggleInfoPlayers.checked, showLateReg: toggleInfoLateReg.checked } }; // Include toggles
-        if(finalBgColor!==originalThemeBg||finalTextColor!==originalThemeText){saveThemeBgColor(finalBgColor); saveThemeTextColor(finalTextColor); logActivity(state.live.activityLog, "Fargetema lagret."); changesMade=true; } if(JSON.stringify(finalElementLayouts)!==JSON.stringify(originalElementLayouts)){ saveElementLayouts(finalElementLayouts); logActivity(state.live.activityLog, "Element layout lagret."); changesMade=true; }
+
+    function closeTournamentModal() {
+        tournamentSettingsModal.classList.add('hidden');
+        isModalOpen = false;
+        currentOpenModal = null;
+        // Optional: Revert any temporary visual changes if needed, though save handles persistence
+    }
+
+    function openUiModal() {
+        if (isModalOpen) return; // Don't open if another modal is already open
+        console.log("Opening UI settings modal");
+
+        // Store original settings to revert on cancel
+        originalThemeBg = loadThemeBgColor();
+        originalThemeText = loadThemeTextColor();
+        originalElementLayouts = loadElementLayouts();
+
+        // --- Populate Color Pickers (RGB & HSL) ---
+        const [bgR, bgG, bgB] = parseRgbString(originalThemeBg);
+        const bgHSL = rgbToHsl(bgR, bgG, bgB);
+        blockSliderUpdates=true; // Prevent infinite loops during setup
+        // BG RGB
+        bgRedSlider.value = bgRedInput.value = bgR;
+        bgGreenSlider.value = bgGreenInput.value = bgG;
+        bgBlueSlider.value = bgBlueInput.value = bgB;
+        // BG HSL
+        bgHueSlider.value = bgHueInput.value = bgHSL.h;
+        bgSatSlider.value = bgSatInput.value = bgHSL.s;
+        bgLigSlider.value = bgLigInput.value = bgHSL.l;
+
+        const [textR, textG, textB] = parseRgbString(originalThemeText);
+        const textHSL = rgbToHsl(textR, textG, textB);
+        // Text RGB
+        textRedSlider.value = textRedInput.value = textR;
+        textGreenSlider.value = textGreenInput.value = textG;
+        textBlueSlider.value = textBlueInput.value = textB;
+        // Text HSL
+        textHueSlider.value = textHueInput.value = textHSL.h;
+        textSatSlider.value = textSatInput.value = textHSL.s;
+        textLigSlider.value = textLigInput.value = textHSL.l;
+        blockSliderUpdates=false; // Enable updates again
+
+        // --- Populate Layout Controls ---
+        // Ensure originalElementLayouts has defaults merged in loadElementLayouts()
+        canvasHeightInput.value = canvasHeightSlider.value = originalElementLayouts.canvas.height;
+        timerXInput.value = timerXSlider.value = originalElementLayouts.timer.x;
+        timerYInput.value = timerYSlider.value = originalElementLayouts.timer.y;
+        timerWidthInput.value = timerWidthSlider.value = originalElementLayouts.timer.width;
+        timerFontSizeInput.value = timerFontSizeSlider.value = originalElementLayouts.timer.fontSize;
+        blindsXInput.value = blindsXSlider.value = originalElementLayouts.blinds.x;
+        blindsYInput.value = blindsYSlider.value = originalElementLayouts.blinds.y;
+        blindsWidthInput.value = blindsWidthSlider.value = originalElementLayouts.blinds.width;
+        blindsFontSizeInput.value = blindsFontSizeSlider.value = originalElementLayouts.blinds.fontSize;
+        logoXInput.value = logoXSlider.value = originalElementLayouts.logo.x;
+        logoYInput.value = logoYSlider.value = originalElementLayouts.logo.y;
+        logoWidthInput.value = logoWidthSlider.value = originalElementLayouts.logo.width;
+        logoHeightInput.value = logoHeightSlider.value = originalElementLayouts.logo.height;
+        infoXInput.value = infoXSlider.value = originalElementLayouts.info.x;
+        infoYInput.value = infoYSlider.value = originalElementLayouts.info.y;
+        infoWidthInput.value = infoWidthSlider.value = originalElementLayouts.info.width;
+        infoFontSizeInput.value = infoFontSizeSlider.value = originalElementLayouts.info.fontSize;
+
+        // --- Populate Info Toggles ---
+        for (const key in infoParagraphs) {
+            const checkboxId = `toggleInfo${key.substring(4)}`; // e.g., toggleInfoNextBlinds
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox) {
+                 // Use value from loaded layout, fallback to default (true) if missing
+                 checkbox.checked = originalElementLayouts.info[key] ?? true;
+             } else {
+                  console.warn(`Checkbox with ID ${checkboxId} not found for info toggle.`);
+             }
+        }
+
+
+        // --- Populate Theme Favorites ---
+        populateThemeFavorites();
+
+        // --- Update Previews & Add Listeners ---
+        updateColorAndLayoutPreviews(); // Show initial state based on loaded values
+        addThemeAndLayoutListeners(); // Add listeners for interactive controls
+
+        uiSettingsModal.classList.remove('hidden');
+        isModalOpen = true;
+        currentOpenModal = uiSettingsModal; // Track open modal
+    }
+
+    function closeUiModal(revert = false) {
+        if (revert) {
+            // Revert to original values if cancelled
+             console.log("Reverting UI changes on cancel.");
+            applyThemeAndLayout(originalThemeBg, originalThemeText, originalElementLayouts);
+        }
+        removeThemeAndLayoutListeners(); // Remove listeners to prevent updates when closed
+        uiSettingsModal.classList.add('hidden');
+        isModalOpen = false;
+        currentOpenModal = null;
+    }
+
+    function addEditBlindLevelRow(levelData={}){
+        editBlindLevelCounter++;
+        const row=editBlindStructureBody.insertRow();
+        row.dataset.levelNumber=editBlindLevelCounter;
+        const sb=levelData.sb??'';
+        const bb=levelData.bb??'';
+        const ante=levelData.ante??0;
+        const duration=levelData.duration??(state.config.blindLevels?.[0]?.duration||20);
+        const pauseMinutes=levelData.pauseMinutes??0;
+        // Check if this level is in the past (cannot be edited)
+        // Level index is 0-based, levelData.level is 1-based
+        const isPastLevel = levelData.level <= state.live.currentLevelIndex && !state.live.isOnBreak;
+
+        const disabledAttr = isPastLevel ? 'disabled' : '';
+        // ENDRET: step="1" for sb, bb, ante
+        row.innerHTML=`
+            <td><span class="level-number">${editBlindLevelCounter}</span> ${isPastLevel?'<small>(Låst)</small>':''}</td>
+            <td><input type="number" class="sb-input" value="${sb}" min="0" step="1" ${disabledAttr}></td>
+            <td><input type="number" class="bb-input" value="${bb}" min="0" step="1" ${disabledAttr}></td>
+            <td><input type="number" class="ante-input" value="${ante}" min="0" step="1" ${disabledAttr}></td>
+            <td><input type="number" class="duration-input" value="${duration}" min="1" ${disabledAttr}></td>
+            <td><input type="number" class="pause-duration-input" value="${pauseMinutes}" min="0" ${disabledAttr}></td>
+            <td><button type="button" class="btn-remove-level" title="Fjern nivå ${editBlindLevelCounter}" ${disabledAttr}>X</button></td>`;
+
+        const removeBtn=row.querySelector('.btn-remove-level');
+
+        if(!isPastLevel){
+            removeBtn.onclick=()=>{row.remove(); updateEditLevelNumbers();};
+        } else {
+            row.querySelectorAll('input').forEach(inp=>inp.disabled=true);
+            removeBtn.disabled=true;
+        }
+    }
+
+    function updateEditLevelNumbers(){
+        const rows=editBlindStructureBody.querySelectorAll('tr');
+        rows.forEach((row,index)=>{
+            const levelNum=index+1;
+            row.dataset.levelNumber=levelNum;
+            row.querySelector('.level-number').textContent=levelNum;
+            const removeBtn = row.querySelector('.btn-remove-level');
+            if (removeBtn) removeBtn.title=`Fjern nivå ${levelNum}`;
+        });
+        editBlindLevelCounter=rows.length;
+    }
+
+    function generateEditPayout(){
+        const places = parseInt(editPaidPlacesInput.value) || 0;
+        if (places > 0 && standardPayouts[places]) {
+            editPrizeDistTextarea.value = standardPayouts[places].join(', ');
+        } else {
+            editPrizeDistTextarea.value = ''; // Clear if invalid places or no standard payout
+        }
+    }
+
+    // --- Color Conversion/Sync ---
+    function syncRgbFromHsl(typePrefix) {
+        if(blockSliderUpdates) return; // Prevent loops
+        const h=parseInt(document.getElementById(`${typePrefix}HueInput`).value);
+        const s=parseInt(document.getElementById(`${typePrefix}SatInput`).value);
+        const l=parseInt(document.getElementById(`${typePrefix}LigInput`).value);
+        const rgbString=hslToRgb(h,s,l);
+        const [r,g,b]=parseRgbString(rgbString);
+        blockSliderUpdates=true; // Prevent HSL sync from re-triggering RGB sync
+        document.getElementById(`${typePrefix}RedSlider`).value=document.getElementById(`${typePrefix}RedInput`).value=r;
+        document.getElementById(`${typePrefix}GreenSlider`).value=document.getElementById(`${typePrefix}GreenInput`).value=g;
+        document.getElementById(`${typePrefix}BlueSlider`).value=document.getElementById(`${typePrefix}BlueInput`).value=b;
+        blockSliderUpdates=false;
+        return rgbString; // Return the calculated RGB string
+    }
+
+    function syncHslFromRgb(typePrefix) {
+         if(blockSliderUpdates) return; // Prevent loops
+        const r=parseInt(document.getElementById(`${typePrefix}RedInput`).value);
+        const g=parseInt(document.getElementById(`${typePrefix}GreenInput`).value);
+        const b=parseInt(document.getElementById(`${typePrefix}BlueInput`).value);
+        const hsl=rgbToHsl(r,g,b);
+        blockSliderUpdates=true; // Prevent RGB sync from re-triggering HSL sync
+        document.getElementById(`${typePrefix}HueSlider`).value=document.getElementById(`${typePrefix}HueInput`).value=hsl.h;
+        document.getElementById(`${typePrefix}SatSlider`).value=document.getElementById(`${typePrefix}SatInput`).value=hsl.s;
+        document.getElementById(`${typePrefix}LigSlider`).value=document.getElementById(`${typePrefix}LigInput`).value=hsl.l;
+        blockSliderUpdates=false;
+        return `rgb(${r}, ${g}, ${b})`; // Return the original RGB string
+    }
+
+    // --- Live Preview Update ---
+     function updateColorAndLayoutPreviews() {
+        if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; // Only update if UI modal is open
+
+        // Sync colors first
+        const currentBgColor = syncHslFromRgb('bg');
+        const currentTextColor = syncHslFromRgb('text');
+
+        // Read layout values AFTER potential color sync
+        const currentElementLayouts = {
+            canvas: { height: parseInt(canvasHeightSlider.value) },
+            timer: { x: parseInt(timerXSlider.value), y: parseInt(timerYSlider.value), width: parseInt(timerWidthSlider.value), fontSize: parseFloat(timerFontSizeSlider.value) },
+            blinds: { x: parseInt(blindsXSlider.value), y: parseInt(blindsYSlider.value), width: parseInt(blindsWidthSlider.value), fontSize: parseFloat(blindsFontSizeSlider.value) },
+            logo: { x: parseInt(logoXSlider.value), y: parseInt(logoYSlider.value), width: parseInt(logoWidthSlider.value), height: parseInt(logoHeightSlider.value) },
+            info: { x: parseInt(infoXSlider.value), y: parseInt(infoYSlider.value), width: parseInt(infoWidthSlider.value), fontSize: parseFloat(infoFontSizeSlider.value),
+                // Read toggle states directly
+                showNextBlinds: toggleInfoNextBlinds.checked, showNextPause: toggleInfoNextPause.checked, showAvgStack: toggleInfoAvgStack.checked, showPlayers: toggleInfoPlayers.checked, showLateReg: toggleInfoLateReg.checked }
+        };
+
+        // Update visual previews within the modal
+        if(bgColorPreview) bgColorPreview.style.backgroundColor = currentBgColor;
+        if(textColorPreview) {
+             textColorPreview.style.backgroundColor = currentBgColor;
+             textColorPreview.querySelector('span').style.color = currentTextColor;
+        }
+        // Apply changes to the main page elements behind the modal
+        applyThemeAndLayout(currentBgColor, currentTextColor, currentElementLayouts);
+    }
+
+    // --- Event Handlers for Sliders/Inputs/Toggles ---
+    function handleThemeLayoutControlChange(e) {
+        if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; // Prevent updates if modal closed
+
+        const target = e.target;
+        const id = target.id;
+        const isSlider = id.includes('Slider');
+        const isInput = id.includes('Input');
+        const isCheckbox = target.type === 'checkbox' && id.startsWith('toggleInfo');
+
+        if (isSlider || isInput) {
+            const baseId = isSlider ? id.replace('Slider', '') : id.replace('Input', '');
+            const slider = document.getElementById(baseId + 'Slider');
+            const input = document.getElementById(baseId + 'Input');
+
+            // Validate and sync Slider/Input for numbers
+            if (target.type === 'number' && input) {
+                 let value = parseFloat(target.value);
+                 const min = parseFloat(target.min || '0');
+                 const max = parseFloat(target.max || '100'); // Adjust max as needed per control
+                 const step = parseFloat(target.step || '1');
+                 if (!isNaN(value)) {
+                     value = Math.max(min, Math.min(max, value));
+                     // Round to step if step is integer, otherwise allow decimals
+                     target.value = (step % 1 === 0) ? Math.round(value) : value.toFixed(step.toString().split('.')[1]?.length || 1);
+                     if (slider) slider.value = target.value;
+                 } else {
+                     // Handle non-numeric input? Maybe reset to min or previous valid?
+                     // For now, just don't update slider if input is invalid
+                 }
+            } else if (isSlider && input) {
+                 input.value = target.value; // Directly sync slider to input
+            }
+
+            // Handle color sync (HSL vs RGB) after updating value
+            if (id.includes('Hue') || id.includes('Sat') || id.includes('Lig')) {
+               syncRgbFromHsl(id.startsWith('bg') ? 'bg' : 'text');
+            } else if (id.includes('Red') || id.includes('Green') || id.includes('Blue')) {
+                syncHslFromRgb(id.startsWith('bg') ? 'bg' : 'text');
+            }
+        }
+        // Update the main view based on the latest control states
+        updateColorAndLayoutPreviews();
+    }
+
+    // References to ALL controls that trigger live updates
+    const allSliders = [ canvasHeightSlider, timerXSlider, timerYSlider, timerWidthSlider, timerFontSizeSlider, blindsXSlider, blindsYSlider, blindsWidthSlider, blindsFontSizeSlider, logoXSlider, logoYSlider, logoWidthSlider, logoHeightSlider, infoXSlider, infoYSlider, infoWidthSlider, infoFontSizeSlider, bgHueSlider, bgSatSlider, bgLigSlider, bgRedSlider, bgGreenSlider, bgBlueSlider, textHueSlider, textSatSlider, textLigSlider, textRedSlider, textGreenSlider, textBlueSlider ];
+    const allInputs = [ canvasHeightInput, timerXInput, timerYInput, timerWidthInput, timerFontSizeInput, blindsXInput, blindsYInput, blindsWidthInput, blindsFontSizeInput, logoXInput, logoYInput, logoWidthInput, logoHeightInput, infoXInput, infoYInput, infoWidthInput, infoFontSizeInput, bgHueInput, bgSatInput, bgLigInput, bgRedInput, bgGreenInput, bgBlueInput, textHueInput, textSatInput, textLigInput, textRedInput, textGreenInput, textBlueInput ];
+    const infoToggles = [toggleInfoNextBlinds, toggleInfoNextPause, toggleInfoAvgStack, toggleInfoPlayers, toggleInfoLateReg];
+
+    function addThemeAndLayoutListeners(){
+        allSliders.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange));
+        allInputs.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); // Use 'input' for live number updates
+        infoToggles.forEach(el => el?.addEventListener('change', handleThemeLayoutControlChange));
+        btnLoadThemeFavorite.addEventListener('click', handleLoadFavorite);
+        btnSaveThemeFavorite.addEventListener('click', handleSaveFavorite);
+        btnDeleteThemeFavorite.addEventListener('click', handleDeleteFavorite);
+        themeFavoritesSelect.addEventListener('change', enableDisableDeleteButton);
+    }
+
+    function removeThemeAndLayoutListeners(){
+        allSliders.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange));
+        allInputs.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange));
+        infoToggles.forEach(el => el?.removeEventListener('change', handleThemeLayoutControlChange));
+        btnLoadThemeFavorite.removeEventListener('click', handleLoadFavorite);
+        btnSaveThemeFavorite.removeEventListener('click', handleSaveFavorite);
+        btnDeleteThemeFavorite.removeEventListener('click', handleDeleteFavorite);
+        themeFavoritesSelect.removeEventListener('change', enableDisableDeleteButton);
+    }
+
+    // --- Theme Favorites Logic ---
+    function populateThemeFavorites() {
+        const favorites = loadThemeFavorites();
+        themeFavoritesSelect.innerHTML = '<option value="">Velg favoritt...</option>';
+        favorites.forEach(fav => {
+            const option = document.createElement('option');
+            option.value = fav.id;
+            option.textContent = fav.name;
+            themeFavoritesSelect.appendChild(option);
+        });
+        enableDisableDeleteButton(); // Update delete button state
+    }
+
+    function enableDisableDeleteButton(){
+        btnDeleteThemeFavorite.disabled = !themeFavoritesSelect.value; // Disable if no favorite is selected
+    }
+
+    function handleLoadFavorite() {
+        const selectedId = themeFavoritesSelect.value;
+        if (!selectedId) return;
+        const favorites = loadThemeFavorites();
+        const fav = favorites.find(f => f.id === selectedId);
+        if (fav) {
+            console.log(`Loading favorite theme: ${fav.name}`);
+            // Apply colors from favorite to sliders/inputs
+             const [bgR, bgG, bgB] = parseRgbString(fav.bg);
+             const bgHSL = rgbToHsl(bgR, bgG, bgB);
+             const [textR, textG, textB] = parseRgbString(fav.text);
+             const textHSL = rgbToHsl(textR, textG, textB);
+
+             blockSliderUpdates = true;
+             // BG
+             bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB;
+             bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l;
+            // Text
+             textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB;
+             textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l;
+             blockSliderUpdates = false;
+
+             updateColorAndLayoutPreviews(); // Update live preview
+            // Do NOT log this to tournament log, it's a UI preference
+        }
+    }
+
+    function handleSaveFavorite() {
+        const name = newThemeFavoriteNameInput.value.trim();
+        if (!name) {
+             alert("Vennligst skriv inn et navn for den nye favoritten.");
+             newThemeFavoriteNameInput.focus();
+             return;
+        }
+        // Get current colors directly from RGB inputs (as they are synced)
+        const currentBgColor = `rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`;
+        const currentTextColor = `rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`;
+
+        const savedFav = addThemeFavorite(name, currentBgColor, currentTextColor); // Save to storage
+        newThemeFavoriteNameInput.value = ''; // Clear input field
+        populateThemeFavorites(); // Refresh dropdown
+        themeFavoritesSelect.value = savedFav.id; // Select the newly saved favorite
+        enableDisableDeleteButton(); // Ensure delete button is enabled
+        alert(`Tema '${savedFav.name}' lagret!`);
+         console.log(`Theme favorite saved: ${savedFav.name}`, savedFav);
+    }
+
+    function handleDeleteFavorite() {
+        const selectedId = themeFavoritesSelect.value;
+        if (!selectedId) return; // Should be disabled, but check anyway
+        const favorites = loadThemeFavorites();
+        const fav = favorites.find(f => f.id === selectedId);
+        if (fav && confirm(`Slette favorittema '${fav.name}'?`)) {
+            deleteThemeFavorite(selectedId); // Delete from storage
+            populateThemeFavorites(); // Refresh dropdown
+            console.log(`Theme favorite deleted: ${fav.name} (${selectedId})`);
+        }
+    }
+
+    // --- Save Handlers ---
+    function handleSaveTournamentSettings(){
+        console.log("Saving tournament rule edits...");
+        let changesMade=false;
+        let needsUIUpdate=false;
+        const cLI=state.live.currentLevelIndex;
+        let overallValid=true;
+        const newBlindLevels=[];
+        const editBlindRows=editBlindStructureBody.querySelectorAll('tr');
+        let errorMessages = []; // Collect specific errors
+
+        if(editBlindRows.length===0){
+            alert("Minst ett nivå kreves.");
+            return;
+        }
+
+        editBlindRows.forEach((row,index)=>{
+            const levelNum=index+1;
+            let rowValid=true;
+            const sbInput=row.querySelector('.sb-input');
+            const bbInput=row.querySelector('.bb-input');
+            const anteInput=row.querySelector('.ante-input');
+            const durationInput=row.querySelector('.duration-input');
+            const pauseInput=row.querySelector('.pause-duration-input');
+
+            // For past levels, read existing state values directly
+            const isPastLevel = levelNum <= cLI && !state.live.isOnBreak; // Use levelNum (1-based) vs cLI (0-based)
+
+            let sb, bb, ante, duration, pauseMinutes;
+
+            if (isPastLevel) {
+                 // Ensure we don't read from a non-existent index
+                 if (index < state.config.blindLevels.length) {
+                     const pastLevelData = state.config.blindLevels[index]; // Get original data
+                     sb = pastLevelData.sb;
+                     bb = pastLevelData.bb;
+                     ante = pastLevelData.ante;
+                     duration = pastLevelData.duration;
+                     pauseMinutes = pastLevelData.pauseMinutes;
+                 } else {
+                      console.error(`Error accessing past level data for index ${index}`);
+                      // Handle error case? Skip? Use default? Mark invalid?
+                      rowValid = false; // Mark as invalid if original data missing
+                 }
+
+            } else {
+                 // Read values from future/editable levels
+                 sb=parseInt(sbInput.value);
+                 bb=parseInt(bbInput.value);
+                 ante=parseInt(anteInput.value)||0;
+                 duration=parseInt(durationInput.value);
+                 pauseMinutes=parseInt(pauseInput.value)||0;
+
+                 [sbInput,bbInput,anteInput,durationInput,pauseInput].forEach(el=>el.classList.remove('invalid'));
+
+                 if(isNaN(duration)||duration<=0){rowValid=false;durationInput.classList.add('invalid');}
+                 if(isNaN(sb)||sb<0){rowValid=false;sbInput.classList.add('invalid');}
+                 if(isNaN(bb)||bb<=0){rowValid=false;bbInput.classList.add('invalid');}
+                 else if (sb > bb) { rowValid = false; sbInput.classList.add('invalid'); bbInput.classList.add('invalid'); errorMessages.push(`Nivå ${levelNum}: SB (${sb}) > BB (${bb})`); }
+                 else if (bb > 0 && sb < 0) { rowValid = false; sbInput.classList.add('invalid'); }
+
+                 if(isNaN(ante)||ante<0){rowValid=false;anteInput.classList.add('invalid');}
+                 if(isNaN(pauseMinutes)||pauseMinutes<0){rowValid=false;pauseInput.classList.add('invalid');}
+            }
+
+            if(!rowValid) overallValid=false;
+            // Add level data even if invalid, validation check happens later
+            newBlindLevels.push({level:levelNum,sb:sb,bb:bb,ante:ante,duration:duration,pauseMinutes:pauseMinutes});
+        });
+
+        if(!overallValid){
+             let alertMsg = "Ugyldige verdier i blindstruktur:\n\n- " + [...new Set(errorMessages)].join("\n- "); // Unique errors
+             if (errorMessages.length === 0) {
+                 alertMsg = "Ugyldige verdier i blindstruktur (sjekk markerte felt).";
+             }
+            alert(alertMsg);
+            return;
+        }
+
+        // Compare with original blind levels (only future levels matter for change detection?)
+         // Simple comparison: Compare entire structure string representations
+        if(JSON.stringify(state.config.blindLevels)!==JSON.stringify(newBlindLevels)){
+             // More robust check: only compare future levels? For now, simple check is ok.
+            state.config.blindLevels=newBlindLevels;
+            changesMade=true;
+            needsUIUpdate=true; // Need to update display if current/next level changed
+            logActivity(state.live.activityLog,"Blindstruktur endret.");
+            console.log("Blinds structure changed and saved.", state.config.blindLevels);
+        }
+
+        // --- Prize Validation ---
+        const newPaidPlaces=parseInt(editPaidPlacesInput.value);
+        const newPrizeDist=editPrizeDistTextarea.value.split(',')
+                            .map(p=>parseFloat(p.trim()))
+                            .filter(p=>!isNaN(p)&&p>=0); // Allow 0% prizes
+
+        let prizesValid=true;
+        let prizeErrorMessages = [];
+
+        if(isNaN(newPaidPlaces)||newPaidPlaces<=0){ prizesValid=false; prizeErrorMessages.push("Ugyldig antall betalte plasser (må være > 0)."); }
+        else if(newPrizeDist.length!==newPaidPlaces){ prizesValid=false; prizeErrorMessages.push(`Antall premier (${newPrizeDist.length}) matcher ikke Antall Betalte (${newPaidPlaces}).`); }
+        else { const sum=newPrizeDist.reduce((a,b)=>a+b,0); if(Math.abs(sum-100)>0.1){ prizesValid=false; prizeErrorMessages.push(`Premiesum (${sum.toFixed(1)}%) er ikke nøyaktig 100%.`); } }
+
+        if (!prizesValid) { alert("Feil i premier:\n\n- " + prizeErrorMessages.join("\n- ")); return; }
+
+        // Check if prize config actually changed
+        if(state.config.paidPlaces!==newPaidPlaces || JSON.stringify(state.config.prizeDistribution)!==JSON.stringify(newPrizeDist)){
+            const playersInMoney = state.live.eliminatedPlayers.filter(p => p.place && p.place <= state.config.paidPlaces).length;
+             if (playersInMoney === 0 || confirm(`Advarsel: ${playersInMoney} spiller(e) er allerede i pengene basert på gammel struktur. Er du sikker på at du vil endre premiestrukturen?`)) {
+                state.config.paidPlaces=newPaidPlaces;
+                state.config.prizeDistribution=newPrizeDist;
+                changesMade=true;
+                needsUIUpdate=true; // Need to update prize display
+                logActivity(state.live.activityLog,"Premiestruktur endret.");
+                console.log("Prizes changed and saved", state.config.paidPlaces, state.config.prizeDistribution);
+            } else {
+                 console.log("Prize change cancelled by user.");
+                 editPaidPlacesInput.value = state.config.paidPlaces; // Revert UI
+                 editPrizeDistTextarea.value = state.config.prizeDistribution.join(', ');
+                 return; // Stop save process
+            }
+        }
+
+        // --- Final Save ---
+        if(changesMade){
+            if(saveTournamentState(currentTournamentId,state)){
+                alert("Regelendringer lagret!");
+                if(needsUIUpdate) updateUI();
+                closeTournamentModal();
+            } else {
+                alert("Lagring av regelendringer feilet!");
+            }
+        } else {
+            alert("Ingen regelendringer å lagre.");
+            closeTournamentModal();
+        }
+    }
+
+     function handleSaveUiSettings(){
+         console.log("Saving UI settings...");
+         let themeChanged = false;
+         let layoutChanged = false;
+
+        // --- Get final colors and layouts ---
+        const finalBgColor=`rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`;
+        const finalTextColor=`rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`;
+        const finalElementLayouts={
+            canvas: {height: parseInt(canvasHeightInput.value)},
+            timer: { x: parseInt(timerXInput.value), y: parseInt(timerYInput.value), width: parseInt(timerWidthInput.value), fontSize: parseFloat(timerFontSizeInput.value) },
+            blinds: { x: parseInt(blindsXInput.value), y: parseInt(blindsYInput.value), width: parseInt(blindsWidthInput.value), fontSize: parseFloat(blindsFontSizeInput.value) },
+            logo: { x: parseInt(logoXInput.value), y: parseInt(logoYInput.value), width: parseInt(logoWidthInput.value), height: parseInt(logoHeightInput.value) },
+            info: { x: parseInt(infoXInput.value), y: parseInt(infoYInput.value), width: parseInt(infoWidthInput.value), fontSize: parseFloat(infoFontSizeInput.value),
+                showNextBlinds: toggleInfoNextBlinds.checked, showNextPause: toggleInfoNextPause.checked, showAvgStack: toggleInfoAvgStack.checked, showPlayers: toggleInfoPlayers.checked, showLateReg: toggleInfoLateReg.checked }
+         };
+
+        // --- Check for changes and save ---
+        if(finalBgColor !== originalThemeBg || finalTextColor !== originalThemeText){
+            saveThemeBgColor(finalBgColor);
+            saveThemeTextColor(finalTextColor);
+            // Don't log UI pref changes to activity log
+            console.log("Theme colors saved.");
+            themeChanged = true;
+        }
+        if(JSON.stringify(finalElementLayouts) !== JSON.stringify(originalElementLayouts)){
+             saveElementLayouts(finalElementLayouts);
+             console.log("Element layouts saved.");
+             layoutChanged = true;
+        }
+
          // --- Finalize ---
-         if(changesMade){ applyThemeAndLayout(finalBgColor, finalTextColor, finalElementLayouts); alert("Utseende lagret!"); closeUiModal(false); } // Apply final settings
-         else{ alert("Ingen utseendeendringer å lagre."); closeUiModal(false); }
-     }
-     function handleResetLayoutTheme() {
-         if (confirm("Tilbakestille layout og farger til standard?")) {
-             const defaultLayout = DEFAULT_ELEMENT_LAYOUTS;
-             const defaultBg = DEFAULT_THEME_BG;
-             const defaultText = DEFAULT_THEME_TEXT;
-             // Apply defaults immediately for preview
-             applyThemeAndLayout(defaultBg, defaultText, defaultLayout);
-             // Update sliders in the modal to reflect defaults
-             const [bgR, bgG, bgB] = parseRgbString(defaultBg); const bgHSL = rgbToHsl(bgR, bgG, bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l;
-             const [textR, textG, textB] = parseRgbString(defaultText); const textHSL = rgbToHsl(textR, textG, textB); textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB; textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l;
-             canvasHeightInput.value = canvasHeightSlider.value = defaultLayout.canvas.height; timerXInput.value = timerXSlider.value = defaultLayout.timer.x; timerYInput.value = timerYSlider.value = defaultLayout.timer.y; timerWidthInput.value = timerWidthSlider.value = defaultLayout.timer.width; timerFontSizeInput.value = timerFontSizeSlider.value = defaultLayout.timer.fontSize; blindsXInput.value = blindsXSlider.value = defaultLayout.blinds.x; blindsYInput.value = blindsYSlider.value = defaultLayout.blinds.y; blindsWidthInput.value = blindsWidthSlider.value = defaultLayout.blinds.width; blindsFontSizeInput.value = blindsFontSizeSlider.value = defaultLayout.blinds.fontSize; logoXInput.value = logoXSlider.value = defaultLayout.logo.x; logoYInput.value = logoYSlider.value = defaultLayout.logo.y; logoWidthInput.value = logoWidthSlider.value = defaultLayout.logo.width; logoHeightInput.value = logoHeightSlider.value = defaultLayout.logo.height; infoXInput.value = infoXSlider.value = defaultLayout.info.x; infoYInput.value = infoYSlider.value = defaultLayout.info.y; infoWidthInput.value = infoWidthSlider.value = defaultLayout.info.width; infoFontSizeInput.value = infoFontSizeSlider.value = defaultLayout.info.fontSize;
-             // Reset toggles
-             for (const key in infoParagraphs) { const checkbox = document.getElementById(`toggleInfo${key.substring(4)}`); if(checkbox) checkbox.checked = DEFAULT_ELEMENT_LAYOUTS.info[key] ?? true; }
-             updateColorAndLayoutPreviews(); // Update previews in modal
-             logActivity(state.live.activityLog, "Layout og tema tilbakestilt til standard.");
+         if(themeChanged || layoutChanged){
+             applyThemeAndLayout(finalBgColor, finalTextColor, finalElementLayouts); // Ensure final state is applied
+             alert("Utseende lagret!");
+             closeUiModal(false); // Close without reverting
+         } else {
+             alert("Ingen utseendeendringer å lagre.");
+             closeUiModal(false); // Close without reverting
          }
      }
-    // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS END ===
+
+     function handleResetLayoutTheme() {
+         if (confirm("Tilbakestille layout og farger til standard?\nLagrede favoritter påvirkes ikke.")) {
+             const defaultLayout = DEFAULT_ELEMENT_LAYOUTS; // From storage.js
+             const defaultBg = DEFAULT_THEME_BG;      // From storage.js
+             const defaultText = DEFAULT_THEME_TEXT;    // From storage.js
+
+             console.log("Resetting UI to defaults.");
+
+             // Apply defaults immediately for live preview behind modal
+             applyThemeAndLayout(defaultBg, defaultText, defaultLayout);
+
+             // --- Update sliders/inputs in the modal to reflect defaults ---
+             blockSliderUpdates=true; // Prevent sync loops
+             // Colors
+             const [bgR, bgG, bgB] = parseRgbString(defaultBg); const bgHSL = rgbToHsl(bgR, bgG, bgB);
+             bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB;
+             bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l;
+             const [textR, textG, textB] = parseRgbString(defaultText); const textHSL = rgbToHsl(textR, textG, textB);
+             textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB;
+             textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l;
+             // Layout
+             canvasHeightInput.value = canvasHeightSlider.value = defaultLayout.canvas.height;
+             timerXInput.value = timerXSlider.value = defaultLayout.timer.x; timerYInput.value = timerYSlider.value = defaultLayout.timer.y; timerWidthInput.value = timerWidthSlider.value = defaultLayout.timer.width; timerFontSizeInput.value = timerFontSizeSlider.value = defaultLayout.timer.fontSize;
+             blindsXInput.value = blindsXSlider.value = defaultLayout.blinds.x; blindsYInput.value = blindsYSlider.value = defaultLayout.blinds.y; blindsWidthInput.value = blindsWidthSlider.value = defaultLayout.blinds.width; blindsFontSizeInput.value = blindsFontSizeSlider.value = defaultLayout.blinds.fontSize;
+             logoXInput.value = logoXSlider.value = defaultLayout.logo.x; logoYInput.value = logoYSlider.value = defaultLayout.logo.y; logoWidthInput.value = logoWidthSlider.value = defaultLayout.logo.width; logoHeightInput.value = logoHeightSlider.value = defaultLayout.logo.height;
+             infoXInput.value = infoXSlider.value = defaultLayout.info.x; infoYInput.value = infoYSlider.value = defaultLayout.info.y; infoWidthInput.value = infoWidthSlider.value = defaultLayout.info.width; infoFontSizeInput.value = infoFontSizeSlider.value = defaultLayout.info.fontSize;
+            // Info Toggles
+             for (const key in infoParagraphs) {
+                 const checkboxId = `toggleInfo${key.substring(4)}`;
+                 const checkbox = document.getElementById(checkboxId);
+                 if(checkbox) checkbox.checked = defaultLayout.info[key] ?? true;
+             }
+            blockSliderUpdates=false; // Re-enable updates
+
+             // Update modal previews
+             updateColorAndLayoutPreviews();
+             alert("Layout og farger er tilbakestilt i redigeringsvinduet.\nTrykk 'Lagre Utseende' for å lagre endringen.")
+             // Do not log this reset to the tournament activity log
+         }
+     }
+// === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS END ===
 
     // === 13: TOURNAMENT FINISH LOGIC START ===
     function finishTournament() { /* ... */ if(state.live.status==='finished')return; console.log("Finishing T..."); clearInterval(timerInterval); timerInterval=null; clearInterval(realTimeInterval); realTimeInterval=null; state.live.status='finished'; state.live.isOnBreak=false; if(state.live.players.length===1){const winner=state.live.players[0]; winner.place=1; state.live.eliminatedPlayers.push(winner); state.live.players.splice(0,1); logActivity(state.live.activityLog,`Vinner: ${winner.name}!`);} else if(state.live.players.length===0){logActivity(state.live.activityLog,`Turnering fullført (ingen aktive).`);} else{logActivity(state.live.activityLog,`Turnering fullført (${state.live.players.length} igjen - Chop?).`);} state.live.eliminatedPlayers.sort((a,b)=>(a.place??Infinity)-(b.place??Infinity)); console.log("Tournament finished!"); updateUI(); saveTournamentState(currentTournamentId,state); alert("Turneringen er fullført!"); }
