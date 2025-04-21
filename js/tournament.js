@@ -8,11 +8,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 02: STATE VARIABLES END ===
 
 // === 03: DOM REFERENCES START ===
-    // ... (andre referanser før modalene) ...
+    const nameDisplay = document.getElementById('tournament-name-display');
+    const currentTimeDisplay = document.getElementById('current-time');
+    const btnEditTournamentSettings = document.getElementById('btn-edit-tournament-settings');
+    const btnEditUiSettings = document.getElementById('btn-edit-ui-settings');
+    const btnBackToMainLive = document.getElementById('btn-back-to-main-live');
+    const liveCanvas = document.getElementById('live-canvas'); // Canvas container
+    const timerElement = document.getElementById('timer-element');
+    const timerDisplay = document.getElementById('timer-display');
+    const breakInfo = document.getElementById('break-info');
+    const blindsElement = document.getElementById('blinds-element');
+    const currentLevelDisplay = document.getElementById('current-level');
+    const blindsDisplay = document.getElementById('blinds-display');
+    const logoElement = document.getElementById('logo-element');
+    const logoImg = logoElement?.querySelector('.logo');
+    const infoElement = document.getElementById('info-element');
+    const nextBlindsDisplay = document.getElementById('next-blinds');
+    // Referanse til 'info-next-pause' <p> element
+    const infoNextPauseParagraph = document.getElementById('info-next-pause');
+    const averageStackDisplay = document.getElementById('average-stack');
+    const playersRemainingDisplay = document.getElementById('players-remaining');
+    const totalEntriesDisplay = document.getElementById('total-entries');
+    const lateRegStatusDisplay = document.getElementById('late-reg-status');
+    const prizeDisplayLive = document.getElementById('prize-display-live');
+    const totalPotPrizeSpan = document.getElementById('total-pot');
+    // ----- VIKTIG: Legg til startPauseButton her -----
+    const startPauseButton = document.getElementById('btn-start-pause');
+    // --------------------------------------------------
+    const prevLevelButton = document.getElementById('btn-prev-level');
+    const nextLevelButton = document.getElementById('btn-next-level');
+    const adjustTimeMinusButton = document.getElementById('btn-adjust-time-minus');
+    const adjustTimePlusButton = document.getElementById('btn-adjust-time-plus');
+    const lateRegButton = document.getElementById('btn-late-reg');
+    const playerListUl = document.getElementById('player-list');
+    const eliminatedPlayerListUl = document.getElementById('eliminated-player-list');
+    const activePlayerCountSpan = document.getElementById('active-player-count');
+    const eliminatedPlayerCountSpan = document.getElementById('eliminated-player-count');
+    const tableBalanceInfo = document.getElementById('table-balance-info');
+    const btnForceSave = document.getElementById('btn-force-save');
+    const endTournamentButton = document.getElementById('btn-end-tournament');
+    const activityLogUl = document.getElementById('activity-log-list');
 
-    // Tournament Modal Refs
-    // BRUK KORREKT NAVN HER:
-    const tournamentSettingsModal = document.getElementById('tournament-settings-modal'); // Endret fra tournamentModal
+    // Tournament Modal Refs (Bruk korrekte navn)
+    const tournamentSettingsModal = document.getElementById('tournament-settings-modal'); // Korrekt navn
     const closeTournamentModalButton = document.getElementById('close-tournament-modal-button');
     const editBlindStructureBody = document.getElementById('edit-blind-structure-body');
     const btnAddEditLevel = document.getElementById('btn-add-edit-level');
@@ -22,9 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveTournamentSettings = document.getElementById('btn-save-tournament-settings');
     const btnCancelTournamentEdit = document.getElementById('btn-cancel-tournament-edit');
 
-    // UI Modal Refs
-    // BRUK KORREKT NAVN HER:
-    const uiSettingsModal = document.getElementById('ui-settings-modal'); // Endret fra uiModal
+    // UI Modal Refs (Bruk korrekte navn)
+    const uiSettingsModal = document.getElementById('ui-settings-modal'); // Korrekt navn
     const closeUiModalButton = document.getElementById('close-ui-modal-button');
     const bgRedSlider = document.getElementById('bgRedSlider'); const bgGreenSlider = document.getElementById('bgGreenSlider'); const bgBlueSlider = document.getElementById('bgBlueSlider');
     const bgRedInput = document.getElementById('bgRedInput'); const bgGreenInput = document.getElementById('bgGreenInput'); const bgBlueInput = document.getElementById('bgBlueInput');
@@ -65,8 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnResetLayoutTheme = document.getElementById('btnResetLayoutTheme');
     // Info Box Toggles
     const toggleInfoNextBlinds = document.getElementById('toggleInfoNextBlinds'); const toggleInfoNextPause = document.getElementById('toggleInfoNextPause'); const toggleInfoAvgStack = document.getElementById('toggleInfoAvgStack'); const toggleInfoPlayers = document.getElementById('toggleInfoPlayers'); const toggleInfoLateReg = document.getElementById('toggleInfoLateReg');
-    const infoParagraphs = { showNextBlinds: document.getElementById('info-next-blinds'), showNextPause: document.getElementById('info-next-pause'), showAvgStack: document.getElementById('info-avg-stack'), showPlayers: document.getElementById('info-players'), showLateReg: document.getElementById('info-late-reg') };
-    // === 03: DOM REFERENCES END ===
+    const infoParagraphs = {
+        showNextBlinds: document.getElementById('info-next-blinds'),
+        showNextPause: infoNextPauseParagraph, // Bruker referansen definert lenger oppe
+        showAvgStack: document.getElementById('info-avg-stack'),
+        showPlayers: document.getElementById('info-players'),
+        showLateReg: document.getElementById('info-late-reg')
+    };
+// === 03: DOM REFERENCES END ===
 
 
     // === 04: INITIALIZATION & VALIDATION START ===
