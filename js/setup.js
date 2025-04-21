@@ -9,18 +9,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const standardBlindLevels = [ {sb: 100, bb: 200}, {sb: 200, bb: 400}, {sb: 300, bb: 600}, {sb: 400, bb: 800, pauseMinutes: 10}, {sb: 500, bb: 1000}, {sb: 600, bb: 1200}, {sb: 800, bb: 1600}, {sb: 1000, bb: 2000, pauseMinutes: 10}, {sb: 1200, bb: 2400}, {sb: 1500, bb: 3000}, {sb: 2000, bb: 4000}, {sb: 2500, bb: 5000, pauseMinutes: 15}, {sb: 3000, bb: 6000}, {sb: 4000, bb: 8000}, {sb: 5000, bb: 10000}, {sb: 6000, bb: 12000}, {sb: 8000, bb: 16000}, {sb: 10000, bb: 20000}, {sb: 15000, bb: 30000}, {sb: 20000, bb: 40000} ];
     // === 03: STATE VARIABLES END ===
 
-    // === 04: HELPER FUNCTIONS - BLINDS START ===
-    function roundToNearestValid(value, step = 100) { if (isNaN(value) || value <= 0) return step; const rounded = Math.round(value / step) * step; return Math.max(step, rounded); }
+// === 04: HELPER FUNCTIONS - BLINDS START ===
+    function roundToNearestValid(value, step = 100) { // Denne brukes KUN til standard blinds nå
+        if (isNaN(value) || value <= 0) return step;
+        const rounded = Math.round(value / step) * step;
+        return Math.max(step, rounded);
+    }
     function addBlindLevelRow(levelData = {}) {
         blindLevelCounter++; const row = blindStructureBody.insertRow(); row.dataset.levelNumber = blindLevelCounter;
-        const defaultDuration = levelDurationInput.value || 20; const sb = levelData.sb ?? ''; const bb = levelData.bb ?? ''; const ante = levelData.ante ?? 0; const duration = levelData.duration ?? defaultDuration; const pauseMinutes = levelData.pauseMinutes ?? 0;
-        row.innerHTML = `<td><span class="level-number">${blindLevelCounter}</span></td><td><input type="number" class="sb-input" value="${sb}" min="0" step="100" required></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="100" required></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="25" placeholder="0"></td><td><input type="number" class="duration-input" value="${duration}" min="1" required></td><td><input type="number" class="pause-duration-input" value="${pauseMinutes}" min="0" placeholder="0"></td><td><button type="button" class="btn-remove-level" title="Fjern nivå ${blindLevelCounter}">X</button></td>`;
+        const defaultDuration = levelDurationInput.value || 20;
+        const sb = levelData.sb ?? '';
+        const bb = levelData.bb ?? '';
+        const ante = levelData.ante ?? 0;
+        const duration = levelData.duration ?? defaultDuration;
+        const pauseMinutes = levelData.pauseMinutes ?? 0;
+        // ENDRET: step="1" for sb, bb, ante. Fjernet onchange for bbInput.
+        row.innerHTML = `<td><span class="level-number">${blindLevelCounter}</span></td><td><input type="number" class="sb-input" value="${sb}" min="0" step="1" required></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="1" required></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="1" placeholder="0"></td><td><input type="number" class="duration-input" value="${duration}" min="1" required></td><td><input type="number" class="pause-duration-input" value="${pauseMinutes}" min="0" placeholder="0"></td><td><button type="button" class="btn-remove-level" title="Fjern nivå ${blindLevelCounter}">X</button></td>`;
         row.querySelector('.btn-remove-level').onclick = () => { row.remove(); updateLevelNumbers(); };
-        const bbInput = row.querySelector('.bb-input'); const sbInput = row.querySelector('.sb-input'); bbInput.onchange = () => { const bbVal = parseInt(bbInput.value); if (!isNaN(bbVal) && bbVal > 0) sbInput.value = roundToNearestValid(Math.floor(bbVal / 2), 100); };
+        // const bbInput = row.querySelector('.bb-input'); // Ikke nødvendig lenger
+        // const sbInput = row.querySelector('.sb-input'); // Ikke nødvendig lenger
+        // bbInput.onchange = () => { ... }; // Fjernet automatisk SB-setting
     }
     function updateLevelNumbers() { const rows = blindStructureBody.querySelectorAll('tr'); rows.forEach((row, index) => { const levelNum = index + 1; row.dataset.levelNumber = levelNum; row.querySelector('.level-number').textContent = levelNum; row.querySelector('.btn-remove-level').title = `Fjern nivå ${levelNum}`; }); blindLevelCounter = rows.length; }
-    function generateStandardBlinds() { blindStructureBody.innerHTML = ''; blindLevelCounter = 0; const duration = parseInt(levelDurationInput.value) || 20; standardBlindLevels.forEach(level => addBlindLevelRow({ ...level, duration: duration, ante: 0 })); updateLevelNumbers(); /*alert("Standardstruktur lastet.");*/ }
-    // === 04: HELPER FUNCTIONS - BLINDS END ===
+    function generateStandardBlinds() { blindStructureBody.innerHTML = ''; blindLevelCounter = 0; const duration = parseInt(levelDurationInput.value) || 20; standardBlindLevels.forEach(level => addBlindLevelRow({ ...level, duration: duration, ante: level.bb > 1000 ? level.bb : 0 })); updateLevelNumbers(); /* La til standard ante=bb for >1000 */ } // La til standard ante
+// === 04: HELPER FUNCTIONS - BLINDS END ===
 
     // === 05: HELPER FUNCTIONS - PAYOUTS START ===
      function generateStandardPayout() { const places = parseInt(paidPlacesInput.value) || 0; if (places > 0 && standardPayouts[places]) { prizeDistInput.value = standardPayouts[places].join(', '); } else { prizeDistInput.value = ''; } }
