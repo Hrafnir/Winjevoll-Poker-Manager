@@ -10,13 +10,14 @@ const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
 
 const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
 const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
-// *** UPDATED DEFAULT LAYOUT VALUES ***
+// Default layout values (percent or relevant unit like em/px)
 const DEFAULT_ELEMENT_LAYOUTS = {
     canvas: { height: 65 }, // Default canvas height in vh
     timer:  { x: 5,  y: 5,  width: 55, fontSize: 18 }, // Larger Font, Adjusted pos
-    blinds: { x: 65, y: 45, width: 30, fontSize: 9 },  // Larger Font, Adjusted pos
+    blinds: { x: 65, y: 40, width: 30, fontSize: 9 },  // Larger Font, Adjusted pos
     logo:   { x: 65, y: 5,  width: 30, height: 30 },   // Adjusted pos/size
-    info:   { x: 65, y: 80, width: 30, fontSize: 1.2 } // Adjusted pos, larger font
+    info:   { x: 65, y: 78, width: 30, fontSize: 1.2, // Info box settings
+              showNextBlinds: true, showAvgStack: true, showPlayers: true, showLateReg: true, showNextPause: true }
 };
 // === 01: CONSTANTS SECTION END ===
 
@@ -72,14 +73,20 @@ function hslToRgb(h, s, l) { s /= 100; l /= 100; let c = (1 - Math.abs(2 * l - 1
 function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); }
 function loadElementLayouts() {
     const loaded = loadObject(ELEMENT_LAYOUTS_KEY);
-    // Merge with defaults, ensuring all keys exist in sub-objects too
-    const merged = {};
+    // Merge with defaults to ensure all keys exist in sub-objects too
+    const mergedLayouts = {};
     for (const key in DEFAULT_ELEMENT_LAYOUTS) {
-        merged[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key], ...(loaded[key] || {}) };
+        mergedLayouts[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key], ...(loaded[key] || {}) };
+        // Ensure boolean toggles exist for info box
+        if (key === 'info') {
+            mergedLayouts.info.showNextBlinds = mergedLayouts.info.showNextBlinds ?? true;
+            mergedLayouts.info.showAvgStack = mergedLayouts.info.showAvgStack ?? true;
+            mergedLayouts.info.showPlayers = mergedLayouts.info.showPlayers ?? true;
+            mergedLayouts.info.showLateReg = mergedLayouts.info.showLateReg ?? true;
+            mergedLayouts.info.showNextPause = mergedLayouts.info.showNextPause ?? true;
+        }
     }
-     // Ensure canvas height exists
-    merged.canvas = { height: loaded.canvas?.height ?? DEFAULT_ELEMENT_LAYOUTS.canvas.height };
-    return merged;
+    return mergedLayouts;
 }
 // === 06d: ELEMENT LAYOUT FUNCTIONS END ===
 
