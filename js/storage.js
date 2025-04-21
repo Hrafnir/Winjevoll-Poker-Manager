@@ -10,14 +10,20 @@ const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
 
 const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
 const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
-// Default layout values (percent or relevant unit like em/px)
+
+// Default layout values (percent or relevant unit like em/px/vh)
+// MERK: x/y er % av canvas bredde/høyde. width er % av canvas bredde.
+// height er % av canvas høyde (for logo). fontSize er 'em'. canvas.height er 'vh'.
 const DEFAULT_ELEMENT_LAYOUTS = {
-    canvas: { height: 65 }, // Default canvas height in vh
-    timer:  { x: 5,  y: 5,  width: 55, fontSize: 18 }, // Larger Font, Adjusted pos
-    blinds: { x: 65, y: 40, width: 30, fontSize: 9 },  // Larger Font, Adjusted pos
-    logo:   { x: 65, y: 5,  width: 30, height: 30 },   // Adjusted pos/size
-    info:   { x: 65, y: 78, width: 30, fontSize: 1.2, // Info box settings
-              showNextBlinds: true, showAvgStack: true, showPlayers: true, showLateReg: true, showNextPause: true }
+    canvas: { height: 65 },
+    title:  { x: 5,  y: 2,  width: 90, fontSize: 3.5 }, // Standard Tittel pos/størrelse
+    timer:  { x: 5,  y: 20, width: 55, fontSize: 18 }, // Justert Y for tittel
+    blinds: { x: 65, y: 40, width: 30, fontSize: 9 },
+    logo:   { x: 65, y: 5,  width: 30, height: 30 },
+    info:   { x: 65, y: 75, width: 30, fontSize: 1.2,
+              // Standard synlighet for info-elementer
+              showNextBlinds: true, showAvgStack: true, showPlayers: true,
+              showLateReg: true, showNextPause: true }
 };
 // === 01: CONSTANTS SECTION END ===
 
