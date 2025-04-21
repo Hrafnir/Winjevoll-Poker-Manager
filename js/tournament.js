@@ -194,11 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyThemeAndLayout(bgColor, textColor, elementLayouts) {
         const rootStyle = document.documentElement.style;
 
-        // Apply Theme Colors
+        // Apply Theme Colors (Globally)
         rootStyle.setProperty('--live-page-bg', bgColor);
         rootStyle.setProperty('--live-page-text', textColor);
-
-        // Determine border color based on background brightness
         try {
             const [r, g, b] = parseRgbString(bgColor);
             const brightness = (r * 299 + g * 587 + b * 114) / 1000;
@@ -206,78 +204,78 @@ document.addEventListener('DOMContentLoaded', () => {
             rootStyle.setProperty('--live-ui-border', borderColor);
         } catch (e) {
             console.error("Error setting border color based on BG:", e);
-            rootStyle.setProperty('--live-ui-border', 'rgba(128, 128, 128, 0.15)'); // Fallback
+            rootStyle.setProperty('--live-ui-border', 'rgba(128, 128, 128, 0.15)');
         }
 
-        // Apply Element Layouts from the provided object
-        // Use fallback values from DEFAULT_ELEMENT_LAYOUTS if a key is missing
+        // Apply Canvas Height (Globally)
         const defaults = DEFAULT_ELEMENT_LAYOUTS; // Defined in storage.js
-
-        // Canvas Height
         rootStyle.setProperty('--canvas-height', `${elementLayouts.canvas?.height ?? defaults.canvas.height}vh`);
 
+        // --- Apply Element Layouts DIRECTLY to elements ---
         // Title Element
         const titleLayout = { ...defaults.title, ...(elementLayouts.title || {}) };
-        if(titleElement) { // Apply CSS variables directly to the element for positioning/sizing
-             titleElement.style.setProperty('--x-pos', `${titleLayout.x}%`);
-             titleElement.style.setProperty('--y-pos', `${titleLayout.y}%`);
-             titleElement.style.setProperty('--width', `${titleLayout.width}%`);
-             titleElement.style.setProperty('--font-size', `${titleLayout.fontSize}em`);
-             // Height is auto for title
+        if (titleElement) {
+            titleElement.style.left = `${titleLayout.x}%`;
+            titleElement.style.top = `${titleLayout.y}%`;
+            titleElement.style.width = `${titleLayout.width}%`;
+            titleElement.style.fontSize = `${titleLayout.fontSize}em`;
+            titleElement.style.height = 'auto'; // Reset height just in case
         }
 
         // Timer Element
         const timerLayout = { ...defaults.timer, ...(elementLayouts.timer || {}) };
-         if(timerElement) {
-             timerElement.style.setProperty('--x-pos', `${timerLayout.x}%`);
-             timerElement.style.setProperty('--y-pos', `${timerLayout.y}%`);
-             timerElement.style.setProperty('--width', `${timerLayout.width}%`);
-             timerElement.style.setProperty('--font-size', `${timerLayout.fontSize}em`);
+        if (timerElement) {
+            timerElement.style.left = `${timerLayout.x}%`;
+            timerElement.style.top = `${timerLayout.y}%`;
+            timerElement.style.width = `${timerLayout.width}%`;
+            timerElement.style.fontSize = `${timerLayout.fontSize}em`;
+            timerElement.style.height = 'auto';
         }
 
         // Blinds Element
         const blindsLayout = { ...defaults.blinds, ...(elementLayouts.blinds || {}) };
-         if(blindsElement) {
-             blindsElement.style.setProperty('--x-pos', `${blindsLayout.x}%`);
-             blindsElement.style.setProperty('--y-pos', `${blindsLayout.y}%`);
-             blindsElement.style.setProperty('--width', `${blindsLayout.width}%`);
-             blindsElement.style.setProperty('--font-size', `${blindsLayout.fontSize}em`);
-         }
+        if (blindsElement) {
+            blindsElement.style.left = `${blindsLayout.x}%`;
+            blindsElement.style.top = `${blindsLayout.y}%`;
+            blindsElement.style.width = `${blindsLayout.width}%`;
+            blindsElement.style.fontSize = `${blindsLayout.fontSize}em`;
+            blindsElement.style.height = 'auto';
+        }
 
         // Logo Element
         const logoLayout = { ...defaults.logo, ...(elementLayouts.logo || {}) };
-         if(logoElement) {
-             logoElement.style.setProperty('--x-pos', `${logoLayout.x}%`);
-             logoElement.style.setProperty('--y-pos', `${logoLayout.y}%`);
-             logoElement.style.setProperty('--width', `${logoLayout.width}%`);
-             logoElement.style.setProperty('--height', `${logoLayout.height}%`); // Use height for logo
-             logoElement.style.setProperty('--font-size', `1em`); // Reset font-size
+        if (logoElement) {
+            logoElement.style.left = `${logoLayout.x}%`;
+            logoElement.style.top = `${logoLayout.y}%`;
+            logoElement.style.width = `${logoLayout.width}%`;
+            logoElement.style.height = `${logoLayout.height}%`; // Use height for logo
+            logoElement.style.fontSize = '1em'; // Reset font size
         }
 
         // Info Element
         const infoLayout = { ...defaults.info, ...(elementLayouts.info || {}) };
-         if(infoElement) {
-             infoElement.style.setProperty('--x-pos', `${infoLayout.x}%`);
-             infoElement.style.setProperty('--y-pos', `${infoLayout.y}%`);
-             infoElement.style.setProperty('--width', `${infoLayout.width}%`);
-             infoElement.style.setProperty('--font-size', `${infoLayout.fontSize}em`);
-         }
+        if (infoElement) {
+            infoElement.style.left = `${infoLayout.x}%`;
+            infoElement.style.top = `${infoLayout.y}%`;
+            infoElement.style.width = `${infoLayout.width}%`;
+            infoElement.style.fontSize = `${infoLayout.fontSize}em`;
+            infoElement.style.height = 'auto';
 
-        // Apply info box visibility toggles based on the layout object
-        for (const key in infoParagraphs) {
-            if (infoParagraphs[key]) {
-                // Use value from layout, fallback to default (true)
-                infoParagraphs[key].classList.toggle('hidden', !(infoLayout[key] ?? true));
+            // Apply info box visibility toggles (still needed)
+            for (const key in infoParagraphs) {
+                if (infoParagraphs[key]) {
+                    infoParagraphs[key].classList.toggle('hidden', !(infoLayout[key] ?? true));
+                }
             }
         }
-        // console.log(`Theme/Layout applied: BG=${bgColor}, Text=${textColor}`, elementLayouts);
+        // console.log(`Theme/Layout applied directly: BG=${bgColor}, Text=${textColor}`, elementLayouts);
     }
     // Load and apply initial theme/layout on page load
     const initialBgColor = loadThemeBgColor();
     const initialTextColor = loadThemeTextColor();
-    const initialElementLayouts = loadElementLayouts(); // This loads defaults merged with saved data
+    const initialElementLayouts = loadElementLayouts(); // Loads defaults merged with saved data
     applyThemeAndLayout(initialBgColor, initialTextColor, initialElementLayouts);
-    // === 04b: THEME & LAYOUT APPLICATION END ===
+// === 04b: THEME & LAYOUT APPLICATION END ===
 
 
     // === 05: HELPER FUNCTIONS - FORMATTING START ===
