@@ -5,16 +5,17 @@ const ACTIVE_TOURNAMENT_ID_KEY = 'winjevollActiveTournamentId_v1';
 const ACTIVE_TEMPLATE_ID_KEY = 'winjevollActiveTemplateId_v1';
 const THEME_BG_COLOR_KEY = 'winjevollThemeBgColor_v1';
 const THEME_TEXT_COLOR_KEY = 'winjevollThemeTextColor_v1';
-const ELEMENT_LAYOUTS_KEY = 'winjevollElementLayouts_v1'; // Combined layout settings
-const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
+const ELEMENT_LAYOUTS_KEY = 'winjevollElementLayouts_v1'; // NEW for element pos/size
+const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1'; // NEW for favorites
 
 const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
 const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
+// *** ADJUSTED DEFAULT LAYOUT VALUES ***
 const DEFAULT_ELEMENT_LAYOUTS = {
-    timer: { x: 5, y: 10, width: 50, fontSize: 16 }, // x,y,width in %, fontSize in em
-    blinds: { x: 60, y: 45, width: 35, fontSize: 8 }, // x,y,width in %, fontSize in em
-    logo: { x: 60, y: 5, width: 35, height: 35 },     // x,y,width,height in %
-    info: { x: 60, y: 80, width: 35, fontSize: 1.1 }   // x,y,width in %, fontSize in em
+    timer:  { x: 5,  y: 5,  width: 55, fontSize: 15 }, // Larger font, takes more width
+    blinds: { x: 65, y: 40, width: 30, fontSize: 7 },  // Adjusted position/size
+    logo:   { x: 65, y: 5,  width: 30, height: 25 },   // Smaller height, adjusted pos
+    info:   { x: 65, y: 75, width: 30, fontSize: 1.1 } // Adjusted position
 };
 // === 01: CONSTANTS SECTION END ===
 
