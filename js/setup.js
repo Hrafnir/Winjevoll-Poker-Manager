@@ -26,12 +26,21 @@ document.addEventListener('DOMContentLoaded', () => {
         // ENDRET: step="1" for sb, bb, ante. Fjernet onchange for bbInput.
         row.innerHTML = `<td><span class="level-number">${blindLevelCounter}</span></td><td><input type="number" class="sb-input" value="${sb}" min="0" step="1" required></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="1" required></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="1" placeholder="0"></td><td><input type="number" class="duration-input" value="${duration}" min="1" required></td><td><input type="number" class="pause-duration-input" value="${pauseMinutes}" min="0" placeholder="0"></td><td><button type="button" class="btn-remove-level" title="Fjern nivå ${blindLevelCounter}">X</button></td>`;
         row.querySelector('.btn-remove-level').onclick = () => { row.remove(); updateLevelNumbers(); };
-        // const bbInput = row.querySelector('.bb-input'); // Ikke nødvendig lenger
-        // const sbInput = row.querySelector('.sb-input'); // Ikke nødvendig lenger
-        // bbInput.onchange = () => { ... }; // Fjernet automatisk SB-setting
     }
     function updateLevelNumbers() { const rows = blindStructureBody.querySelectorAll('tr'); rows.forEach((row, index) => { const levelNum = index + 1; row.dataset.levelNumber = levelNum; row.querySelector('.level-number').textContent = levelNum; row.querySelector('.btn-remove-level').title = `Fjern nivå ${levelNum}`; }); blindLevelCounter = rows.length; }
-    function generateStandardBlinds() { blindStructureBody.innerHTML = ''; blindLevelCounter = 0; const duration = parseInt(levelDurationInput.value) || 20; standardBlindLevels.forEach(level => addBlindLevelRow({ ...level, duration: duration, ante: level.bb > 1000 ? level.bb : 0 })); updateLevelNumbers(); /* La til standard ante=bb for >1000 */ } // La til standard ante
+
+    // ENDRET: Fjernet automatisk ante-setting
+    function generateStandardBlinds() {
+        blindStructureBody.innerHTML = '';
+        blindLevelCounter = 0;
+        const duration = parseInt(levelDurationInput.value) || 20;
+        standardBlindLevels.forEach(level => addBlindLevelRow({
+            ...level,
+            duration: duration,
+            ante: 0 // Setter alltid ante til 0 som standard
+        }));
+        updateLevelNumbers();
+    }
 // === 04: HELPER FUNCTIONS - BLINDS END ===
 
     // === 05: HELPER FUNCTIONS - PAYOUTS START ===
