@@ -264,25 +264,17 @@ main.tournament-live {
     height: var(--canvas-height); /* Controlled by JS/CSS var */
     width: 100%;
     flex-shrink: 0; /* Don't shrink canvas */
-    /* Optional background image/styling for canvas itself */
-    /* background-image: url('path/to/canvas_bg.jpg'); background-size: cover; */
 }
 
 .draggable-element {
     position: absolute;
-    /* Use CSS vars set by JS based on saved layout */
-    left: var(--x-pos);
-    top: var(--y-pos);
-    width: var(--width);
-    height: var(--height, auto); /* Height is optional, defaults to auto */
-    font-size: var(--font-size); /* Base font size for the element */
+    /* left, top, width, height, font-size set directly by JS now */
     box-sizing: border-box;
-    padding: 5px; /* Default padding, can be overridden */
+    padding: 5px; /* Default padding */
     background-color: transparent;
     border: none;
-    color: inherit; /* Inherit text color from canvas/main */
-    /* Add transition for smoother movement? */
-    /* transition: left 0.1s linear, top 0.1s linear, width 0.1s linear, height 0.1s linear; */
+    color: inherit; /* Inherit text color */
+    height: auto; /* Default height unless overridden by JS (like for logo) */
 }
 
 /* Make elements clickable for opening UI modal */
@@ -294,24 +286,20 @@ main.tournament-live {
 }
 
 /* --- Styling for individual canvas elements --- */
+/* Styles here define the *internal* look of the elements, */
+/* while positioning/sizing is handled by JS via inline styles */
 
 /* Title Element */
 #title-element {
-    /* Positioning/Size vars set by JS */
-    left: var(--title-x);
-    top: var(--title-y);
-    width: var(--title-width);
-    font-size: var(--title-font-size); /* Controls the base size of H1 inside */
     text-align: center;
-    padding: 0; /* Remove default padding if needed */
+    padding: 0;
     line-height: 1.1;
-    height: auto; /* Let h1 determine height */
-    z-index: 5; /* Ensure it's above others if overlapping */
+    z-index: 5;
 }
 #title-element h1#tournament-name-display {
-    font-size: 1em; /* Inherit size from parent #title-element */
+    font-size: 1em; /* Inherit base size from #title-element's inline style */
     margin: 0;
-    padding: 5px 0; /* Add some vertical padding inside */
+    padding: 5px 0;
     color: inherit;
     background-color: transparent;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
@@ -319,8 +307,6 @@ main.tournament-live {
 
 /* Timer Element */
 #timer-element {
-    left: var(--timer-x); top: var(--timer-y); width: var(--timer-width);
-    font-size: var(--timer-font-size); /* Controls size of text inside */
     text-align: center;
 }
 #timer-element .timer-section h2 { /* "Tid Igjen" label */
@@ -349,8 +335,6 @@ main.tournament-live {
 
 /* Blinds Element */
 #blinds-element {
-    left: var(--blinds-x); top: var(--blinds-y); width: var(--blinds-width);
-    font-size: var(--blinds-font-size); /* Controls size of text inside */
     text-align: center;
 }
 #blinds-element .blinds-section h3 { /* "Blinds (Nivå X)" label */
@@ -374,12 +358,10 @@ main.tournament-live {
 
 /* Logo Element */
 #logo-element {
-    left: var(--logo-x); top: var(--logo-y); width: var(--logo-width); height: var(--logo-height);
-    padding: 0; /* No padding on the container itself */
+    padding: 0;
     display: flex; /* Use flex to center image */
     justify-content: center;
     align-items: center;
-    font-size: 1em; /* Reset font size */
 }
 #logo-element .logo-area {
     width: 100%;
@@ -399,15 +381,12 @@ main.tournament-live {
 
 /* Info Element */
 #info-element {
-    left: var(--info-x); top: var(--info-y); width: var(--info-width);
-    font-size: var(--info-font-size); /* Controls size of text inside */
-    background-color: rgba(0, 0, 0, 0.1); /* Slight background for readability? */
+    background-color: rgba(0, 0, 0, 0.1); /* Slight background for readability */
     color: inherit;
     opacity: 0.9;
     padding: 10px; /* Padding inside the box */
     border-radius: 4px;
     border: 1px solid var(--live-ui-border);
-    height: auto; /* Let content determine height */
 }
 #info-element p {
     margin: 3px 0;
@@ -419,7 +398,7 @@ main.tournament-live {
     display: none;
 }
 
-/* Hide old structure completely */
+/* Hide old structure completely - Keep this just in case */
 .live-split-container, .live-left-column, .live-right-column, .right-col-logo-area, .right-col-blinds-area, .right-col-info-area { display: none; }
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT END === */
 
