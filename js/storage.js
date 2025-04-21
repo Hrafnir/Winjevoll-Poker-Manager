@@ -1,45 +1,89 @@
-<!DOCTYPE html>
-<html lang="no">
-<head>
-    <!-- === 01: HEAD SECTION START === -->
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Live Turnering - Winjevoll</title> <link rel="stylesheet" href="css/style.css">
-    <!-- === 01: HEAD SECTION END === -->
-</head>
-<body>
-    <!-- === 02: HEADER (BANNER) SECTION START === --><!-- === 02: HEADER (BANNER) SECTION END === -->
-    <!-- === 03: MAIN CONTENT SECTION START === -->
-    <main class="tournament-live">
-        <h1 id="tournament-name-display" class="main-tournament-title">Laster...</h1>
-        <div class="header-right-controls"><p>Klokke: <span id="current-time">--:--:--</span></p><button id="btn-edit-settings" title="Innstillinger" class="small-button">⚙️ Innst.</button><button id="btn-back-to-main-live" title="Tilbake til Start" class="small-button"> Hjem</button></div>
-        <div class="live-split-container">
-            <div class="live-left-column"><div class="timer-section"><h2>Tid Igjen</h2><div id="timer-display">--:--</div><div id="break-info" class="hidden">PAUSE</div></div></div>
-            <div class="live-right-column"><div class="right-col-logo-area"><img src="placeholder-logo.png" alt="Winjevoll Pokerklubb Logo" class="logo"></div><div class="right-col-blinds-area"><h3>Blinds <span id="current-level"></span></h3><div id="blinds-display"><span class="value">--</span>/<span class="value">--</span><span class="label">A:</span><span class="value">--</span></div></div><div class="right-col-info-area"><p>Neste: <span id="next-blinds">--</span></p><p>Average Stack: <span id="average-stack">--</span></p><p>Spillere: <span id="players-remaining">--</span> (<span id="total-entries">--</span> entries)</p><p id="late-reg-status">Late Reg: --</p></div></div>
-        </div>
-        <div id="prize-display-live" class="live-info-prizes hidden"><h3>Premiefordeling (Totalpott: <span id="total-pot">--</span> kr)</h3><p>Laster...</p></div>
-        <div class="controls"><button id="btn-start-pause">Start Klokke</button><button id="btn-prev-level"><< Nivå</button><button id="btn-next-level">Nivå >></button><button id="btn-adjust-time-minus">-1 min</button><button id="btn-adjust-time-plus">+1 min</button><button id="btn-late-reg" disabled>Late Reg</button></div>
-        <div class="player-management"><div class="player-column"><h2>Aktive (<span id="active-player-count">--</span>)</h2><p id="table-balance-info" class="warning hidden">Ubalanserte bord!</p><ul id="player-list" class="item-list player-list-live"><li>Laster...</li></ul></div><div class="player-column"><h2>Eliminerte (<span id="eliminated-player-count">--</span>)</h2><ul id="eliminated-player-list" class="item-list player-list-live"></ul></div></div>
-        <div id="activity-log-container"><h3>Aktivitetslogg</h3><ul id="activity-log-list"><li>Loggen starter...</li></ul></div>
-    </main>
-    <!-- === 03: MAIN CONTENT SECTION END === -->
-    <!-- === 04: FOOTER SECTION START === -->
-    <footer><p>© 2024 Winjevoll Pokerklubb</p><div><button id="btn-force-save" class="small-button">Lagre Nå</button><button id="btn-end-tournament" class="danger-button">Fullfør Turnering</button></div></footer>
-    <!-- === 04: FOOTER SECTION END === -->
+// === 01: CONSTANTS SECTION START ===
+const TOURNAMENT_COLLECTION_KEY = 'winjevollTournamentCollection_v1';
+const TEMPLATE_COLLECTION_KEY = 'winjevollTemplateCollection_v1';
+const ACTIVE_TOURNAMENT_ID_KEY = 'winjevollActiveTournamentId_v1';
+const ACTIVE_TEMPLATE_ID_KEY = 'winjevollActiveTemplateId_v1'; // For loading template into setup
+const THEME_BG_COLOR_KEY = 'winjevollThemeBgColor_v1'; // New
+const THEME_TEXT_COLOR_KEY = 'winjevollThemeTextColor_v1'; // New
+const LOGO_LAYOUT_KEY = 'winjevollLogoLayout_v1'; // New for logo settings
+const LAYOUT_SETTINGS_KEY = 'winjevollLayoutSettings_v1'; // NEW for split/basis
+const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1'; // NEW for favorites
 
-    <!-- === 05: MODAL FOR EDITING SETTINGS START === -->
-    <div id="edit-settings-modal" class="modal hidden"><div class="modal-content">
-        <span class="close-button" id="close-modal-button" title="Lukk">×</span><h2>Rediger Innstillinger</h2><p class="warning">Advarsel: Endringer underveis kan ha utilsiktede konsekvenser!</p>
+const DEFAULT_THEME_BG = 'rgb(56, 56, 56)'; // Default dark grey background
+const DEFAULT_THEME_TEXT = 'rgb(240, 240, 240)'; // Default light grey/off-white text
+const DEFAULT_LOGO_LAYOUT = { sizePercent: 90, positionPercent: 50 }; // Default logo layout
+const DEFAULT_LAYOUT_SETTINGS = { leftBasisPercent: 60, logoBasisPercent: 40, blindsBasisPercent: 35, infoBasisPercent: 25 }; // Added defaults
+// === 01: CONSTANTS SECTION END ===
 
-        <div id="edit-layout-section"><h3>Layout Justering</h3><div class="control-group layout-control"><label for="layoutSplitSlider">Timer Bredde (%):</label><input type="range" id="layoutSplitSlider" min="30" max="70" value="60"><input type="number" id="layoutSplitInput" min="30" max="70" value="60"><span>%</span></div><p><small>Justerer Timer vs Logo/Blinds/Info.</small></p><h4>Høydefordeling Høyre:</h4><div class="control-group layout-control"><label for="layoutLogoBasisSlider">Logo Høyde (%):</label><input type="range" id="layoutLogoBasisSlider" min="10" max="70" value="40"><input type="number" id="layoutLogoBasisInput" min="10" max="70" value="40"><span>%</span></div><div class="control-group layout-control"><label for="layoutBlindsBasisSlider">Blinds Høyde (%):</label><input type="range" id="layoutBlindsBasisSlider" min="10" max="70" value="35"><input type="number" id="layoutBlindsBasisInput" min="10" max="70" value="35"><span>%</span></div><div class="control-group layout-control"><label for="layoutInfoBasisSlider">Info Høyde (%):</label><input type="range" id="layoutInfoBasisSlider" min="10" max="70" value="25"><input type="number" id="layoutInfoBasisInput" min="10" max="70" value="25"><span>%</span></div></div>
-        <div id="edit-logo-section"><h3>Logo Utseende</h3><div class="control-group layout-control"><label for="logoSizeSlider">Størrelse (% høyde):</label><input type="range" id="logoSizeSlider" min="10" max="100" value="90"><input type="number" id="logoSizeInput" min="10" max="100" value="90"><span>%</span></div><div class="control-group layout-control"><label for="logoPosSlider">Vertikal Posisjon:</label><input type="range" id="logoPosSlider" min="0" max="100" value="50"><input type="number" id="logoPosInput" min="0" max="100" value="50"><span>%</span></div></div>
-        <div id="edit-theme-section"><h3>Fargetema</h3><div class="theme-favorites-section"><select id="themeFavoritesSelect"><option value="">Velg favoritt...</option></select><button type="button" id="btnLoadThemeFavorite" class="small-button info-button">Last</button><input type="text" id="newThemeFavoriteName" placeholder="Navn på ny favoritt"><button type="button" id="btnSaveThemeFavorite" class="small-button success-button">Lagre</button><button type="button" id="btnDeleteThemeFavorite" class="small-button danger-button" disabled>Slett</button></div><div class="theme-editor-row"><div class="theme-editor-color"><h4>Bakgrunn</h4><div class="control-group hsl-group"><label>H:</label><input type="range" class="hue-slider" id="bgHueSlider" min="0" max="360"><input type="number" id="bgHueInput" min="0" max="360"></div><div class="control-group hsl-group"><label>S:</label><input type="range" id="bgSatSlider" min="0" max="100"><input type="number" id="bgSatInput" min="0" max="100"><span>%</span></div><div class="control-group hsl-group"><label>L:</label><input type="range" id="bgLigSlider" min="0" max="100"><input type="number" id="bgLigInput" min="0" max="100"><span>%</span></div><hr><div class="control-group rgb-group"><label>R:</label><input type="range" id="bgRedSlider" min="0" max="255"><input type="number" id="bgRedInput" min="0" max="255"></div><div class="control-group rgb-group"><label>G:</label><input type="range" id="bgGreenSlider" min="0" max="255"><input type="number" id="bgGreenInput" min="0" max="255"></div><div class="control-group rgb-group"><label>B:</label><input type="range" id="bgBlueSlider" min="0" max="255"><input type="number" id="bgBlueInput" min="0" max="255"></div></div><div class="theme-editor-preview"><label>Preview BG:</label><div id="bg-color-preview" class="color-preview-box"></div></div></div><div class="theme-editor-row"><div class="theme-editor-color"><h4>Tekst</h4><div class="control-group hsl-group"><label>H:</label><input type="range" class="hue-slider" id="textHueSlider" min="0" max="360"><input type="number" id="textHueInput" min="0" max="360"></div><div class="control-group hsl-group"><label>S:</label><input type="range" id="textSatSlider" min="0" max="100"><input type="number" id="textSatInput" min="0" max="100"><span>%</span></div><div class="control-group hsl-group"><label>L:</label><input type="range" id="textLigSlider" min="0" max="100"><input type="number" id="textLigInput" min="0" max="100"><span>%</span></div><hr><div class="control-group rgb-group"><label>R:</label><input type="range" id="textRedSlider" min="0" max="255"><input type="number" id="textRedInput" min="0" max="255"></div><div class="control-group rgb-group"><label>G:</label><input type="range" id="textGreenSlider" min="0" max="255"><input type="number" id="textGreenInput" min="0" max="255"></div><div class="control-group rgb-group"><label>B:</label><input type="range" id="textBlueSlider" min="0" max="255"><input type="number" id="textBlueInput" min="0" max="255"></div></div><div class="theme-editor-preview"><label>Preview Text:</label><div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div></div></div></div>
-        <div id="edit-blinds-section"><h3>Fremtidige Nivåer/Pauser</h3><p><small>(Historiske er låst.)</small></p><div class="blind-table-container"><table id="edit-blind-structure-table"><thead><tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet</th><th>Pause Etter (min)</th><th></th></tr></thead><tbody id="edit-blind-structure-body"></tbody></table></div><button type="button" id="btn-add-edit-level">Legg til Nivå</button></div>
-        <div id="edit-prizes-section"><h3>Premier</h3><label for="edit-paid-places">Antall Betalte:</label><input type="number" id="edit-paid-places" min="1"><label for="edit-prize-distribution">Ny Fordeling (%):</label><textarea id="edit-prize-distribution" rows="2"></textarea><button type="button" id="btn-generate-edit-payout">Generer Standard</button></div>
-        <div class="modal-actions"><button id="btn-save-edited-settings" class="success-button">Lagre Alle Endringer</button><button id="btn-cancel-edit-settings" type="button">Avbryt</button></div>
-    </div></div>
-    <!-- === 05: MODAL FOR EDITING SETTINGS END === -->
+// === 02: UTILITY FUNCTIONS (Load/Save Collections/Items) START ===
+function loadItem(key) { return localStorage.getItem(key); }
+function saveItem(key, value) { try { localStorage.setItem(key, value); } catch(e){ console.error(`Error saving item ${key}:`, e); }}
+function loadObject(key, defaultValue = {}) { try { const json = localStorage.getItem(key); return json ? JSON.parse(json) : defaultValue; } catch (e) { console.error(`Error loading object ${key}:`, e); localStorage.removeItem(key); return defaultValue; } }
+function saveObject(key, object) { try { if (typeof object !== 'object' || object === null) throw new Error("Not an object"); localStorage.setItem(key, JSON.stringify(object)); } catch (e) { console.error(`Error saving object ${key}:`, e); if (e.name === 'QuotaExceededError') alert(`Lagringsplass full (${key})!`); else alert(`Ukjent lagringsfeil (${key})!`); throw e; } }
+// === 02: UTILITY FUNCTIONS (Load/Save Collections/Items) END ===
 
-    <!-- === 06: SCRIPTS SECTION START === -->
-    <script src="js/storage.js"></script><script src="js/tournament.js"></script>
-    <!-- === 06: SCRIPTS SECTION END === -->
-</body>
-</html>
+// === 03: TOURNAMENT FUNCTIONS START ===
+function loadTournamentCollection() { return loadObject(TOURNAMENT_COLLECTION_KEY); }
+function saveTournamentState(tournamentId, state) { if (!tournamentId || !state?.config || !state.live) { console.error("Invalid data to saveTournamentState."); return false; } try { const collection = loadTournamentCollection(); collection[tournamentId] = state; saveObject(TOURNAMENT_COLLECTION_KEY, collection); console.log(`Tourn ${tournamentId} saved.`); return true; } catch (error) { console.error(`Failed save T ${tournamentId}`, error); return false; } }
+function loadTournamentState(tournamentId) { if (!tournamentId) return null; const collection = loadTournamentCollection(); if(collection[tournamentId]?.config && collection[tournamentId].live) { console.log(`Loading T ${tournamentId}`); return collection[tournamentId]; } else { console.warn(`T state ${tournamentId} not found/invalid.`); return null; } }
+function deleteTournamentState(tournamentId) { if (!tournamentId) return; try { const collection = loadTournamentCollection(); if (collection[tournamentId]) { delete collection[tournamentId]; saveObject(TOURNAMENT_COLLECTION_KEY, collection); console.log(`Tourn ${tournamentId} deleted.`); if (getActiveTournamentId() === tournamentId) { clearActiveTournamentId(); } } else { console.warn(`Tourn ${tournamentId} not found deletion.`); } } catch (error) { console.error(`Failed delete T ${tournamentId}`, error); alert(`Kunne ikke slette turnering ${tournamentId}.`); } }
+// === 03: TOURNAMENT FUNCTIONS END ===
+
+// === 04: TEMPLATE FUNCTIONS START ===
+function loadTemplateCollection() { return loadObject(TEMPLATE_COLLECTION_KEY); }
+function saveTemplate(templateId, templateData) { if (!templateId || !templateData?.config) { console.error("Invalid data to saveTemplate."); return false; } try { const collection = loadTemplateCollection(); collection[templateId] = templateData; saveObject(TEMPLATE_COLLECTION_KEY, collection); console.log(`Template ${templateId} saved.`); return true; } catch(error) { console.error(`Failed save template ${templateId}`, error); return false; } }
+function loadTemplate(templateId) { if (!templateId) return null; const collection = loadTemplateCollection(); if(collection[templateId]?.config) { console.log(`Loading template ${templateId}`); return collection[templateId]; } else { console.warn(`Template ${templateId} not found/invalid.`); return null; } }
+function deleteTemplate(templateId) { if (!templateId) return; try { const collection = loadTemplateCollection(); if (collection[templateId]) { delete collection[templateId]; saveObject(TEMPLATE_COLLECTION_KEY, collection); console.log(`Template ${templateId} deleted.`); if (getActiveTemplateId() === templateId) { clearActiveTemplateId(); } } else { console.warn(`Template ${templateId} not found deletion.`); } } catch (error) { console.error(`Failed delete template ${templateId}`, error); alert(`Kunne ikke slette mal ${templateId}.`); } }
+// === 04: TEMPLATE FUNCTIONS END ===
+
+// === 05: ACTIVE ID FUNCTIONS START ===
+function setActiveTournamentId(tournamentId) { if (tournamentId) saveItem(ACTIVE_TOURNAMENT_ID_KEY, tournamentId); else localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); }
+function getActiveTournamentId() { return loadItem(ACTIVE_TOURNAMENT_ID_KEY); }
+function clearActiveTournamentId() { localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); }
+function setActiveTemplateId(templateId) { if (templateId) saveItem(ACTIVE_TEMPLATE_ID_KEY, templateId); else localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); }
+function getActiveTemplateId() { return loadItem(ACTIVE_TEMPLATE_ID_KEY); }
+function clearActiveTemplateId() { localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); }
+// === 05: ACTIVE ID FUNCTIONS END ===
+
+// === 06: CLEAR ALL DATA FUNCTION START ===
+function clearAllData() { try { localStorage.removeItem(TOURNAMENT_COLLECTION_KEY); localStorage.removeItem(TEMPLATE_COLLECTION_KEY); localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); localStorage.removeItem(THEME_BG_COLOR_KEY); localStorage.removeItem(THEME_TEXT_COLOR_KEY); localStorage.removeItem(LOGO_LAYOUT_KEY); localStorage.removeItem(LAYOUT_SETTINGS_KEY); localStorage.removeItem(THEME_FAVORITES_KEY); console.log("All app data cleared."); } catch (e) { console.error("Error clearing all data:", e); alert("Kunne ikke slette all lagret data!"); } }
+// === 06: CLEAR ALL DATA FUNCTION END ===
+
+// === 06b: ACTIVITY LOG HELPER START ===
+function logActivity(logArray, message) { if (!logArray) logArray = []; const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit'}); logArray.unshift({ timestamp, message }); const MAX_LOG_ENTRIES = 50; if (logArray.length > MAX_LOG_ENTRIES) logArray.pop(); console.log(`[Log]: ${message}`); }
+// === 06b: ACTIVITY LOG HELPER END ===
+
+// === 06c: THEME COLOR FUNCTIONS START ===
+function saveThemeBgColor(rgbString) { saveItem(THEME_BG_COLOR_KEY, rgbString); }
+function loadThemeBgColor() { return loadItem(THEME_BG_COLOR_KEY) || DEFAULT_THEME_BG; }
+function saveThemeTextColor(rgbString) { saveItem(THEME_TEXT_COLOR_KEY, rgbString); }
+function loadThemeTextColor() { return loadItem(THEME_TEXT_COLOR_KEY) || DEFAULT_THEME_TEXT; }
+function parseRgbString(rgbString) { if (!rgbString || !rgbString.startsWith('rgb')) return [128, 128, 128]; const values = rgbString.substring(4, rgbString.length - 1).split(',').map(v => parseInt(v.trim())); return values.length === 3 ? values : [128, 128, 128]; }
+function rgbToHsl(r, g, b) { r /= 255; g /= 255; b /= 255; const max = Math.max(r, g, b), min = Math.min(r, g, b); let h=0, s, l = (max + min) / 2; if (max === min) { h = s = 0; } else { const d = max - min; s = l > 0.5 ? d / (2 - max - min) : d / (max + min); switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; default: h=0; /* Added default */ } h /= 6; } return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) }; }
+function hslToRgb(h, s, l) { s /= 100; l /= 100; let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c/2, r = 0, g = 0, b = 0; if (0 <= h && h < 60) { r = c; g = x; b = 0; } else if (60 <= h && h < 120) { r = x; g = c; b = 0; } else if (120 <= h && h < 180) { r = 0; g = c; b = x; } else if (180 <= h && h < 240) { r = 0; g = x; b = c; } else if (240 <= h && h < 300) { r = x; g = 0; b = c; } else if (300 <= h && h < 360) { r = c; g = 0; b = x; } r = Math.round((r + m) * 255); g = Math.round((g + m) * 255); b = Math.round((b + m) * 255); return `rgb(${r}, ${g}, ${b})`; }
+// === 06c: THEME COLOR FUNCTIONS END ===
+
+// === 06d: LOGO LAYOUT FUNCTIONS START ===
+function saveLogoLayout(layoutObject) { saveObject(LOGO_LAYOUT_KEY, layoutObject); }
+function loadLogoLayout() { return loadObject(LOGO_LAYOUT_KEY, DEFAULT_LOGO_LAYOUT); }
+// === 06d: LOGO LAYOUT FUNCTIONS END ===
+
+// === 06e: LAYOUT SETTINGS FUNCTIONS START ===
+function saveLayoutSettings(settingsObject) { saveObject(LAYOUT_SETTINGS_KEY, settingsObject); }
+function loadLayoutSettings() { return loadObject(LAYOUT_SETTINGS_KEY, DEFAULT_LAYOUT_SETTINGS); }
+// === 06e: LAYOUT SETTINGS FUNCTIONS END ===
+
+// === 06f: THEME FAVORITES FUNCTIONS START ===
+function loadThemeFavorites() { return loadObject(THEME_FAVORITES_KEY, []); }
+function saveThemeFavorites(favoritesArray) { saveObject(THEME_FAVORITES_KEY, favoritesArray); }
+function addThemeFavorite(name, bgRgb, textRgb) { const favorites = loadThemeFavorites(); const newFav = { id: generateUniqueId('fav'), name: name || `Favoritt ${favorites.length + 1}`, bg: bgRgb, text: textRgb }; favorites.push(newFav); saveThemeFavorites(favorites); return newFav; }
+function deleteThemeFavorite(favoriteId) { let favorites = loadThemeFavorites(); favorites = favorites.filter(fav => fav.id !== favoriteId); saveThemeFavorites(favorites); }
+// === 06f: THEME FAVORITES FUNCTIONS END ===
+
+// === 07: UNIQUE ID GENERATOR SECTION START ===
+function generateUniqueId(prefix = 'id') { const timestamp = Date.now().toString(36); const randomPart = Math.random().toString(36).substring(2, 9); return `${prefix}-${timestamp}-${randomPart}`; }
+// === 07: UNIQUE ID GENERATOR SECTION END ===
+
+// === FINAL SCRIPT PARSE CHECK START ===
+console.log("storage.js parsed successfully.");
+// === FINAL SCRIPT PARSE CHECK END ===
