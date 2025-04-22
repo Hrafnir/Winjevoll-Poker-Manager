@@ -140,30 +140,20 @@
             </div>
         </div>
     </div>
-    <!-- === 05b: MODAL FOR UI SETTINGS START === -->
+ <!-- === 05b: MODAL FOR UI SETTINGS START === -->
  <div id="ui-settings-modal" class="modal hidden">
      <div class="modal-content">
          <span class="close-button" id="close-ui-modal-button" title="Lukk">×</span>
          <h2>Rediger Utseende & Lyd</h2>
-         <p class="warning">Endringer gjelder umiddelbart (unntatt lagrede favoritter)! Lagre for å beholde.<br>Dra elementer på skjermen bak for å flytte dem.</p>
+         <p class="warning">Endringer gjelder umiddelbart! Lagre for å beholde.<br>Dra elementer på skjermen bak for å flytte dem.</p>
 
          <!-- LAYOUT SECTION -->
          <div id="edit-layout-section">
              <h3>Layout Justering</h3>
-             <div class="control-group layout-control">
-                 <label for="canvasHeightSlider">Canvas Høyde (vh):</label>
-                 <input type="range" id="canvasHeightSlider" min="30" max="95" value="65">
-                 <input type="number" id="canvasHeightInput" min="30" max="95" value="65"><span>vh</span>
-             </div>
+             <div class="control-group layout-control"><label for="canvasHeightSlider">Canvas Høyde (vh):</label><input type="range" id="canvasHeightSlider" min="30" max="95" value="65"><input type="number" id="canvasHeightInput" min="30" max="95" value="65"><span>vh</span></div>
              <hr>
              <h4>Synlighet:</h4>
-             <div class="element-visibility-toggles">
-                  <label><input type="checkbox" id="toggleTitleElement" data-element-id="title"> Tittel</label>
-                  <label><input type="checkbox" id="toggleTimerElement" data-element-id="timer"> Timer</label>
-                  <label><input type="checkbox" id="toggleBlindsElement" data-element-id="blinds"> Blinds</label>
-                  <label><input type="checkbox" id="toggleLogoElement" data-element-id="logo"> Logo</label>
-                  <label><input type="checkbox" id="toggleInfoElement" data-element-id="info"> Info Boks</label>
-             </div>
+             <div class="element-visibility-toggles"><label><input type="checkbox" id="toggleTitleElement" data-element-id="title"> Tittel</label><label><input type="checkbox" id="toggleTimerElement" data-element-id="timer"> Timer</label><label><input type="checkbox" id="toggleBlindsElement" data-element-id="blinds"> Blinds</label><label><input type="checkbox" id="toggleLogoElement" data-element-id="logo"> Logo</label><label><input type="checkbox" id="toggleInfoElement" data-element-id="info"> Info Boks</label></div>
              <hr>
              <h4>Element Størrelse (Posisjon justeres ved å dra):</h4>
              <div class="element-layout-grid">
@@ -178,6 +168,15 @@
           <!-- THEME SECTION -->
           <div id="edit-theme-section">
               <h3>Fargetema</h3>
+              <!-- NYTT: Predefinerte temaer -->
+              <div class="predefined-themes-section" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee;">
+                   <label for="predefinedThemeSelect" style="display: block; margin-bottom: 5px;">Velg forhåndsdefinert tema:</label>
+                   <div style="display: flex; gap: 10px; align-items: center;">
+                       <select id="predefinedThemeSelect" style="flex-grow: 1; max-width: 250px;"><option value="">-- Velg et tema --</option></select>
+                       <button type="button" id="btnLoadPredefinedTheme" class="small-button info-button" disabled>Last inn</button>
+                   </div>
+              </div>
+              <!-- Eksisterende Favoritter -->
               <div class="theme-favorites-section">
                  <select id="themeFavoritesSelect"><option value="">Velg favoritt...</option></select>
                  <button type="button" id="btnLoadThemeFavorite" class="small-button info-button">Last</button>
@@ -185,6 +184,7 @@
                  <button type="button" id="btnSaveThemeFavorite" class="small-button success-button">Lagre</button>
                  <button type="button" id="btnDeleteThemeFavorite" class="small-button danger-button" disabled>Slett</button>
               </div>
+              <!-- Fargevelgere -->
               <div class="theme-editor-row">
                  <div class="theme-editor-color"><h4>Bakgrunn</h4><div class="control-group hsl-group"><label>H:</label><input type="range" class="hue-slider" id="bgHueSlider" min="0" max="360"><input type="number" id="bgHueInput" min="0" max="360"></div><div class="control-group hsl-group"><label>S:</label><input type="range" id="bgSatSlider" min="0" max="100"><input type="number" id="bgSatInput" min="0" max="100"><span>%</span></div><div class="control-group hsl-group"><label>L:</label><input type="range" id="bgLigSlider" min="0" max="100"><input type="number" id="bgLigInput" min="0" max="100"><span>%</span></div><hr><div class="control-group rgb-group"><label>R:</label><input type="range" id="bgRedSlider" min="0" max="255"><input type="number" id="bgRedInput" min="0" max="255"></div><div class="control-group rgb-group"><label>G:</label><input type="range" id="bgGreenSlider" min="0" max="255"><input type="number" id="bgGreenInput" min="0" max="255"></div><div class="control-group rgb-group"><label>B:</label><input type="range" id="bgBlueSlider" min="0" max="255"><input type="number" id="bgBlueInput" min="0" max="255"></div></div>
                  <div class="theme-editor-preview"><label>Preview BG:</label><div id="bg-color-preview" class="color-preview-box"></div></div>
@@ -215,6 +215,8 @@
      </div>
  </div>
   <!-- === 05b: MODAL FOR UI SETTINGS END === -->
+
+                
     <!-- === 06: SCRIPTS SECTION START === -->
     <script src="js/storage.js"></script>
     <script src="js/tournament.js"></script>
