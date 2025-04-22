@@ -52,11 +52,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // === 06: HELPER FUNCTIONS - FORM POPULATION END ===
 
     // === 07: EVENT LISTENERS START ===
-    tournamentTypeSelect.addEventListener('change', () => { const type = tournamentTypeSelect.value; rebuySection.classList.toggle('hidden', type !== 'rebuy'); knockoutSection.classList.toggle('hidden', type !== 'knockout'); });
-    btnAddLevel.addEventListener('click', () => addBlindLevelRow()); btnGenerateBlinds.addEventListener('click', generateStandardBlinds); btnClearBlinds.addEventListener('click', () => { if (confirm("Slette hele blindstrukturen?")) { blindStructureBody.innerHTML = ''; blindLevelCounter = 0; } });
-    btnGeneratePayout.addEventListener('click', generateStandardPayout); paidPlacesInput.addEventListener('change', generateStandardPayout);
-    btnBackToMain.addEventListener('click', () => { window.location.href = 'index.html'; }); btnSaveTemplate.addEventListener('click', handleSaveTemplate); form.addEventListener('submit', handleStartTournament);
-    // === 07: EVENT LISTENERS END ===
+    tournamentTypeSelect.addEventListener('change', () => {
+        const type = tournamentTypeSelect.value;
+        rebuySection.classList.toggle('hidden', type !== 'rebuy');
+        knockoutSection.classList.toggle('hidden', type !== 'knockout');
+
+        // --- QUICK FIX: Auto-populate rebuy/addon cost ---
+        if (type === 'rebuy') {
+            const buyInValue = parseInt(buyInInput.value);
+            // Only update if buy-in has a valid, non-negative number
+            if (!isNaN(buyInValue) && buyInValue >= 0) {
+                 // Check if the fields are currently empty or have the default value
+                 // to avoid overwriting intentional user edits if they switch types back and forth.
+                 // (Optional - for a simpler "always copy" approach, remove these checks)
+                 // if (rebuyCostInput.value === "" || rebuyCostInput.value === "100") { // Check against default if needed
+                    rebuyCostInput.value = buyInValue;
+                 // }
+                 // if (addonCostInput.value === "" || addonCostInput.value === "100") { // Check against default if needed
+                    addonCostInput.value = buyInValue;
+                 // }
+                console.log(`Auto-set Rebuy/Addon cost based on Buy-in: ${buyInValue}`);
+            }
+        }
+        // --- END QUICK FIX ---
+    });
+
+    btnAddLevel.addEventListener('click', () => addBlindLevelRow());
+    btnGenerateBlinds.addEventListener('click', generateStandardBlinds);
+    btnClearBlinds.addEventListener('click', () => { if (confirm("Slette hele blindstrukturen?")) { blindStructureBody.innerHTML = ''; blindLevelCounter = 0; } });
+    btnGeneratePayout.addEventListener('click', generateStandardPayout);
+    paidPlacesInput.addEventListener('change', generateStandardPayout); // Optional: trigger generation on change?
+    buyInInput.addEventListener('change', () => { // Added: Update rebuy/addon if buy-in changes *while* rebuy is selected
+         if (tournamentTypeSelect.value === 'rebuy') {
+              const buyInValue = parseInt(buyInInput.value);
+               if (!isNaN(buyInValue) && buyInValue >= 0) {
+                    rebuyCostInput.value = buyInValue;
+                    addonCostInput.value = buyInValue;
+               }
+         }
+    });
+
+
+    btnBackToMain.addEventListener('click', () => { window.location.href = 'index.html'; });
+    btnSaveTemplate.addEventListener('click', handleSaveTemplate);
+    form.addEventListener('submit', handleStartTournament);
+// === 07: EVENT LISTENERS END ===
 
     // === 08: INITIALIZATION START ===
     const templateIdToLoad = getActiveTemplateId(); if (templateIdToLoad) { const template = loadTemplate(templateIdToLoad); if (template?.config) { populateForm(template.config); setupTitle.textContent = `Start fra Mal: ${template.config.name}`; console.log("Loaded template:", templateIdToLoad); } else { alert(`Kunne ikke laste mal ID: ${templateIdToLoad}`); generateStandardBlinds(); generateStandardPayout(); } clearActiveTemplateId(); } else { setupTitle.textContent = "Konfigurer Ny Turnering"; tournamentTypeSelect.dispatchEvent(new Event('change')); generateStandardBlinds(); generateStandardPayout(); }
