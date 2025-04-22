@@ -11,17 +11,14 @@ const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
 const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
 const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
 
-// Default layout values (percent or relevant unit like em/px/vh)
-// MERK: x/y er % av canvas bredde/høyde. width er % av canvas bredde.
-// height er % av canvas høyde (for logo). fontSize er 'em'. canvas.height er 'vh'.
+// Default layout values including visibility
 const DEFAULT_ELEMENT_LAYOUTS = {
     canvas: { height: 65 },
-    title:  { x: 5,  y: 2,  width: 90, fontSize: 3.5 }, // Standard Tittel pos/størrelse
-    timer:  { x: 5,  y: 20, width: 55, fontSize: 18 }, // Justert Y for tittel
-    blinds: { x: 65, y: 40, width: 30, fontSize: 9 },
-    logo:   { x: 65, y: 5,  width: 30, height: 30 },
-    info:   { x: 65, y: 75, width: 30, fontSize: 1.2,
-              // Standard synlighet for info-elementer
+    title:  { x: 5,  y: 2,  width: 90, fontSize: 3.5, isVisible: true },
+    timer:  { x: 5,  y: 20, width: 55, fontSize: 18,  isVisible: true },
+    blinds: { x: 65, y: 40, width: 30, fontSize: 9,   isVisible: true },
+    logo:   { x: 65, y: 5,  width: 30, height: 30,  isVisible: true },
+    info:   { x: 65, y: 75, width: 30, fontSize: 1.2, isVisible: true,
               showNextBlinds: true, showAvgStack: true, showPlayers: true,
               showLateReg: true, showNextPause: true }
 };
@@ -79,17 +76,34 @@ function hslToRgb(h, s, l) { s /= 100; l /= 100; let c = (1 - Math.abs(2 * l - 1
 function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); }
 function loadElementLayouts() {
     const loaded = loadObject(ELEMENT_LAYOUTS_KEY);
-    // Merge with defaults to ensure all keys exist in sub-objects too
     const mergedLayouts = {};
+    // Sørg for at alle nøkkelelementer fra default eksisterer
     for (const key in DEFAULT_ELEMENT_LAYOUTS) {
-        mergedLayouts[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key], ...(loaded[key] || {}) };
-        // Ensure boolean toggles exist for info box
+        // Start med default for dette elementet
+        mergedLayouts[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key] };
+        // Hvis det finnes lagrede verdier for dette elementet, merge dem inn
+        if (loaded && loaded[key]) {
+            mergedLayouts[key] = { ...mergedLayouts[key], ...loaded[key] };
+        }
+        // Sikre at isVisible alltid er satt (default til true hvis mangler)
+        mergedLayouts[key].isVisible = mergedLayouts[key].isVisible ?? true;
+
+        // Sikre at info-toggles eksisterer hvis det er info-elementet
         if (key === 'info') {
-            mergedLayouts.info.showNextBlinds = mergedLayouts.info.showNextBlinds ?? true;
-            mergedLayouts.info.showAvgStack = mergedLayouts.info.showAvgStack ?? true;
-            mergedLayouts.info.showPlayers = mergedLayouts.info.showPlayers ?? true;
-            mergedLayouts.info.showLateReg = mergedLayouts.info.showLateReg ?? true;
-            mergedLayouts.info.showNextPause = mergedLayouts.info.showNextPause ?? true;
+             const defaultInfo = DEFAULT_ELEMENT_LAYOUTS.info;
+             mergedLayouts.info.showNextBlinds = mergedLayouts.info.showNextBlinds ?? defaultInfo.showNextBlinds;
+             mergedLayouts.info.showAvgStack = mergedLayouts.info.showAvgStack ?? defaultInfo.showAvgStack;
+             mergedLayouts.info.showPlayers = mergedLayouts.info.showPlayers ?? defaultInfo.showPlayers;
+             mergedLayouts.info.showLateReg = mergedLayouts.info.showLateReg ?? defaultInfo.showLateReg;
+             mergedLayouts.info.showNextPause = mergedLayouts.info.showNextPause ?? defaultInfo.showNextPause;
+        }
+    }
+    // Legg til eventuelle elementer som kun finnes i lagret data (mindre sannsynlig med vår struktur)
+    for (const key in loaded) {
+        if (!mergedLayouts[key]) {
+            mergedLayouts[key] = loaded[key];
+            // Sikre isVisible her også for eldre lagret data
+             mergedLayouts[key].isVisible = mergedLayouts[key].isVisible ?? true;
         }
     }
     return mergedLayouts;
