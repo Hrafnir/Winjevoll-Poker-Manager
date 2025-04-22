@@ -117,6 +117,21 @@ function addThemeFavorite(name, bgRgb, textRgb) { const favorites = loadThemeFav
 function deleteThemeFavorite(favoriteId) { let favorites = loadThemeFavorites(); favorites = favorites.filter(fav => fav.id !== favoriteId); saveThemeFavorites(favorites); }
 // === 06e: THEME FAVORITES FUNCTIONS END ===
 
+// === 06f: SOUND PREFERENCE FUNCTIONS START ===
+const SOUND_ENABLED_KEY = 'winjevollSoundEnabled_v1';
+
+function saveSoundPreference(isEnabled) {
+    saveItem(SOUND_ENABLED_KEY, isEnabled ? 'true' : 'false');
+    console.log(`Sound preference saved: ${isEnabled}`);
+}
+
+function loadSoundPreference() {
+    const storedValue = loadItem(SOUND_ENABLED_KEY);
+    // Default to true if not set
+    return storedValue !== 'false';
+}
+// === 06f: SOUND PREFERENCE FUNCTIONS END ===
+
 // === 07: UNIQUE ID GENERATOR SECTION START ===
 function generateUniqueId(prefix = 'id') { const timestamp = Date.now().toString(36); const randomPart = Math.random().toString(36).substring(2, 9); return `${prefix}-${timestamp}-${randomPart}`; }
 // === 07: UNIQUE ID GENERATOR SECTION END ===
