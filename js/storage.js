@@ -132,6 +132,25 @@ function loadSoundPreference() {
 }
 // === 06f: SOUND PREFERENCE FUNCTIONS END ===
 
+// === 06g: SOUND VOLUME FUNCTIONS START ===
+const SOUND_VOLUME_KEY = 'winjevollSoundVolume_v1';
+const DEFAULT_SOUND_VOLUME = 0.7; // Default volume (0.0 to 1.0)
+
+function saveSoundVolume(volume) {
+    // Clamp volume between 0 and 1
+    const clampedVolume = Math.max(0, Math.min(1, parseFloat(volume) || DEFAULT_SOUND_VOLUME));
+    saveItem(SOUND_VOLUME_KEY, clampedVolume.toString());
+    console.log(`Sound volume saved: ${clampedVolume}`);
+}
+
+function loadSoundVolume() {
+    const storedValue = loadItem(SOUND_VOLUME_KEY);
+    const volume = parseFloat(storedValue);
+    // Return stored value if valid, otherwise default
+    return !isNaN(volume) && volume >= 0 && volume <= 1 ? volume : DEFAULT_SOUND_VOLUME;
+}
+// === 06g: SOUND VOLUME FUNCTIONS END ===
+
 // === 07: UNIQUE ID GENERATOR SECTION START ===
 function generateUniqueId(prefix = 'id') { const timestamp = Date.now().toString(36); const randomPart = Math.random().toString(36).substring(2, 9); return `${prefix}-${timestamp}-${randomPart}`; }
 // === 07: UNIQUE ID GENERATOR SECTION END ===
