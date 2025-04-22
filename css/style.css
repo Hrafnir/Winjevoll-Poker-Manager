@@ -8,11 +8,9 @@
     --live-page-text: rgb(235, 235, 235);
     --live-ui-border: rgba(255, 255, 255, 0.15); /* Auto-calculated based on bg */
 
-    /* Element Layout Variables (Defaults from storage.js) */
-    /* Values controlled by JS applyThemeAndLayout */
+    /* Canvas Height Variable */
     --canvas-height: 65vh;
-    /* Note: X/Y/Width/Height/FontSize for elements are now set via inline styles by JS */
-    /* Defaults are still kept in storage.js DEFAULT_ELEMENT_LAYOUTS */
+    /* Note: Element X/Y/Width/Height/FontSize are set via inline styles by JS */
 }
 
 body {
@@ -113,38 +111,11 @@ hr { border: none; border-top: 1px dashed #ccc; margin: 15px 0;}
 
 /* === 02: HEADER & FOOTER SECTION START === */
 /* Header is not used on tournament page, keep for other pages */
-header {
-    background-color: var(--dark-color);
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    z-index: 10; /* Ensure header is above content */
-}
-header .logo {
-    height: 40px;
-    margin-right: 15px;
-    content: url('../placeholder-logo.png'); /* Relative path for CSS */
-    background-color: #555; /* Fallback color */
-    object-fit: contain;
-}
+header { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; }
+header .logo { height: 40px; margin-right: 15px; content: url('../placeholder-logo.png'); background-color: #555; object-fit: contain; }
 header h1 { color: white; margin: 0; font-size: 1.5em; }
-
 /* Footer */
-footer {
-    background-color: var(--dark-color);
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    margin-top: auto; /* Push footer to bottom */
-    font-size: 0.9em;
-    z-index: 10; /* Ensure footer is above content */
-}
+footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-top: auto; font-size: 0.9em; z-index: 10; }
 footer p { margin: 0; }
 footer div { display: flex; gap: 10px;}
 /* === 02: HEADER & FOOTER SECTION END === */
@@ -176,44 +147,18 @@ main.setup-page { padding: 15px; }
 #btn-start-tournament { padding: 12px 25px; font-size: 1.1em; }
 #btn-save-template { padding: 12px 25px; font-size: 1.1em; background-color: var(--info-color); color: white; border-color: var(--info-color); }
 #btn-back-to-main { padding: 12px 25px; font-size: 1.1em; background-color: var(--secondary-color); color: white; border-color: var(--secondary-color); }
-
 .blind-structure-controls { margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap;}
 .blind-table-container { max-height: 400px; overflow-y: auto; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 4px;}
 #blind-structure-table, #edit-blind-structure-table { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.9em; }
-#blind-structure-table th, #blind-structure-table td,
-#edit-blind-structure-table th, #edit-blind-structure-table td {
-    border-bottom: 1px solid #eee; border-right: 1px solid #eee;
-    padding: 6px 8px; text-align: center; vertical-align: middle;
-}
-#blind-structure-table th, #edit-blind-structure-table th {
-    background-color: #e9ecef; position: sticky; top: 0; z-index: 1;
-    border-bottom-width: 2px; font-weight: 600;
-}
-#blind-structure-table td:last-child, #blind-structure-table th:last-child,
-#edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
-
-#blind-structure-table input[type="number"],
-#edit-blind-structure-table input[type="number"] {
-     width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0;
-     border-color: #ccc; text-align: center;
-}
-#blind-structure-table .pause-duration-input,
-#edit-blind-structure-table .pause-duration-input { width: 60px; }
-
-#blind-structure-table .btn-remove-level,
-#edit-blind-structure-table .btn-remove-level {
-    padding: 3px 8px; font-size: 1.1em; background-color: transparent;
-    border: none; color: var(--danger-color); font-weight: bold; line-height: 1;
-    cursor: pointer;
-}
-#blind-structure-table .btn-remove-level:hover,
-#edit-blind-structure-table .btn-remove-level:hover {
-    background-color: var(--danger-color); color: white; border-radius: 3px;
-}
-#blind-structure-table input:disabled,
-#edit-blind-structure-table input:disabled { background-color: #eee; cursor: not-allowed;}
+#blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 6px 8px; text-align: center; vertical-align: middle; }
+#blind-structure-table th, #edit-blind-structure-table th { background-color: #e9ecef; position: sticky; top: 0; z-index: 1; border-bottom-width: 2px; font-weight: 600; }
+#blind-structure-table td:last-child, #blind-structure-table th:last-child, #edit-blind-structure-table td:last-child, #edit-blind-structure-table th:last-child { border-right: none;}
+#blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 80px; padding: 4px; font-size: 1em; margin-bottom: 0; border-color: #ccc; text-align: center; }
+#blind-structure-table .pause-duration-input, #edit-blind-structure-table .pause-duration-input { width: 60px; }
+#blind-structure-table .btn-remove-level, #edit-blind-structure-table .btn-remove-level { padding: 3px 8px; font-size: 1.1em; background-color: transparent; border: none; color: var(--danger-color); font-weight: bold; line-height: 1; cursor: pointer; }
+#blind-structure-table .btn-remove-level:hover, #edit-blind-structure-table .btn-remove-level:hover { background-color: var(--danger-color); color: white; border-radius: 3px; }
+#blind-structure-table input:disabled, #edit-blind-structure-table input:disabled { background-color: #eee; cursor: not-allowed;}
 #edit-blind-structure-table td small { font-size: 0.8em; color: #666; display: block; }
-
 /* === 04: SETUP PAGE SECTION END === */
 
 
@@ -222,7 +167,6 @@ main.tournament-live {
     background-color: var(--live-page-bg); /* Use theme variable */
     color: var(--live-page-text); /* Use theme variable */
 }
-
 /* Styling for the controls moved below the canvas */
 .sub-canvas-controls.header-right-controls {
     display: flex;
@@ -235,16 +179,12 @@ main.tournament-live {
     flex-shrink: 0; /* Prevent shrinking */
 }
 .sub-canvas-controls p { margin: 0; white-space: nowrap; opacity: 0.8; font-size: 0.9em;}
-.sub-canvas-controls button {
-    background-color: rgba(128, 128, 128, 0.5);
-    border-color: rgba(128, 128, 128, 0.7);
-    color: inherit; /* Inherit text color from theme */
-    opacity: 0.8;
-}
-.sub-canvas-controls button:hover:not(:disabled) {
-    background-color: rgba(160, 160, 160, 0.6);
-    border-color: rgba(160, 160, 160, 0.8);
-    opacity: 1;
+.sub-canvas-controls button { background-color: rgba(128, 128, 128, 0.5); border-color: rgba(128, 128, 128, 0.7); color: inherit; opacity: 0.8; }
+.sub-canvas-controls button:hover:not(:disabled) { background-color: rgba(160, 160, 160, 0.6); border-color: rgba(160, 160, 160, 0.8); opacity: 1; }
+/* Styling for mute button */
+.sub-canvas-controls button#btn-toggle-sound {
+    min-width: 80px; /* Give some fixed width */
+    text-align: center;
 }
 /* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION END === */
 
@@ -275,8 +215,7 @@ main.tournament-live {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    /* Add a subtle border for visibility during non-drag */
-    /* border: 1px dashed rgba(255, 255, 255, 0.1); */
+    /* transition: opacity 0.2s ease, box-shadow 0.2s ease; */ /* Optional: transition for dragging state */
 }
 
 /* Style when element is actively being dragged */
@@ -292,13 +231,6 @@ main.tournament-live {
 .element-hidden {
     display: none !important;
 }
-
-/* Remove hover outline from clickable-element if modal isn't opened on click anymore */
-/*
-.clickable-element { cursor: pointer; }
-.clickable-element:hover { outline: 1px dashed rgba(255, 255, 255, 0.5); }
-*/
-
 
 /* --- Styling for individual canvas elements --- */
 /* Defines the *internal* look */
@@ -393,11 +325,10 @@ main.tournament-live {
 
 /* --- UI Settings Modal Specific Styles --- */
 #edit-layout-section h4 { margin-top: 15px; margin-bottom: 10px; font-size: 1.1em; }
-.element-visibility-toggles { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee; display: flex; flex-wrap: wrap; gap: 10px 20px; /* Row and column gap */ }
+.element-visibility-toggles { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee; display: flex; flex-wrap: wrap; gap: 10px 20px; }
 .element-visibility-toggles label { display: inline-flex; align-items: center; cursor: pointer; font-weight: 500; }
 .element-visibility-toggles input[type="checkbox"] { margin-right: 6px; width: 16px; height: 16px; flex-shrink: 0;}
-
-.element-layout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; } /* Adjusted minmax */
+.element-layout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
 .element-layout-controls { border: 1px solid #eee; padding: 15px; border-radius: 4px; }
 .element-layout-controls h5 { margin-top: 0; margin-bottom: 15px; background-color: #f0f0f0; padding: 8px; border-radius: 3px; color: #333;}
 .layout-control { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: nowrap; }
@@ -458,6 +389,7 @@ main.tournament-live {
     .theme-favorites-section > * {width: 100%; max-width: none; margin: 5px 0 !important;}
     .layout-control { flex-wrap: wrap; }
     .layout-control label { flex-basis: 100px; }
+    .element-visibility-toggles { gap: 5px 10px; } /* Tettere toggles på mobil */
 }
 @media (max-width: 480px) {
     body { font-size: 14px; }
