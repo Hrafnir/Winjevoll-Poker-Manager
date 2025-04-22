@@ -345,77 +345,387 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS START ===
-    function openTournamentModal() { if (state.live.status === 'finished' || isModalOpen) return; console.log("Opening T modal"); editBlindStructureBody.innerHTML = ''; editBlindLevelCounter = 0; state.config.blindLevels.forEach(l => addEditBlindLevelRow(l)); updateEditLevelNumbers(); editPaidPlacesInput.value = state.config.paidPlaces; editPrizeDistTextarea.value = state.config.prizeDistribution.join(', '); tournamentSettingsModal.classList.remove('hidden'); isModalOpen = true; currentOpenModal = tournamentSettingsModal; }
-    function closeTournamentModal() { tournamentSettingsModal.classList.add('hidden'); isModalOpen = false; currentOpenModal = null; }
-    function openUiModal() { if (isModalOpen) return; console.log("Opening UI modal"); originalThemeBg = loadThemeBgColor(); originalThemeText = loadThemeTextColor(); originalElementLayouts = loadElementLayouts(); blockSliderUpdates=true; const [bgR, bgG, bgB] = parseRgbString(originalThemeBg); const bgHSL = rgbToHsl(bgR, bgG, bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; const [textR, textG, textB] = parseRgbString(originalThemeText); const textHSL = rgbToHsl(textR, textG, textB); textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB; textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l; canvasHeightInput.value = canvasHeightSlider.value = originalElementLayouts.canvas.height; titleWidthInput.value = titleWidthSlider.value = originalElementLayouts.title.width; titleFontSizeInput.value = titleFontSizeSlider.value = originalElementLayouts.title.fontSize; timerWidthInput.value = timerWidthSlider.value = originalElementLayouts.timer.width; timerFontSizeInput.value = timerFontSizeSlider.value = originalElementLayouts.timer.fontSize; blindsWidthInput.value = blindsWidthSlider.value = originalElementLayouts.blinds.width; blindsFontSizeInput.value = blindsFontSizeSlider.value = originalElementLayouts.blinds.fontSize; logoWidthInput.value = logoWidthSlider.value = originalElementLayouts.logo.width; logoHeightInput.value = logoHeightSlider.value = originalElementLayouts.logo.height; infoWidthInput.value = infoWidthSlider.value = originalElementLayouts.info.width; infoFontSizeInput.value = infoFontSizeSlider.value = originalElementLayouts.info.fontSize; visibilityToggles.forEach(toggle => { const elementId = toggle.dataset.elementId.replace('-element',''); toggle.checked = originalElementLayouts[elementId]?.isVisible ?? true; }); for (const key in infoParagraphs) { const checkboxId = `toggleInfo${key.substring(4)}`; const checkbox = document.getElementById(checkboxId); if (checkbox) checkbox.checked = originalElementLayouts.info[key] ?? true; } blockSliderUpdates=false; populateThemeFavorites(); updateColorAndLayoutPreviews(); addThemeAndLayoutListeners(); uiSettingsModal.classList.remove('hidden'); isModalOpen = true; currentOpenModal = uiSettingsModal; }
-    function closeUiModal(revert = false) { if (revert) applyThemeAndLayout(originalThemeBg, originalThemeText, originalElementLayouts); removeThemeAndLayoutListeners(); uiSettingsModal.classList.add('hidden'); isModalOpen = false; currentOpenModal = null; }
-    function addEditBlindLevelRow(levelData={}){ editBlindLevelCounter++; const row=editBlindStructureBody.insertRow(); row.dataset.levelNumber=editBlindLevelCounter; const sb=levelData.sb??''; const bb=levelData.bb??''; const ante=levelData.ante??0; const dur=levelData.duration??(state.config.blindLevels?.[0]?.duration||20); const pause=levelData.pauseMinutes??0; const past = levelData.level <= state.live.currentLevelIndex && !state.live.isOnBreak; const dis = past ? 'disabled' : ''; row.innerHTML=`<td><span class="level-number">${editBlindLevelCounter}</span> ${past?'<small>(Låst)</small>':''}</td><td><input type="number" class="sb-input" value="${sb}" min="0" step="1" ${dis}></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="1" ${dis}></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="1" ${dis}></td><td><input type="number" class="duration-input" value="${dur}" min="1" ${dis}></td><td><input type="number" class="pause-duration-input" value="${pause}" min="0" ${dis}></td><td><button type="button" class="btn-remove-level" title="Fjern nivå ${editBlindLevelCounter}" ${dis}>X</button></td>`; const btn=row.querySelector('.btn-remove-level'); if(!past) btn.onclick=()=>{row.remove(); updateEditLevelNumbers();}; else { row.querySelectorAll('input').forEach(inp=>inp.disabled=true); btn.disabled=true; } }
-    function updateEditLevelNumbers(){ const rows=editBlindStructureBody.querySelectorAll('tr'); rows.forEach((r,i)=>{ const lvl=i+1; r.dataset.levelNumber=lvl; r.querySelector('.level-number').textContent=lvl; const btn=r.querySelector('.btn-remove-level'); if(btn)btn.title=`Fjern nivå ${lvl}`; }); editBlindLevelCounter=rows.length; }
-    function generateEditPayout(){ const p=parseInt(editPaidPlacesInput.value)||0; editPrizeDistTextarea.value = (p > 0 && standardPayouts[p]) ? standardPayouts[p].join(', ') : ''; }
-    function syncRgbFromHsl(prefix){ if(blockSliderUpdates) return; const h=parseInt(document.getElementById(`${prefix}HueInput`).value); const s=parseInt(document.getElementById(`${prefix}SatInput`).value); const l=parseInt(document.getElementById(`${prefix}LigInput`).value); const rgb=hslToRgb(h,s,l); const [r,g,b]=parseRgbString(rgb); blockSliderUpdates=true; document.getElementById(`${prefix}RedSlider`).value=document.getElementById(`${prefix}RedInput`).value=r; document.getElementById(`${prefix}GreenSlider`).value=document.getElementById(`${prefix}GreenInput`).value=g; document.getElementById(`${prefix}BlueSlider`).value=document.getElementById(`${prefix}BlueInput`).value=b; blockSliderUpdates=false; return rgb; }
-    function syncHslFromRgb(prefix){ if(blockSliderUpdates) return; const r=parseInt(document.getElementById(`${prefix}RedInput`).value); const g=parseInt(document.getElementById(`${prefix}GreenInput`).value); const b=parseInt(document.getElementById(`${prefix}BlueInput`).value); const hsl=rgbToHsl(r,g,b); blockSliderUpdates=true; document.getElementById(`${prefix}HueSlider`).value=document.getElementById(`${prefix}HueInput`).value=hsl.h; document.getElementById(`${prefix}SatSlider`).value=document.getElementById(`${prefix}SatInput`).value=hsl.s; document.getElementById(`${prefix}LigSlider`).value=document.getElementById(`${prefix}LigInput`).value=hsl.l; blockSliderUpdates=false; return `rgb(${r}, ${g}, ${b})`; }
-    function updateColorAndLayoutPreviews() { if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; const bg = syncHslFromRgb('bg'); const txt = syncHslFromRgb('text'); const layouts = { canvas: { height: parseInt(canvasHeightSlider.value) }, title: { width: parseInt(titleWidthSlider.value), fontSize: parseFloat(titleFontSizeSlider.value) }, timer: { width: parseInt(timerWidthSlider.value), fontSize: parseFloat(timerFontSizeSlider.value) }, blinds: { width: parseInt(blindsWidthSlider.value), fontSize: parseFloat(blindsFontSizeSlider.value) }, logo: { width: parseInt(logoWidthSlider.value), height: parseInt(logoHeightSlider.value) }, info: { width: parseInt(infoWidthSlider.value), fontSize: parseFloat(infoFontSizeSlider.value), showNextBlinds: toggleInfoNextBlinds.checked, showNextPause: toggleInfoNextPause.checked, showAvgStack: toggleInfoAvgStack.checked, showPlayers: toggleInfoPlayers.checked, showLateReg: toggleInfoLateReg.checked } }; visibilityToggles.forEach(toggle => { const elementId = toggle.dataset.elementId.replace('-element',''); layouts[elementId] = { ...loadElementLayouts()[elementId], ...(layouts[elementId] || {}), isVisible: toggle.checked }; }); if(bgColorPreview) bgColorPreview.style.backgroundColor = bg; if(textColorPreview) { textColorPreview.style.backgroundColor = bg; textColorPreview.querySelector('span').style.color = txt; } applyThemeAndLayout(bg, txt, layouts); }
-    function handleThemeLayoutControlChange(e) { if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; const target = e.target; const id = target.id; const isSlider = id.includes('Slider'); const isInput = id.includes('Input'); const isVisToggle = target.type === 'checkbox' && visibilityToggles.includes(target); const isInfoToggle = target.type === 'checkbox' && internalInfoToggles.includes(target); if (isSlider || isInput) { const baseId = isSlider ? id.replace('Slider', '') : id.replace('Input', ''); const slider = document.getElementById(baseId + 'Slider'); const input = document.getElementById(baseId + 'Input'); if (target.type === 'number' && input) { let val = parseFloat(target.value); const min = parseFloat(target.min||'0'); const max = parseFloat(target.max||'100'); const step = parseFloat(target.step||'1'); if (!isNaN(val)) { val = Math.max(min, Math.min(max, val)); target.value = (step % 1 === 0) ? Math.round(val) : val.toFixed(step.toString().split('.')[1]?.length || 1); if (slider) slider.value = target.value; } } else if (isSlider && input) input.value = target.value; if (id.includes('Hue') || id.includes('Sat') || id.includes('Lig')) syncRgbFromHsl(id.startsWith('bg') ? 'bg' : 'text'); else if (id.includes('Red') || id.includes('Green') || id.includes('Blue')) syncHslFromRgb(id.startsWith('bg') ? 'bg' : 'text'); } updateColorAndLayoutPreviews(); }
-    function addThemeAndLayoutListeners(){ sizeSliders.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); sizeInputs.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); colorSliders.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); colorInputs.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); visibilityToggles.forEach(el => el?.addEventListener('change', handleThemeLayoutControlChange)); internalInfoToggles.forEach(el => el?.addEventListener('change', handleThemeLayoutControlChange)); btnLoadThemeFavorite.addEventListener('click', handleLoadFavorite); btnSaveThemeFavorite.addEventListener('click', handleSaveFavorite); btnDeleteThemeFavorite.addEventListener('click', handleDeleteFavorite); themeFavoritesSelect.addEventListener('change', enableDisableDeleteButton); }
-    function removeThemeAndLayoutListeners(){ sizeSliders.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); sizeInputs.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); colorSliders.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); colorInputs.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); visibilityToggles.forEach(el => el?.removeEventListener('change', handleThemeLayoutControlChange)); internalInfoToggles.forEach(el => el?.removeEventListener('change', handleThemeLayoutControlChange)); btnLoadThemeFavorite.removeEventListener('click', handleLoadFavorite); btnSaveThemeFavorite.removeEventListener('click', handleSaveFavorite); btnDeleteThemeFavorite.removeEventListener('click', handleDeleteFavorite); themeFavoritesSelect.removeEventListener('change', enableDisableDeleteButton); }
-    function populateThemeFavorites() { const favs = loadThemeFavorites(); themeFavoritesSelect.innerHTML = '<option value="">Velg favoritt...</option>'; favs.forEach(f => { const opt = document.createElement('option'); opt.value = f.id; opt.textContent = f.name; themeFavoritesSelect.appendChild(opt); }); enableDisableDeleteButton(); }
+    function openTournamentModal() {
+        if (state.live.status === 'finished' || isModalOpen) return;
+        console.log("Opening T modal");
+        editBlindStructureBody.innerHTML = ''; editBlindLevelCounter = 0;
+        state.config.blindLevels.forEach(level => addEditBlindLevelRow(level));
+        updateEditLevelNumbers();
+        editPaidPlacesInput.value = state.config.paidPlaces;
+        editPrizeDistTextarea.value = state.config.prizeDistribution.join(', ');
+        tournamentSettingsModal.classList.remove('hidden');
+        isModalOpen = true;
+        currentOpenModal = tournamentSettingsModal;
+    }
+
+    function closeTournamentModal() {
+        tournamentSettingsModal.classList.add('hidden');
+        isModalOpen = false;
+        currentOpenModal = null;
+    }
+
+    function openUiModal() {
+        if (isModalOpen) return;
+        console.log("Opening UI modal");
+        originalThemeBg = loadThemeBgColor();
+        originalThemeText = loadThemeTextColor();
+        originalElementLayouts = loadElementLayouts(); // Loads merged defaults + saved
+
+        blockSliderUpdates=true; // Prevent sync loops during setup
+        // --- Populate Color Pickers (RGB & HSL) ---
+        const [bgR, bgG, bgB] = parseRgbString(originalThemeBg); const bgHSL = rgbToHsl(bgR, bgG, bgB);
+        bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB;
+        bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l;
+        const [textR, textG, textB] = parseRgbString(originalThemeText); const textHSL = rgbToHsl(textR, textG, textB);
+        textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB;
+        textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l;
+
+        // --- Populate Layout Controls ---
+        canvasHeightInput.value = canvasHeightSlider.value = originalElementLayouts.canvas.height;
+        // Size/Font Controls
+        titleWidthInput.value = titleWidthSlider.value = originalElementLayouts.title.width;
+        titleFontSizeInput.value = titleFontSizeSlider.value = originalElementLayouts.title.fontSize;
+        timerWidthInput.value = timerWidthSlider.value = originalElementLayouts.timer.width;
+        timerFontSizeInput.value = timerFontSizeSlider.value = originalElementLayouts.timer.fontSize;
+        blindsWidthInput.value = blindsWidthSlider.value = originalElementLayouts.blinds.width;
+        blindsFontSizeInput.value = blindsFontSizeSlider.value = originalElementLayouts.blinds.fontSize;
+        logoWidthInput.value = logoWidthSlider.value = originalElementLayouts.logo.width;
+        logoHeightInput.value = logoHeightSlider.value = originalElementLayouts.logo.height;
+        infoWidthInput.value = infoWidthSlider.value = originalElementLayouts.info.width;
+        infoFontSizeInput.value = infoFontSizeSlider.value = originalElementLayouts.info.fontSize;
+        // Visibility Toggles
+        visibilityToggles.forEach(toggle => {
+            const elementId = toggle.dataset.elementId.replace('-element','');
+            toggle.checked = originalElementLayouts[elementId]?.isVisible ?? true;
+        });
+        // Internal Info Toggles
+        for (const key in infoParagraphs) {
+            const checkboxId = `toggleInfo${key.substring(4)}`;
+            const checkbox = document.getElementById(checkboxId);
+            if (checkbox) checkbox.checked = originalElementLayouts.info[key] ?? true;
+        }
+        blockSliderUpdates=false; // Re-enable updates
+
+        populateThemeFavorites();
+        updateColorAndLayoutPreviews(); // Update preview based on loaded values
+        addThemeAndLayoutListeners(); // Add listeners for controls
+        uiSettingsModal.classList.remove('hidden');
+        isModalOpen = true;
+        currentOpenModal = uiSettingsModal;
+    }
+
+    function closeUiModal(revert = false) {
+        if (revert) {
+             console.log("Reverting UI changes on cancel.");
+            applyThemeAndLayout(originalThemeBg, originalThemeText, originalElementLayouts);
+        }
+        removeThemeAndLayoutListeners(); // Remove listeners to prevent updates when closed
+        uiSettingsModal.classList.add('hidden');
+        isModalOpen = false;
+        currentOpenModal = null;
+    }
+
+    function addEditBlindLevelRow(levelData={}){
+        editBlindLevelCounter++; const row=editBlindStructureBody.insertRow(); row.dataset.levelNumber=editBlindLevelCounter;
+        const sb=levelData.sb??''; const bb=levelData.bb??''; const ante=levelData.ante??0; const dur=levelData.duration??(state.config.blindLevels?.[0]?.duration||20); const pause=levelData.pauseMinutes??0;
+        const past = levelData.level <= state.live.currentLevelIndex && !state.live.isOnBreak; const dis = past ? 'disabled' : '';
+        row.innerHTML=`<td><span class="level-number">${editBlindLevelCounter}</span> ${past?'<small>(Låst)</small>':''}</td><td><input type="number" class="sb-input" value="${sb}" min="0" step="1" ${dis}></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="1" ${dis}></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="1" ${dis}></td><td><input type="number" class="duration-input" value="${dur}" min="1" ${dis}></td><td><input type="number" class="pause-duration-input" value="${pause}" min="0" ${dis}></td><td><button type="button" class="btn-remove-level" title="Fjern nivå ${editBlindLevelCounter}" ${dis}>X</button></td>`;
+        const btn=row.querySelector('.btn-remove-level'); if(!past) btn.onclick=()=>{row.remove(); updateEditLevelNumbers();}; else { row.querySelectorAll('input').forEach(inp=>inp.disabled=true); btn.disabled=true; }
+    }
+
+    function updateEditLevelNumbers(){
+        const rows=editBlindStructureBody.querySelectorAll('tr');
+        rows.forEach((r,i)=>{ const lvl=i+1; r.dataset.levelNumber=lvl; r.querySelector('.level-number').textContent=lvl; const btn=r.querySelector('.btn-remove-level'); if(btn)btn.title=`Fjern nivå ${lvl}`; });
+        editBlindLevelCounter=rows.length;
+    }
+
+    function generateEditPayout(){
+        const p=parseInt(editPaidPlacesInput.value)||0;
+        editPrizeDistTextarea.value = (p > 0 && standardPayouts[p]) ? standardPayouts[p].join(', ') : '';
+    }
+
+    function syncRgbFromHsl(prefix){
+        if(blockSliderUpdates) return; const h=parseInt(document.getElementById(`${prefix}HueInput`).value); const s=parseInt(document.getElementById(`${prefix}SatInput`).value); const l=parseInt(document.getElementById(`${prefix}LigInput`).value); const rgb=hslToRgb(h,s,l); const [r,g,b]=parseRgbString(rgb); blockSliderUpdates=true;
+        document.getElementById(`${prefix}RedSlider`).value=document.getElementById(`${prefix}RedInput`).value=r; document.getElementById(`${prefix}GreenSlider`).value=document.getElementById(`${prefix}GreenInput`).value=g; document.getElementById(`${prefix}BlueSlider`).value=document.getElementById(`${prefix}BlueInput`).value=b;
+        blockSliderUpdates=false; return rgb;
+    }
+
+    function syncHslFromRgb(prefix){
+         if(blockSliderUpdates) return; const r=parseInt(document.getElementById(`${prefix}RedInput`).value); const g=parseInt(document.getElementById(`${prefix}GreenInput`).value); const b=parseInt(document.getElementById(`${prefix}BlueInput`).value); const hsl=rgbToHsl(r,g,b); blockSliderUpdates=true;
+         document.getElementById(`${prefix}HueSlider`).value=document.getElementById(`${prefix}HueInput`).value=hsl.h; document.getElementById(`${prefix}SatSlider`).value=document.getElementById(`${prefix}SatInput`).value=hsl.s; document.getElementById(`${prefix}LigSlider`).value=document.getElementById(`${prefix}LigInput`).value=hsl.l;
+         blockSliderUpdates=false; return `rgb(${r}, ${g}, ${b})`;
+    }
+
+     function updateColorAndLayoutPreviews() {
+        if (!isModalOpen || currentOpenModal !== uiSettingsModal) return;
+        const bg = syncHslFromRgb('bg'); const txt = syncHslFromRgb('text');
+        // Read current sizes and visibility toggles from controls
+        const layouts = {
+            canvas: { height: parseInt(canvasHeightSlider.value) },
+            title: { width: parseInt(titleWidthSlider.value), fontSize: parseFloat(titleFontSizeSlider.value) },
+            timer: { width: parseInt(timerWidthSlider.value), fontSize: parseFloat(timerFontSizeSlider.value) },
+            blinds: { width: parseInt(blindsWidthSlider.value), fontSize: parseFloat(blindsFontSizeSlider.value) },
+            logo: { width: parseInt(logoWidthSlider.value), height: parseInt(logoHeightSlider.value) },
+            info: { width: parseInt(infoWidthSlider.value), fontSize: parseFloat(infoFontSizeSlider.value),
+                showNextBlinds: toggleInfoNextBlinds.checked, showNextPause: toggleInfoNextPause.checked,
+                showAvgStack: toggleInfoAvgStack.checked, showPlayers: toggleInfoPlayers.checked, showLateReg: toggleInfoLateReg.checked
+            }
+        };
+        // Add visibility status from toggles, preserving existing x/y from saved state
+        const currentLayouts = loadElementLayouts(); // Need current X/Y for apply function
+        visibilityToggles.forEach(toggle => {
+            const elementId = toggle.dataset.elementId.replace('-element','');
+            layouts[elementId] = {
+                ...(currentLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId]), // Get existing X/Y or default
+                ...(layouts[elementId] || {}), // Merge new size/font
+                isVisible: toggle.checked // Set visibility from toggle
+            };
+        });
+
+        // Update modal previews
+        if(bgColorPreview) bgColorPreview.style.backgroundColor = bg;
+        if(textColorPreview) { textColorPreview.style.backgroundColor = bg; textColorPreview.querySelector('span').style.color = txt; }
+
+        // Apply changes to the main page (will use the constructed layouts object)
+        applyThemeAndLayout(bg, txt, layouts);
+    }
+
+    function handleThemeLayoutControlChange(e) {
+        if (!isModalOpen || currentOpenModal !== uiSettingsModal) return;
+        const target = e.target; const id = target.id;
+        const isSlider = id.includes('Slider'); const isInput = id.includes('Input');
+        const isVisToggle = target.type === 'checkbox' && visibilityToggles.includes(target);
+        const isInfoToggle = target.type === 'checkbox' && internalInfoToggles.includes(target);
+
+        if (isSlider || isInput) { // Handle size and color controls
+            const baseId = isSlider ? id.replace('Slider', '') : id.replace('Input', '');
+            const slider = document.getElementById(baseId + 'Slider');
+            const input = document.getElementById(baseId + 'Input');
+            if (target.type === 'number' && input) { // Sync number input to slider
+                let val = parseFloat(target.value);
+                const min = parseFloat(target.min || '0'); const max = parseFloat(target.max || '100'); const step = parseFloat(target.step || '1');
+                if (!isNaN(val)) {
+                    val = Math.max(min, Math.min(max, val));
+                    target.value = (step % 1 === 0) ? Math.round(val) : val.toFixed(step.toString().split('.')[1]?.length || 1);
+                    if (slider) slider.value = target.value;
+                }
+            } else if (isSlider && input) { // Sync slider to number input
+                input.value = target.value;
+            }
+            // Handle color sync if it's a color control
+            if (id.includes('Hue') || id.includes('Sat') || id.includes('Lig')) syncRgbFromHsl(id.startsWith('bg') ? 'bg' : 'text');
+            else if (id.includes('Red') || id.includes('Green') || id.includes('Blue')) syncHslFromRgb(id.startsWith('bg') ? 'bg' : 'text');
+        }
+        // For any control change (size, color, toggle), update the preview
+        updateColorAndLayoutPreviews();
+    }
+
+    function addThemeAndLayoutListeners(){
+        sizeSliders.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange));
+        sizeInputs.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange));
+        colorSliders.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange));
+        colorInputs.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange));
+        visibilityToggles.forEach(el => el?.addEventListener('change', handleThemeLayoutControlChange)); // Element visibility
+        internalInfoToggles.forEach(el => el?.addEventListener('change', handleThemeLayoutControlChange)); // Info box internal visibility
+        btnLoadThemeFavorite.addEventListener('click', handleLoadFavorite);
+        btnSaveThemeFavorite.addEventListener('click', handleSaveFavorite);
+        btnDeleteThemeFavorite.addEventListener('click', handleDeleteFavorite);
+        themeFavoritesSelect.addEventListener('change', enableDisableDeleteButton);
+    }
+
+    function removeThemeAndLayoutListeners(){
+        sizeSliders.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange));
+        sizeInputs.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange));
+        colorSliders.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange));
+        colorInputs.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange));
+        visibilityToggles.forEach(el => el?.removeEventListener('change', handleThemeLayoutControlChange));
+        internalInfoToggles.forEach(el => el?.removeEventListener('change', handleThemeLayoutControlChange));
+        btnLoadThemeFavorite.removeEventListener('click', handleLoadFavorite);
+        btnSaveThemeFavorite.removeEventListener('click', handleSaveFavorite);
+        btnDeleteThemeFavorite.removeEventListener('click', handleDeleteFavorite);
+        themeFavoritesSelect.removeEventListener('change', enableDisableDeleteButton);
+    }
+
+    function populateThemeFavorites() {
+        const favs = loadThemeFavorites();
+        themeFavoritesSelect.innerHTML = '<option value="">Velg favoritt...</option>';
+        favs.forEach(f => { const opt = document.createElement('option'); opt.value = f.id; opt.textContent = f.name; themeFavoritesSelect.appendChild(opt); });
+        enableDisableDeleteButton();
+    }
+
     function enableDisableDeleteButton(){ btnDeleteThemeFavorite.disabled = !themeFavoritesSelect.value; }
-    function handleLoadFavorite() { const id = themeFavoritesSelect.value; if (!id) return; const fav = loadThemeFavorites().find(f => f.id === id); if (fav) { console.log(`Loading theme: ${fav.name}`); const [bgR,bgG,bgB]=parseRgbString(fav.bg); const bgHSL=rgbToHsl(bgR,bgG,bgB); const [txtR,txtG,txtB]=parseRgbString(fav.text); const txtHSL=rgbToHsl(txtR,txtG,txtB); blockSliderUpdates=true; bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; textRedSlider.value=textRedInput.value=txtR; textGreenSlider.value=textGreenInput.value=txtG; textBlueSlider.value=textBlueInput.value=txtB; textHueSlider.value=textHueInput.value=txtHSL.h; textSatSlider.value=textSatInput.value=txtHSL.s; textLigSlider.value=textLigInput.value=txtHSL.l; blockSliderUpdates=false; updateColorAndLayoutPreviews(); } }
-    function handleSaveFavorite() { const name = newThemeFavoriteNameInput.value.trim(); if (!name) { alert("Skriv navn."); return; } const bg = `rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`; const txt = `rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`; const saved = addThemeFavorite(name, bg, txt); newThemeFavoriteNameInput.value = ''; populateThemeFavorites(); themeFavoritesSelect.value = saved.id; enableDisableDeleteButton(); alert(`Tema '${saved.name}' lagret!`); console.log(`Theme saved: ${saved.name}`, saved); }
-    function handleDeleteFavorite() { const id = themeFavoritesSelect.value; if (!id) return; const fav = loadThemeFavorites().find(f => f.id === id); if (fav && confirm(`Slette tema '${fav.name}'?`)) { deleteThemeFavorite(id); populateThemeFavorites(); console.log(`Theme deleted: ${fav.name}`); } }
-    function handleSaveTournamentSettings(){ console.log("Saving T settings..."); let changes=false; let uiUpdate=false; const cLI=state.live.currentLevelIndex; let valid=true; const newLvls=[]; const rows=editBlindStructureBody.querySelectorAll('tr'); let errs=[]; if(rows.length===0){alert("Minst ett nivå kreves.");return;} rows.forEach((row,idx)=>{ const lvlNum=idx+1; let rowOk=true; const sbIn=row.querySelector('.sb-input'); const bbIn=row.querySelector('.bb-input'); const aIn=row.querySelector('.ante-input'); const dIn=row.querySelector('.duration-input'); const pIn=row.querySelector('.pause-duration-input'); const past=lvlNum<=cLI&&!state.live.isOnBreak; let sb,bb,a,d,pM; if(past){if(idx<state.config.blindLevels.length){const pastData=state.config.blindLevels[idx];sb=pastData.sb;bb=pastData.bb;a=pastData.ante;d=pastData.duration;pM=pastData.pauseMinutes;}else{rowOk=false;}}else{sb=parseInt(sbIn.value);bb=parseInt(bbIn.value);a=parseInt(aIn.value)||0;d=parseInt(dIn.value);pM=parseInt(pIn.value)||0;[sbIn,bbIn,aIn,dIn,pIn].forEach(el=>el.classList.remove('invalid')); if(isNaN(d)||d<=0){rowOk=false;dIn.classList.add('invalid');} if(isNaN(sb)||sb<0){rowOk=false;sbIn.classList.add('invalid');} if(isNaN(bb)||bb<=0){rowOk=false;bbIn.classList.add('invalid');} else if(sb>bb){rowOk=false;sbIn.classList.add('invalid');bbIn.classList.add('invalid');errs.push(`L${lvlNum}:SB>BB`);} else if(bb>0&&sb<0){rowOk=false;sbIn.classList.add('invalid');} if(isNaN(a)||a<0){rowOk=false;aIn.classList.add('invalid');} if(isNaN(pM)||pM<0){rowOk=false;pIn.classList.add('invalid');}} if(!rowOk)valid=false; newLvls.push({level:lvlNum,sb:sb,bb:bb,ante:a,duration:d,pauseMinutes:pM});}); if(!valid){let msg="Ugyldige verdier:\n- "+[...new Set(errs)].join("\n- "); if(errs.length===0)msg="Ugyldige verdier (markerte felt)."; alert(msg); return;} if(JSON.stringify(state.config.blindLevels)!==JSON.stringify(newLvls)){state.config.blindLevels=newLvls;changes=true;uiUpdate=true;logActivity(state.live.activityLog,"Blindstruktur endret.");console.log("Blinds changed",newLvls);} const places=parseInt(editPaidPlacesInput.value); const dist=editPrizeDistTextarea.value.split(',').map(p=>parseFloat(p.trim())).filter(p=>!isNaN(p)&&p>=0); let prizesOk=true; let prizeErrs=[]; if(isNaN(places)||places<=0){prizesOk=false;prizeErrs.push("Ugyldig antall betalte (> 0).");}else if(dist.length!==places){prizesOk=false;prizeErrs.push(`Premier(${dist.length}) != Betalte(${places}).`);}else{const sum=dist.reduce((a,b)=>a+b,0);if(Math.abs(sum-100)>0.1){prizesOk=false;prizeErrs.push(`Sum (${sum.toFixed(1)}%) != 100%.`);}} if(!prizesOk){alert("Feil i premier:\n- "+prizeErrs.join("\n- "));return;} if(state.config.paidPlaces!==places||JSON.stringify(state.config.prizeDistribution)!==JSON.stringify(dist)){const inMoney=state.live.eliminatedPlayers.filter(p=>p.place&&p.place<=state.config.paidPlaces).length;if(inMoney===0||confirm(`Advarsel: ${inMoney} i pengene. Endre premier?`)){state.config.paidPlaces=places;state.config.prizeDistribution=dist;changes=true;uiUpdate=true;logActivity(state.live.activityLog,"Premiestruktur endret.");console.log("Prizes changed",places,dist);}else{console.log("Prize change cancelled.");editPaidPlacesInput.value=state.config.paidPlaces;editPrizeDistTextarea.value=state.config.prizeDistribution.join(', ');return;}} if(changes){if(saveTournamentState(currentTournamentId,state)){alert("Regelendringer lagret!");if(uiUpdate)updateUI();closeTournamentModal();}else alert("Lagring feilet!");} else{alert("Ingen regelendringer å lagre.");closeTournamentModal();}}
-    function handleSaveUiSettings(){ console.log("Saving UI..."); let themeCh=false; let layoutCh=false; const bg=`rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`; const txt=`rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`; const layouts={canvas:{height:parseInt(canvasHeightInput.value)}, title:{width:parseInt(titleWidthSlider.value), fontSize:parseFloat(titleFontSizeSlider.value)}, timer:{width:parseInt(timerWidthSlider.value), fontSize:parseFloat(timerFontSizeSlider.value)}, blinds:{width:parseInt(blindsWidthSlider.value), fontSize:parseFloat(blindsFontSizeSlider.value)}, logo:{width:parseInt(logoWidthSlider.value), height:parseInt(logoHeightSlider.value)}, info:{width:parseInt(infoWidthSlider.value), fontSize:parseFloat(infoFontSizeSlider.value), showNextBlinds:toggleInfoNextBlinds.checked, showNextPause:toggleInfoNextPause.checked, showAvgStack:toggleInfoAvgStack.checked, showPlayers:toggleInfoPlayers.checked, showLateReg:toggleInfoLateReg.checked}}; const currentLayouts = loadElementLayouts(); visibilityToggles.forEach(toggle => { const elementId = toggle.dataset.elementId.replace('-element',''); layouts[elementId] = { ...(currentLayouts[elementId] || {}), ...(layouts[elementId] || {}), x: currentLayouts[elementId]?.x ?? 0, y: currentLayouts[elementId]?.y ?? 0, // Preserve dragged X/Y isVisible: toggle.checked }; }); if(bg!==originalThemeBg||txt!==originalThemeText){saveThemeBgColor(bg);saveThemeTextColor(txt);console.log("Theme saved.");themeCh=true;} if(JSON.stringify(layouts)!==JSON.stringify(originalElementLayouts)){saveElementLayouts(layouts);console.log("Layout saved.");layoutCh=true;} if(themeCh||layoutCh){applyThemeAndLayout(bg,txt,layouts);alert("Utseende lagret!");closeUiModal(false);} else{alert("Ingen endringer å lagre.");closeUiModal(false);}}
-    function handleResetLayoutTheme() { if (confirm("Tilbakestille layout og farger til standard?")) { const dLayout = DEFAULT_ELEMENT_LAYOUTS; const dBg = DEFAULT_THEME_BG; const dTxt = DEFAULT_THEME_TEXT; console.log("Resetting UI."); applyThemeAndLayout(dBg, dTxt, dLayout); blockSliderUpdates=true; const [bgR,bgG,bgB]=parseRgbString(dBg); const bgHSL=rgbToHsl(bgR,bgG,bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; const [txtR,txtG,txtB]=parseRgbString(dTxt); const txtHSL=rgbToHsl(txtR,txtG,txtB); textRedSlider.value=textRedInput.value=txtR; textGreenSlider.value=textGreenInput.value=txtG; textBlueSlider.value=textBlueInput.value=txtB; textHueSlider.value=textHueInput.value=txtHSL.h; textSatSlider.value=textSatInput.value=txtHSL.s; textLigSlider.value=textLigInput.value=txtHSL.l; canvasHeightInput.value=canvasHeightSlider.value=dLayout.canvas.height; titleWidthInput.value=titleWidthSlider.value=dLayout.title.width; titleFontSizeInput.value=titleFontSizeSlider.value=dLayout.title.fontSize; timerWidthInput.value=timerWidthSlider.value=dLayout.timer.width; timerFontSizeInput.value=timerFontSizeSlider.value=dLayout.timer.fontSize; blindsWidthInput.value=blindsWidthSlider.value=dLayout.blinds.width; blindsFontSizeInput.value=blindsFontSizeSlider.value=dLayout.blinds.fontSize; logoWidthInput.value=logoWidthSlider.value=dLayout.logo.width; logoHeightInput.value=logoHeightSlider.value=dLayout.logo.height; infoWidthInput.value=infoWidthSlider.value=dLayout.info.width; infoFontSizeInput.value=infoFontSizeSlider.value=dLayout.info.fontSize; visibilityToggles.forEach(t => {const elId=t.dataset.elementId.replace('-element',''); t.checked=dLayout[elId]?.isVisible??true;}); for(const k in infoParagraphs){const checkId=`toggleInfo${k.substring(4)}`; const check=document.getElementById(checkId); if(check) check.checked=dLayout.info[k]??true;} blockSliderUpdates=false; updateColorAndLayoutPreviews(); alert("Layout/farger tilbakestilt. Trykk Lagre.") } }
-    // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS END ===
+
+    function handleLoadFavorite() {
+        const id = themeFavoritesSelect.value; if (!id) return;
+        const fav = loadThemeFavorites().find(f => f.id === id);
+        if (fav) {
+            console.log(`Loading theme: ${fav.name}`);
+            const [bgR,bgG,bgB]=parseRgbString(fav.bg); const bgHSL=rgbToHsl(bgR,bgG,bgB); const [txtR,txtG,txtB]=parseRgbString(fav.text); const txtHSL=rgbToHsl(txtR,txtG,txtB);
+            blockSliderUpdates = true;
+            bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l;
+            textRedSlider.value=textRedInput.value=txtR; textGreenSlider.value=textGreenInput.value=txtG; textBlueSlider.value=textBlueInput.value=txtB; textHueSlider.value=textHueInput.value=txtHSL.h; textSatSlider.value=textSatInput.value=txtHSL.s; textLigSlider.value=textLigInput.value=txtHSL.l;
+            blockSliderUpdates = false;
+            updateColorAndLayoutPreviews(); // Apply loaded colors to preview
+        }
+    }
+
+    function handleSaveFavorite() {
+        const name = newThemeFavoriteNameInput.value.trim(); if (!name) { alert("Skriv navn."); return; }
+        const bg = `rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`; const txt = `rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`;
+        const saved = addThemeFavorite(name, bg, txt);
+        newThemeFavoriteNameInput.value = ''; populateThemeFavorites(); themeFavoritesSelect.value = saved.id; enableDisableDeleteButton();
+        alert(`Tema '${saved.name}' lagret!`); console.log(`Theme saved: ${saved.name}`, saved);
+    }
+
+    function handleDeleteFavorite() {
+        const id = themeFavoritesSelect.value; if (!id) return;
+        const fav = loadThemeFavorites().find(f => f.id === id);
+        if (fav && confirm(`Slette tema '${fav.name}'?`)) { deleteThemeFavorite(id); populateThemeFavorites(); console.log(`Theme deleted: ${fav.name}`); }
+    }
+
+    function handleSaveTournamentSettings(){
+        console.log("Saving T settings..."); let changes=false; let uiUpdate=false; const cLI=state.live.currentLevelIndex; let valid=true; const newLvls=[]; const rows=editBlindStructureBody.querySelectorAll('tr'); let errs=[];
+        if(rows.length===0){alert("Minst ett nivå kreves.");return;}
+        rows.forEach((row,idx)=>{ const lvlNum=idx+1; let rowOk=true; const sbIn=row.querySelector('.sb-input'); const bbIn=row.querySelector('.bb-input'); const aIn=row.querySelector('.ante-input'); const dIn=row.querySelector('.duration-input'); const pIn=row.querySelector('.pause-duration-input'); const past=lvlNum<=cLI&&!state.live.isOnBreak; let sb,bb,a,d,pM; if(past){if(idx<state.config.blindLevels.length){const pastData=state.config.blindLevels[idx];sb=pastData.sb;bb=pastData.bb;a=pastData.ante;d=pastData.duration;pM=pastData.pauseMinutes;}else{console.error(`Error getting past level ${idx}`);rowOk=false;}}else{sb=parseInt(sbIn.value);bb=parseInt(bbIn.value);a=parseInt(aIn.value)||0;d=parseInt(dIn.value);pM=parseInt(pIn.value)||0;[sbIn,bbIn,aIn,dIn,pIn].forEach(el=>el.classList.remove('invalid')); if(isNaN(d)||d<=0){rowOk=false;dIn.classList.add('invalid');} if(isNaN(sb)||sb<0){rowOk=false;sbIn.classList.add('invalid');} if(isNaN(bb)||bb<=0){rowOk=false;bbIn.classList.add('invalid');} else if(sb>bb){rowOk=false;sbIn.classList.add('invalid');bbIn.classList.add('invalid');errs.push(`L${lvlNum}:SB>BB`);} else if(bb>0&&sb<0){rowOk=false;sbIn.classList.add('invalid');} if(isNaN(a)||a<0){rowOk=false;aIn.classList.add('invalid');} if(isNaN(pM)||pM<0){rowOk=false;pIn.classList.add('invalid');}} if(!rowOk)valid=false; newLvls.push({level:lvlNum,sb:sb,bb:bb,ante:a,duration:d,pauseMinutes:pM});});
+        if(!valid){let msg="Ugyldige verdier:\n- "+[...new Set(errs)].join("\n- "); if(errs.length===0)msg="Ugyldige verdier (markerte felt)."; alert(msg); return;}
+        if(JSON.stringify(state.config.blindLevels)!==JSON.stringify(newLvls)){state.config.blindLevels=newLvls;changes=true;uiUpdate=true;logActivity(state.live.activityLog,"Blindstruktur endret.");console.log("Blinds changed",newLvls);}
+        const places=parseInt(editPaidPlacesInput.value); const dist=editPrizeDistTextarea.value.split(',').map(p=>parseFloat(p.trim())).filter(p=>!isNaN(p)&&p>=0); let prizesOk=true; let prizeErrs=[];
+        if(isNaN(places)||places<=0){prizesOk=false;prizeErrs.push("Ugyldig antall betalte (> 0).");}else if(dist.length!==places){prizesOk=false;prizeErrs.push(`Premier(${dist.length}) != Betalte(${places}).`);}else{const sum=dist.reduce((a,b)=>a+b,0);if(Math.abs(sum-100)>0.1){prizesOk=false;prizeErrs.push(`Sum (${sum.toFixed(1)}%) != 100%.`);}}
+        if(!prizesOk){alert("Feil i premier:\n- "+prizeErrs.join("\n- "));return;}
+        if(state.config.paidPlaces!==places||JSON.stringify(state.config.prizeDistribution)!==JSON.stringify(dist)){const inMoney=state.live.eliminatedPlayers.filter(p=>p.place&&p.place<=state.config.paidPlaces).length;if(inMoney===0||confirm(`Advarsel: ${inMoney} i pengene. Endre premier?`)){state.config.paidPlaces=places;state.config.prizeDistribution=dist;changes=true;uiUpdate=true;logActivity(state.live.activityLog,"Premiestruktur endret.");console.log("Prizes changed",places,dist);}else{console.log("Prize change cancelled.");editPaidPlacesInput.value=state.config.paidPlaces;editPrizeDistTextarea.value=state.config.prizeDistribution.join(', ');return;}}
+        if(changes){if(saveTournamentState(currentTournamentId,state)){alert("Regelendringer lagret!");if(uiUpdate)updateUI();closeTournamentModal();}else alert("Lagring feilet!");}
+        else{alert("Ingen regelendringer å lagre.");closeTournamentModal();}
+    }
+
+     function handleSaveUiSettings(){
+         console.log("Saving UI..."); let themeCh=false; let layoutCh=false;
+         const bg=`rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`;
+         const txt=`rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`;
+         // Create the final layout object to save
+         const finalLayouts={ canvas:{height:parseInt(canvasHeightInput.value)} };
+         const currentFullLayouts = loadElementLayouts(); // Get current full layout to preserve X/Y
+
+         // Loop through elements controlled by modal size/visibility
+         draggableElements.forEach(element => {
+             if (!element) return;
+             const elementId = element.id.replace('-element', ''); // 'title', 'timer', etc.
+             const visibilityToggle = document.getElementById(`toggle${elementId.charAt(0).toUpperCase() + elementId.slice(1)}Element`);
+
+             // Start with existing or default layout (preserves existing X/Y)
+             finalLayouts[elementId] = { ...(currentFullLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId]) };
+
+             // Update size/font/height based on modal controls
+             const widthSlider = document.getElementById(`${elementId}WidthSlider`);
+             const fontSlider = document.getElementById(`${elementId}FontSizeSlider`);
+             const heightSlider = document.getElementById(`${elementId}HeightSlider`); // Only for logo
+
+             if(widthSlider) finalLayouts[elementId].width = parseInt(widthSlider.value);
+             if(fontSlider) finalLayouts[elementId].fontSize = parseFloat(fontSlider.value);
+             if(heightSlider) finalLayouts[elementId].height = parseInt(heightSlider.value);
+
+             // Update visibility
+             if(visibilityToggle) finalLayouts[elementId].isVisible = visibilityToggle.checked;
+
+             // Special handling for internal info toggles
+             if (elementId === 'info') {
+                 finalLayouts.info.showNextBlinds = toggleInfoNextBlinds.checked;
+                 finalLayouts.info.showNextPause = toggleInfoNextPause.checked;
+                 finalLayouts.info.showAvgStack = toggleInfoAvgStack.checked;
+                 finalLayouts.info.showPlayers = toggleInfoPlayers.checked;
+                 finalLayouts.info.showLateReg = toggleInfoLateReg.checked;
+             }
+         });
+
+         // Check for changes
+         if(bg!==originalThemeBg||txt!==originalThemeText){ saveThemeBgColor(bg);saveThemeTextColor(txt);console.log("Theme saved.");themeCh=true; }
+         // Compare the *entire* final layout object (including preserved X/Y) with the original one loaded
+         if(JSON.stringify(finalLayouts)!==JSON.stringify(originalElementLayouts)){ saveElementLayouts(finalLayouts);console.log("Layout saved.");layoutCh=true; }
+
+         if(themeCh||layoutCh){ applyThemeAndLayout(bg,txt,finalLayouts);alert("Utseende lagret!");closeUiModal(false); }
+         else{ alert("Ingen endringer å lagre.");closeUiModal(false); }
+     } // <-- *** Denne manglet sannsynligvis ***
+
+     function handleResetLayoutTheme() {
+         if (confirm("Tilbakestille layout og farger til standard?")) {
+             const dLayout = DEFAULT_ELEMENT_LAYOUTS; const dBg = DEFAULT_THEME_BG; const dTxt = DEFAULT_THEME_TEXT;
+             console.log("Resetting UI.");
+             // Apply defaults first to update the live view AND save the reset position/visibility
+             // Need to merge default sizes with CURRENT positions from originalElementLayouts
+             const resetLayouts = {};
+             for (const key in dLayout) {
+                 resetLayouts[key] = {
+                     ...(originalElementLayouts[key] || {}), // Keep current X,Y if exists
+                     ...(dLayout[key]) // Apply default Width, Height, FontSize, Visibility etc.
+                 };
+                  // Ensure visibility is set to default 'true'
+                 resetLayouts[key].isVisible = dLayout[key].isVisible ?? true;
+             }
+             // Special handling for info box internal toggles
+             resetLayouts.info = { ...resetLayouts.info, ...dLayout.info };
 
 
-    // === 13: TOURNAMENT FINISH LOGIC START ===
-    function finishTournament() { if (state.live.status === 'finished') return; console.log("Finishing T..."); logActivity(state.live.activityLog,"Turnering fullføres."); if(timerInterval)clearInterval(timerInterval);timerInterval=null; if(realTimeInterval)clearInterval(realTimeInterval);realTimeInterval=null; state.live.status='finished'; state.live.isOnBreak=false; state.live.timeRemainingInLevel=0; state.live.timeRemainingInBreak=0; if(state.live.players.length===1){const w=state.live.players[0];w.place=1;state.live.eliminatedPlayers.push(w);state.live.players.splice(0,1);logActivity(state.live.activityLog,`Vinner: ${w.name}!`);}else if(state.live.players.length>1){logActivity(state.live.activityLog,`Fullført med ${state.live.players.length} spillere igjen.`); state.live.players.forEach(p=>{p.eliminated=true;p.place=null;state.live.eliminatedPlayers.push(p);}); state.live.players=[];}else{logActivity(state.live.activityLog,`Fullført uten aktive spillere.`);} state.live.eliminatedPlayers.sort((a,b)=>(a.place??Infinity)-(b.place??Infinity)); updateUI(); saveTournamentState(currentTournamentId,state); alert("Turneringen er fullført!"); }
-    // === 13: TOURNAMENT FINISH LOGIC END ===
+             applyThemeAndLayout(dBg, dTxt, resetLayouts);
 
-
-    // === 14: EVENT LISTENER ATTACHMENT (General) START ===
-    if(startPauseButton) startPauseButton.addEventListener('click', handleStartPause);
-    if(prevLevelButton) prevLevelButton.addEventListener('click', () => handleAdjustLevel(-1));
-    if(nextLevelButton) nextLevelButton.addEventListener('click', () => handleAdjustLevel(1));
-    if(adjustTimeMinusButton) adjustTimeMinusButton.addEventListener('click', () => handleAdjustTime(-60));
-    if(adjustTimePlusButton) adjustTimePlusButton.addEventListener('click', () => handleAdjustTime(60));
-    if(lateRegButton) lateRegButton.addEventListener('click', handleLateRegClick);
-    if(endTournamentButton) endTournamentButton.addEventListener('click', handleEndTournament);
-    if(btnForceSave) btnForceSave.addEventListener('click', handleForceSave);
-    if(btnBackToMainLive) btnBackToMainLive.addEventListener('click', handleBackToMain);
-    if(btnEditTournamentSettings) btnEditTournamentSettings.addEventListener('click', openTournamentModal);
-    if(btnEditUiSettings) btnEditUiSettings.addEventListener('click', openUiModal);
-    // Remove click listener on canvas elements for opening modal
-    // if(liveCanvas) { liveCanvas.addEventListener('click', (e) => { const clickedElement = e.target.closest('.clickable-element'); if (clickedElement && !isModalOpen) { openUiModal(); } }); }
-    if(closeTournamentModalButton) closeTournamentModalButton.addEventListener('click', closeTournamentModal);
-    if(btnCancelTournamentEdit) btnCancelTournamentEdit.addEventListener('click', closeTournamentModal);
-    if(btnAddEditLevel) btnAddEditLevel.addEventListener('click', () => addEditBlindLevelRow());
-    if(btnGenerateEditPayout) btnGenerateEditPayout.addEventListener('click', generateEditPayout);
-    if(btnSaveTournamentSettings) btnSaveTournamentSettings.addEventListener('click', handleSaveTournamentSettings);
-    if(closeUiModalButton) closeUiModalButton.addEventListener('click', () => closeUiModal(true));
-    if(btnCancelUiEdit) btnCancelUiEdit.addEventListener('click', () => closeUiModal(true));
-    if(btnSaveUiSettings) btnSaveUiSettings.addEventListener('click', handleSaveUiSettings);
-    if(btnResetLayoutTheme) btnResetLayoutTheme.addEventListener('click', handleResetLayoutTheme);
-    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { if (currentOpenModal === uiSettingsModal) closeUiModal(true); else if (currentOpenModal === tournamentSettingsModal) closeTournamentModal(); } });
-
-    // Add Drag and Drop Listeners to elements
-    draggableElements.forEach(element => {
-         if (element) {
-             element.addEventListener('mousedown', (e) => startDrag(e, element));
+             // Update controls in modal to reflect defaults
+             blockSliderUpdates=true;
+             const [bgR,bgG,bgB]=parseRgbString(dBg); const bgHSL=rgbToHsl(bgR,bgG,bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l;
+             const [txtR,txtG,txtB]=parseRgbString(dTxt); const txtHSL=rgbToHsl(txtR,txtG,txtB); textRedSlider.value=textRedInput.value=txtR; textGreenSlider.value=textGreenInput.value=txtG; textBlueSlider.value=textBlueInput.value=txtB; textHueSlider.value=textHueInput.value=txtHSL.h; textSatSlider.value=textSatInput.value=txtHSL.s; textLigSlider.value=textLigInput.value=txtHSL.l;
+             canvasHeightInput.value=canvasHeightSlider.value=dLayout.canvas.height;
+             titleWidthInput.value=titleWidthSlider.value=dLayout.title.width; titleFontSizeInput.value=titleFontSizeSlider.value=dLayout.title.fontSize;
+             timerWidthInput.value=timerWidthSlider.value=dLayout.timer.width; timerFontSizeInput.value=timerFontSizeSlider.value=dLayout.timer.fontSize;
+             blindsWidthInput.value=blindsWidthSlider.value=dLayout.blinds.width; blindsFontSizeInput.value=blindsFontSizeSlider.value=dLayout.blinds.fontSize;
+             logoWidthInput.value=logoWidthSlider.value=dLayout.logo.width; logoHeightInput.value=logoHeightSlider.value=dLayout.logo.height;
+             infoWidthInput.value=infoWidthSlider.value=dLayout.info.width; infoFontSizeInput.value=infoFontSizeSlider.value=dLayout.info.fontSize;
+             visibilityToggles.forEach(t => {const elId=t.dataset.elementId.replace('-element',''); t.checked=dLayout[elId]?.isVisible??true;});
+             for(const k in infoParagraphs){const checkId=`toggleInfo${k.substring(4)}`; const check=document.getElementById(checkId); if(check) check.checked=dLayout.info[k]??true;}
+             blockSliderUpdates=false;
+             // updateColorAndLayoutPreviews(); // Not strictly needed as applyThemeAndLayout was called
+             alert("Layout/farger tilbakestilt. Trykk Lagre.")
          }
-     });
-    // === 14: EVENT LISTENER ATTACHMENT (General) END ===
+     }
+// === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS END ===
 
 
-    // === 15: INITIAL UI RENDER & TIMER START ===
-    console.log("Performing initial UI render...");
-    updateUI(); startRealTimeClock();
-    if (state.live.status === 'running') { console.log("State is 'running', starting timer."); timerInterval = setInterval(tick, 1000); }
-    else if (state.live.status === 'finished') console.log("State is 'finished'.");
-    else console.log(`State is '${state.live.status}'. Timer not started.`);
-    console.log("Tournament page fully initialized.");
-    // === 15: INITIAL UI RENDER & TIMER START ===
+// === 13: TOURNAMENT FINISH LOGIC START ===
+function finishTournament() { if (state.live.status === 'finished') return; console.log("Finishing T..."); logActivity(state.live.activityLog,"Turnering fullføres."); if(timerInterval)clearInterval(timerInterval);timerInterval=null; if(realTimeInterval)clearInterval(realTimeInterval);realTimeInterval=null; state.live.status='finished'; state.live.isOnBreak=false; state.live.timeRemainingInLevel=0; state.live.timeRemainingInBreak=0; if(state.live.players.length===1){const w=state.live.players[0];w.place=1;state.live.eliminatedPlayers.push(w);state.live.players.splice(0,1);logActivity(state.live.activityLog,`Vinner: ${w.name}!`);}else if(state.live.players.length>1){logActivity(state.live.activityLog,`Fullført med ${state.live.players.length} spillere igjen.`); state.live.players.forEach(p=>{p.eliminated=true;p.place=null;state.live.eliminatedPlayers.push(p);}); state.live.players=[];}else{logActivity(state.live.activityLog,`Fullført uten aktive spillere.`);} state.live.eliminatedPlayers.sort((a,b)=>(a.place??Infinity)-(b.place??Infinity)); updateUI(); saveTournamentState(currentTournamentId,state); alert("Turneringen er fullført!"); }
+// === 13: TOURNAMENT FINISH LOGIC END ===
+
+
+// === 14: EVENT LISTENER ATTACHMENT (General) START ===
+if(startPauseButton) startPauseButton.addEventListener('click', handleStartPause);
+if(prevLevelButton) prevLevelButton.addEventListener('click', () => handleAdjustLevel(-1));
+if(nextLevelButton) nextLevelButton.addEventListener('click', () => handleAdjustLevel(1));
+if(adjustTimeMinusButton) adjustTimeMinusButton.addEventListener('click', () => handleAdjustTime(-60));
+if(adjustTimePlusButton) adjustTimePlusButton.addEventListener('click', () => handleAdjustTime(60));
+if(lateRegButton) lateRegButton.addEventListener('click', handleLateRegClick);
+if(endTournamentButton) endTournamentButton.addEventListener('click', handleEndTournament);
+if(btnForceSave) btnForceSave.addEventListener('click', handleForceSave);
+if(btnBackToMainLive) btnBackToMainLive.addEventListener('click', handleBackToMain);
+if(btnEditTournamentSettings) btnEditTournamentSettings.addEventListener('click', openTournamentModal);
+if(btnEditUiSettings) btnEditUiSettings.addEventListener('click', openUiModal);
+if(closeTournamentModalButton) closeTournamentModalButton.addEventListener('click', closeTournamentModal);
+if(btnCancelTournamentEdit) btnCancelTournamentEdit.addEventListener('click', closeTournamentModal);
+if(btnAddEditLevel) btnAddEditLevel.addEventListener('click', () => addEditBlindLevelRow());
+if(btnGenerateEditPayout) btnGenerateEditPayout.addEventListener('click', generateEditPayout);
+if(btnSaveTournamentSettings) btnSaveTournamentSettings.addEventListener('click', handleSaveTournamentSettings);
+if(closeUiModalButton) closeUiModalButton.addEventListener('click', () => closeUiModal(true));
+if(btnCancelUiEdit) btnCancelUiEdit.addEventListener('click', () => closeUiModal(true));
+if(btnSaveUiSettings) btnSaveUiSettings.addEventListener('click', handleSaveUiSettings);
+if(btnResetLayoutTheme) btnResetLayoutTheme.addEventListener('click', handleResetLayoutTheme);
+window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { if (currentOpenModal === uiSettingsModal) closeUiModal(true); else if (currentOpenModal === tournamentSettingsModal) closeTournamentModal(); } });
+// Add Drag and Drop Listeners
+draggableElements.forEach(element => { if (element) element.addEventListener('mousedown', (e) => startDrag(e, element)); });
+// === 14: EVENT LISTENER ATTACHMENT (General) END ===
+
+
+// === 15: INITIAL UI RENDER & TIMER START ===
+console.log("Performing initial UI render...");
+updateUI(); startRealTimeClock();
+if (state.live.status === 'running') { console.log("State is 'running', starting timer."); timerInterval = setInterval(tick, 1000); }
+else if (state.live.status === 'finished') console.log("State is 'finished'.");
+else console.log(`State is '${state.live.status}'. Timer not started.`);
+console.log("Tournament page fully initialized.");
+// === 15: INITIAL UI RENDER & TIMER START ===
 
 });
 // === 01: DOMContentLoaded LISTENER END ===
