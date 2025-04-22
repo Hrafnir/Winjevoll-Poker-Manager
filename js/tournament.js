@@ -124,10 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const infoParagraphs = { showNextBlinds: document.getElementById('info-next-blinds'), showNextPause: infoNextPauseParagraph, showAvgStack: document.getElementById('info-avg-stack'), showPlayers: document.getElementById('info-players'), showLateReg: document.getElementById('info-late-reg') };
     // Theme Controls
     const bgRedSlider = document.getElementById('bgRedSlider'); const bgGreenSlider = document.getElementById('bgGreenSlider'); const bgBlueSlider = document.getElementById('bgBlueSlider'); const bgRedInput = document.getElementById('bgRedInput'); const bgGreenInput = document.getElementById('bgGreenInput'); const bgBlueInput = document.getElementById('bgBlueInput'); const bgColorPreview = document.getElementById('bg-color-preview'); const textRedSlider = document.getElementById('textRedSlider'); const textGreenSlider = document.getElementById('textGreenSlider'); const textBlueSlider = document.getElementById('textBlueSlider'); const textRedInput = document.getElementById('textRedInput'); const textGreenInput = document.getElementById('textGreenInput'); const textBlueInput = document.getElementById('textBlueInput'); const textColorPreview = document.getElementById('text-color-preview'); const bgHueSlider = document.getElementById('bgHueSlider'); const bgHueInput = document.getElementById('bgHueInput'); const bgSatSlider = document.getElementById('bgSatSlider'); const bgSatInput = document.getElementById('bgSatInput'); const bgLigSlider = document.getElementById('bgLigSlider'); const bgLigInput = document.getElementById('bgLigInput'); const textHueSlider = document.getElementById('textHueSlider'); const textHueInput = document.getElementById('textHueInput'); const textSatSlider = document.getElementById('textSatSlider'); const textSatInput = document.getElementById('textSatInput'); const textLigSlider = document.getElementById('textLigSlider'); const textLigInput = document.getElementById('textLigInput'); const themeFavoritesSelect = document.getElementById('themeFavoritesSelect'); const btnLoadThemeFavorite = document.getElementById('btnLoadThemeFavorite'); const newThemeFavoriteNameInput = document.getElementById('newThemeFavoriteName'); const btnSaveThemeFavorite = document.getElementById('btnSaveThemeFavorite'); const btnDeleteThemeFavorite = document.getElementById('btnDeleteThemeFavorite');
-    // Sound Controls (NYE)
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeInput = document.getElementById('volumeInput');
-    const btnTestSound = document.getElementById('btn-test-sound');
+    // Sound Controls
+    const volumeSlider = document.getElementById('volumeSlider'); const volumeInput = document.getElementById('volumeInput'); const btnTestSound = document.getElementById('btn-test-sound');
     // Modal Action Buttons
     const btnSaveUiSettings = document.getElementById('btn-save-ui-settings'); const btnCancelUiEdit = document.getElementById('btn-cancel-ui-edit'); const btnResetLayoutTheme = document.getElementById('btnResetLayoutTheme');
 
@@ -201,13 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT START ===
     function assignTableSeat(player, excludeTableNum = null) {
-        console.log(`Assigning seat for ${player.name}, excluding table ${excludeTableNum}`);
         const tables = {}; let validTables = [];
         state.live.players.forEach(p => { if (p.id !== player.id && p.table && p.table !== excludeTableNum) tables[p.table] = (tables[p.table] || 0) + 1; });
         validTables = Object.entries(tables).map(([n, c]) => ({ tableNum: parseInt(n), count: c })).filter(t => t.tableNum !== excludeTableNum);
         validTables.sort((a, b) => a.count - b.count); let targetTable = -1;
         for (const t of validTables) { if (t.count < state.config.playersPerTable) { targetTable = t.tableNum; break; } }
-        if (targetTable === -1) { const existing = [...new Set(state.live.players.map(p => p.table).filter(t => t > 0))]; let nextT = existing.length > 0 ? Math.max(0, ...existing) + 1 : 1; if (nextT === excludeTableNum) nextT++; targetTable = nextT; console.log(`No space on tables. Using/Creating T${targetTable}`); }
+        if (targetTable === -1) { const existing = [...new Set(state.live.players.map(p => p.table).filter(t => t > 0))]; let nextT = existing.length > 0 ? Math.max(0, ...existing) + 1 : 1; if (nextT === excludeTableNum) nextT++; targetTable = nextT; }
         const occupied = state.live.players.filter(p => p.table === targetTable).map(p => p.seat); let seat = 1; while (occupied.includes(seat)) seat++;
         if (seat > state.config.playersPerTable && occupied.length >= state.config.playersPerTable) { console.error(`No seat on T${targetTable}!`); seat = occupied.length + 1; }
         player.table = targetTable; player.seat = seat; console.log(`Assigned ${player.name} -> T${player.table}S${player.seat}`);
@@ -255,15 +252,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let balancingPerformed = false; const maxDiff = 1;
         while (true) {
             const tables = {}; state.live.players.forEach(p => { if(p.table > 0) tables[p.table] = (tables[p.table] || 0) + 1; });
-            const tableCounts = Object.entries(tables).map(([n, c]) => ({ tableNum: parseInt(n), count: c })).filter(tc => tc.count > 0); // KORREKT VARIABELNAVN
+            const tableCounts = Object.entries(tables).map(([n, c]) => ({ tableNum: parseInt(n), count: c })).filter(tc => tc.count > 0); // Use tableCounts
 
             if (tableCounts.length < 2) { if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden'); break; }
 
             tableCounts.sort((a, b) => a.count - b.count);
-            // **** KORRIGERT HER: Bruk tableCounts i stedet for counts ****
-            const minT = tableCounts[0];
-            const maxT = tableCounts[tableCounts.length - 1];
-            // **********************************************************
+            const minT = tableCounts[0]; // Use tableCounts
+            const maxT = tableCounts[tableCounts.length - 1]; // Use tableCounts
 
             if (maxT.count - minT.count <= maxDiff) { if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden'); break; }
 
@@ -282,7 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (balancingPerformed) console.log("Balancing done.");
         return balancingPerformed;
     }
-// === 07: HELPER FUNCTIONS - TABLE MANAGEMENT END ===
+    // === 07: HELPER FUNCTIONS - TABLE MANAGEMENT END ===
+
 
     // === 07b: HELPER FUNCTIONS - LOGGING START ===
     function logActivity(logArray, message) { if (!logArray) logArray = state.live.activityLog = []; const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); logArray.unshift({ timestamp, message }); const MAX_LOG_ENTRIES = 100; if (logArray.length > MAX_LOG_ENTRIES) logArray.pop(); console.log(`[Log ${timestamp}] ${message}`); }
@@ -291,17 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // === 07c: HELPER FUNCTIONS - SOUND START ===
-    function playSound(soundKey) {
-        if (!soundsEnabled) return;
-        const soundUrl = SOUND_URLS[soundKey];
-        if (!soundUrl) { console.warn(`Sound not found: ${soundKey}`); return; }
-        try {
-            const audio = new Audio(soundUrl);
-            audio.volume = currentVolume; // Bruk gjeldende volum
-            audio.play().catch(e => console.error(`Play fail ${soundUrl}:`, e));
-            console.log(`Playing: ${soundKey} at volume ${currentVolume}`);
-        } catch (e) { console.error(`Audio obj fail ${soundUrl}:`, e); }
-    }
+    function playSound(soundKey) { if (!soundsEnabled) return; const soundUrl = SOUND_URLS[soundKey]; if (!soundUrl) { console.warn(`Sound not found: ${soundKey}`); return; } try { const audio = new Audio(soundUrl); audio.volume = currentVolume; audio.play().catch(e => console.error(`Play fail ${soundUrl}:`, e)); console.log(`Playing: ${soundKey} at volume ${currentVolume}`); } catch (e) { console.error(`Audio obj fail ${soundUrl}:`, e); } }
     function updateSoundToggleVisuals() { if (btnToggleSound) btnToggleSound.textContent = soundsEnabled ? '🔊 Lyd På' : '🔇 Lyd Av'; }
     // === 07c: HELPER FUNCTIONS - SOUND END ===
 
@@ -330,270 +316,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
-    function Update counts, pot, avg stack etc.
-            saveTournamentState(currentTournamentId, state);
-        } handleRebuy(event){
-        const playerId = parseInt(event.target.dataset.playerId);
-        const player =
-    }
+    function handleRebuy(event){ const pId=parseInt(event.target.dataset.playerId); const p=state.live.players.find(pl=>pl.id===pId); const lvl=state.live.currentLevelIndex+1; if(!p){return;} if(state.config.type!=='rebuy'||!(lvl<=state.config.rebuyLevels)){alert("Re-buy N/A.");return;} if(state.live.status==='finished'){alert("Turnering fullført.");return;} if(confirm(`Re-buy (${state.config.rebuyCost}kr/${state.config.rebuyChips}c) for ${p.name}?`)){ p.rebuys=(p.rebuys||0)+1; state.live.totalPot+=state.config.rebuyCost; state.live.totalEntries++; state.live.totalRebuys++; logActivity(state.live.activityLog,`${p.name} tok Re-buy.`); updateUI(); saveTournamentState(currentTournamentId,state);}}
+    function handleAddon(event){ const pId=parseInt(event.target.dataset.playerId); const p=state.live.players.find(pl=>pl.id===pId); const lvl=state.live.currentLevelIndex+1; const isAP=lvl>state.config.rebuyLevels; if(!p){return;} if(state.config.type!=='rebuy'||!isAP||p.addon){alert("Add-on N/A.");return;} if(state.live.status==='finished'){alert("Turnering fullført.");return;} if(confirm(`Add-on (${state.config.addonCost}kr/${state.config.addonChips}c) for ${p.name}?`)){ p.addon=true; state.live.totalPot+=state.config.addonCost; state.live.totalAddons++; logActivity(state.live.activityLog,`${p.name} tok Add-on.`); updateUI(); saveTournamentState(currentTournamentId,state);}}
+    function handleEliminate(event){ if(state.live.status==='finished') return; const pId=parseInt(event.target.dataset.playerId); const ap=state.live.players; const pI=ap.findIndex(p=>p.id===pId); if(pI===-1) return; if (ap.length <= 1) { alert("Kan ikke eliminere siste spiller."); return; } const p=ap[pI]; let koId = null; if (state.config.type === 'knockout' && (state.config.bountyAmount || 0) > 0) { const assigners = ap.filter(pl=>pl.id!==pId); const overlay = document.createElement('div'); overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:200;'; const box = document.createElement('div'); box.style.cssText = 'background:#fff;color:#333;padding:25px;border-radius:5px;text-align:center;max-width:400px;box-shadow:0 5px 15px rgba(0,0,0,0.3);'; box.innerHTML = `<h3 style="margin-top:0;margin-bottom:15px;color:#333;">Hvem slo ut ${p.name}?</h3><select id="ko-sel" style="padding:8px;margin:10px 0 20px 0;min-width:250px;max-width:100%;border:1px solid #ccc;border-radius:4px;font-size:1em;"><option value="">-- Velg --</option><option value="none">Ingen KO</option>${assigners.map(pl => `<option value="${pl.id}">${pl.name} (B${pl.table}S${pl.seat})</option>`).join('')}</select><div><button id="ko-ok" class="success-button" style="margin-right:10px;padding:8px 15px;font-size:0.95em;">Bekreft</button><button id="ko-cancel" style="padding:8px 15px;font-size:0.95em;">Avbryt</button></div>`; overlay.appendChild(box); document.body.appendChild(overlay); const closeKo = () => { if (document.body.contains(overlay)) document.body.removeChild(overlay); }; document.getElementById('ko-ok').onclick = () => { const selVal = document.getElementById('ko-sel').value; if (!selVal) { alert("Velg spiller/Ingen KO."); return; } koId = (selVal === "none") ? null : parseInt(selVal); closeKo(); proceed(); }; document.getElementById('ko-cancel').onclick = () => { closeKo(); console.log("KO selection cancelled."); }; } else { koId = null; proceed(); } function proceed() { let koName = null; let koObj = null; if (koId !== null) { koObj = ap.find(pl=>pl.id===koId); if (koObj) koName = koObj.name; else { console.warn("Selected KO player not found:", koId); koId = null; } } const confirmMsg = `Eliminere ${p.name}?` + (koName ? ` (KO til ${koName})` : ''); if (confirm(confirmMsg)) { playSound('KNOCKOUT'); p.eliminated=true; p.eliminatedBy=koId; const playersRemainingBefore = ap.length; p.place=playersRemainingBefore; if (koObj) { koObj.knockouts=(koObj.knockouts||0)+1; state.live.knockoutLog.push({ eliminatedPlayerId: p.id, eliminatedByPlayerId: koObj.id, level: state.live.currentLevelIndex + 1, timestamp: new Date().toISOString() }); console.log(`KO: ${koObj.name} -> ${p.name}`); } state.live.eliminatedPlayers.push(p); ap.splice(pI,1); const logTxt = koName ? ` av ${koName}` : ''; logActivity(state.live.activityLog,`${p.name} slått ut (${p.place}.plass${logTxt}).`); console.log(`Player ${p.name} eliminated. ${ap.length} remaining.`); if (state.config.paidPlaces > 0 && ap.length === state.config.paidPlaces) { logActivity(state.live.activityLog, `Boblen sprakk! ${ap.length} spillere igjen (i pengene).`); playSound('BUBBLE'); } const structChanged = checkAndHandleTableBreak(); if (!structChanged) { updateUI(); saveTournamentState(currentTournamentId, state); } if (state.live.players.length <= 1) finishTournament(); } else console.log("Elimination cancelled."); } }
+    function handleRestore(event){ if(state.live.status==='finished'){ alert("Turnering fullført."); return; } const pId=parseInt(event.target.dataset.playerId); const pI=state.live.eliminatedPlayers.findIndex(p=>p.id===pId); if(pI===-1) return; const p=state.live.eliminatedPlayers[pI]; const oldP = p.place; if(confirm(`Gjenopprette ${p.name} (var ${oldP}.plass)?`)){ const koById = p.eliminatedBy; p.eliminated=false; p.eliminatedBy=null; p.place=null; state.live.eliminatedPlayers.splice(pI,1); state.live.players.push(p); if(state.config.type==='knockout'&&koById){ let koGetter = state.live.players.find(pl=>pl.id===koById)||state.live.eliminatedPlayers.find(pl=>pl.id===koById); if(koGetter?.knockouts>0){ koGetter.knockouts--; console.log(`KO reversed for ${koGetter.name}.`); const logI = state.live.knockoutLog.findIndex(l=>l.eliminatedPlayerId===p.id&&l.eliminatedByPlayerId===koById); if(logI>-1) state.live.knockoutLog.splice(logI,1); } } assignTableSeat(p); logActivity(state.live.activityLog,`${p.name} gjenopprettet fra ${oldP}.plass (B${p.table}S${p.seat}).`); const structChanged = checkAndHandleTableBreak(); if (!structChanged) { updateUI(); saveTournamentState(currentTournamentId, state); } } }
+    function handleEditPlayer(event){ if(state.live.status === 'finished') return; const pId=parseInt(event.target.dataset.playerId); const p = state.live.players.find(pl=>pl.id===pId)||state.live.eliminatedPlayers.find(pl=>pl.id===pId); if(!p) return; const oN=p.name; const nN=prompt(`Endre navn for ${oN}:`,oN); if(nN?.trim()&&nN.trim()!==oN){p.name=nN.trim(); logActivity(state.live.activityLog,`Navn endret: ${oN} -> ${p.name}.`); renderPlayerList(); saveTournamentState(currentTournamentId,state);}else if(nN!==null&&!nN.trim())alert("Navn tomt.");}
+    function handleLateRegClick() { if(state.live.status === 'finished') return; const lvl=state.live.currentLevelIndex + 1; const isOpen = lvl <= state.config.lateRegLevel && state.config.lateRegLevel > 0; if (!isOpen) { const reason = state.config.lateRegLevel > 0 ? `stengte etter nivå ${state.config.lateRegLevel}` : "ikke aktivert"; alert(`Sen registrering ${reason}.`); return; } const name = prompt("Navn (Late Reg):"); if (name?.trim()) { const p={id:generateUniqueId('p'), name:name.trim(), stack:state.config.startStack, table:0, seat:0, rebuys:0, addon:false, eliminated:false, eliminatedBy:null, place:null, knockouts:0 }; assignTableSeat(p); state.live.players.push(p); state.live.totalPot+=state.config.buyIn; state.live.totalEntries++; logActivity(state.live.activityLog,`${p.name} registrert (Late Reg, B${p.table}S${p.seat}).`); state.live.players.sort((a,b)=>a.table===b.table?a.seat-b.seat:a.table-b.table); const structChanged = checkAndHandleTableBreak(); if(!structChanged){updateUI(); saveTournamentState(currentTournamentId,state);} } else if(name !== null) alert("Navn tomt."); }
+    // === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
 
-    function handleEliminate(event){
-        if(state.live.status==='finished') return state.live.players.find(pl => pl.id === playerId);
-        const currentLevelNum = state.live.;
-        const playerIdToEliminate = parseInt(event.target.dataset.playerId);
-        const activePlayers = statecurrentLevelIndex + 1;
-        if (!player) { console.error("Rebuy failed: Player not found", playerId.live.players;
-        const playerIndex = activePlayers.findIndex(p => p.id === playerIdToEliminate);
-        if(playerIndex === -1) { console.error("Player to eliminate not found:", playerId); return; }
-        if (state.config.type !== 'rebuy') { alert("Re-buy er ikke tilToEliminate); return; }
-        if (activePlayers.length <= 1) { alert("Kan ikkegjengelig for denne turneringstypen."); return; }
-        if (!(currentLevelNum <= state.config.rebuyLevels)) { alert(`Re-buy er kun tilgjengelig t.o.m. nivå eliminere siste spiller."); return; }
-        const player = activePlayers[playerIndex];
-        let potentialEliminatorId = ${state.config.rebuyLevels}. Nåværende nivå: ${currentLevelNum}.`); return; } null;
-
-        // --- Knockout Logic ---
-        if (state.config.type === 'knockout' && (state
-        if (state.live.status === 'finished') { alert("Kan ikke utføre handlinger i en.config.bountyAmount || 0) > 0) {
-            const potentialAssigners = activePlayers.filter( fullført turnering."); return; }
-        if (confirm(`Re-buy (${state.config.rebuyp => p.id !== playerIdToEliminate);
-            const dialogOverlay = document.createElement('div'); dialogOverlay.style.cssText = 'position:fixed;top:0;left:0;width:10Cost} kr / ${state.config.rebuyChips} sjetonger) for ${player.name}?`))0%;height:100%;background:rgba(0,0,0,0.6);display: {
-            player.rebuys = (player.rebuys || 0) + 1;
-            flex;justify-content:center;align-items:center;z-index:200;';
-state.live.totalPot += state.config.rebuyCost;
-            state.live.totalEntries++;            const dialogBox = document.createElement('div'); dialogBox.style.cssText = 'background:#fff;color:# // Rebuy counts as an entry for prize pool calculation
-            state.live.totalRebuys++;
-            logActivity(333;padding:25px;border-radius:5px;text-align:center;max-width:400px;box-shadow:0 5px 15px rgba(0,state.live.activityLog, `${player.name} tok Re-buy (+${state.config.rebuyChips0,0,0.3);';
-            dialogBox.innerHTML = `<h3 style="margin-top} chips, +${state.config.rebuyCost} kr).`);
-            updateUI(); // Update counts, pot:0;margin-bottom:15px;color:#333;">Hvem slo ut ${player.name}?</h3>, avg stack etc.
-            saveTournamentState(currentTournamentId, state);
-        }
-    }
-
-    function handleAddon(event){
-        const playerId = parseInt(event.target.dataset.playerId);
-<select id="ko-assigner-select" style="padding:8px;margin:10px 0 20px 0;min-width:250px;max-width:100%;border:        const player = state.live.players.find(pl => pl.id === playerId);
-        const current1px solid #ccc;border-radius:4px;font-size:1em;"><option value="">--LevelNum = state.live.currentLevelIndex + 1;
-        const isAddonPeriod = currentLevel Velg spiller --</option><option value="none">Ingen KO / Feil / Annet</option>${Num > state.config.rebuyLevels; // Addon typically after rebuy period
-        if (!player) { console.error("Addon failed: Player not found", playerId); return; }
-        if (state.config.potentialAssigners.map(p => `<option value="${p.id}">${p.name} (B${p.table}type !== 'rebuy') { alert("Add-on er ikke tilgjengelig for denne turneringstypenS${p.seat})</option>`).join('')}</select><div><button id="ko-confirm-btn" class."); return; }
-        if (!isAddonPeriod) { alert(`Add-on er vanligvis tilgj="success-button" style="margin-right:10px;padding:8px 15px;engelig ETTER re-buy perioden (etter nivå ${state.config.rebuyLevels}). Nåværende nivå:font-size:0.95em;">Bekreft Eliminering</button><button id="ko-cancel ${currentLevelNum}.`); return; }
-        if (player.addon) { alert(`${player.name} har allerede tatt-btn" style="padding:8px 15px;font-size:0.95em;"> Add-on.`); return; }
-        if (state.live.status === 'finished') { alert("KanAvbryt</button></div>`;
-            dialogOverlay.appendChild(dialogBox); document.body.appendChild(dialogOverlay); ikke utføre handlinger i en fullført turnering."); return; }
-        if (confirm(`Add-on
-            const confirmBtn = document.getElementById('ko-confirm-btn'); const cancelBtn = document.getElementById('ko-cancel-btn'); const selectElement = document.getElementById('ko-assigner-select');
-            const (${state.config.addonCost} kr / ${state.config.addonChips} sjetonger) for ${player.name}?`)) {
-            player.addon = true;
-            state.live.totalPot closeKoDialog = () => { if (document.body.contains(dialogOverlay)) document.body.removeChild( += state.config.addonCost;
-            state.live.totalAddons++;
-            logActivity(statedialogOverlay); };
-            confirmBtn.onclick = () => { const selectedValue = selectElement.value; if.live.activityLog, `${player.name} tok Add-on (+${state.config.addonChips} (!selectedValue || selectedValue === "") { alert("Vennligst velg en spiller eller 'Ingen KO'."); chips, +${state.config.addonCost} kr).`);
-            updateUI(); // Update counts, pot, avg stack return; } potentialEliminatorId = (selectedValue === "none") ? null : parseInt(selectedValue); closeKoDialog(); proceed etc.
-            saveTournamentState(currentTournamentId, state);
-        }
-    }
-
-    function handleWithElimination(); };
-            cancelBtn.onclick = () => { closeKoDialog(); console.log("Elimination cancelled by user during KO selection."); };
-            dialogOverlay.onclick = (e) => { if (eEliminate(event){
-        if(state.live.status==='finished') return;
-        const playerIdToEliminate = parseInt(event.target.dataset.playerId);
-        const activePlayers = state.live.players.target === dialogOverlay) { /* Optional: closeKoDialog(); */ } };
-        } else {
-            potential; // Referanse til den aktive spillerlisten
-        const playerIndex = activePlayers.findIndex(p => p.EliminatorId = null; // Ensure null if not KO
-            proceedWithElimination(); // Proceed directly without KO dialog
-        id === playerIdToEliminate);
-        if(playerIndex === -1) { console.error("Player to eliminate not found:", playerIdToEliminate); return; }
-        if (activePlayers.length <= 1) { alert("}
-
-        // --- Function to handle the actual elimination logic ---
-        function proceedWithElimination() {
-            let eliminatorName = null; let eliminatorObject = null;
-            if (potentialEliminatorId !== nullKan ikke eliminere siste spiller."); return; }
-        const player = activePlayers[playerIndex]; // Spilleren som) {
-                eliminatorObject = activePlayers.find(p => p.id === potentialEliminatorId);
-                 skal elimineres
-        let potentialEliminatorId = null; // ID-en til den som slo ut
-
-        //if (eliminatorObject) { eliminatorName = eliminatorObject.name; }
-                else { console. Håndter knockout-valg hvis relevant
-        if (state.config.type === 'knockout' && (warn("Selected KO player not found:", potentialEliminatorId); potentialEliminatorId = null; }
-            }state.config.bountyAmount || 0) > 0) {
-            const potentialAssigners = active
-            const confirmMsg = `Eliminere ${player.name}?` + (eliminatorName ? ` (KO tildeles ${eliminatorName})` : '');
-
-            if (confirm(confirmMsg)) {
-                playSound('KNOCKOUTPlayers.filter(pl => pl.id !== playerIdToEliminate);
-            const dialogOverlay = document.createElement'); // Play elimination sound
-                player.eliminated=true; player.eliminatedBy=potentialEliminatorId('div'); dialogOverlay.style.cssText = 'position:fixed;top:0;left:0;;
-                const playersRemainingBeforeElimination = activePlayers.length;
-                player.place=playersRemainingBeforeElimination;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:20 // Assign place based on count BEFORE removing
-
-                if (eliminatorObject) {
-                    eliminatorObject.knock0;';
-            const dialogBox = document.createElement('div'); dialogBox.style.cssText = 'outs=(eliminatorObject.knockouts||0)+1;
-                    state.live.knockoutLog.pushbackground:#fff;color:#333;padding:25px;border-radius:5px;text-align({ eliminatedPlayerId: player.id, eliminatedByPlayerId: eliminatorObject.id, level: state.:center;max-width:400px;box-shadow:0 5px 15pxlive.currentLevelIndex + 1, timestamp: new Date().toISOString() });
-                    console.log(`KO rgba(0,0,0,0.3);';
-            dialogBox.innerHTML = `<h3 style="margin-top:0;margin-bottom:15px;color:#333;">Hvem slo: ${eliminatorObject.name} -> ${player.name}`);
-                }
-                state.live.eliminatedPlayers.push(player);
-                activePlayers.splice(playerIndex, 1); // Remove player AFTER ut ${player.name}?</h3><select id="ko-sel" style="padding:8px;margin:1 assigning place
-
-                const logTxt = eliminatorName ? ` av ${eliminatorName}` : '';
-                log0px 0 20px 0;min-width:250px;max-width:Activity(state.live.activityLog,`${p.name} slått ut (${player.place}.plass${logTxt100%;border:1px solid #ccc;border-radius:4px;font-size:1}).`);
-                console.log(`Player ${player.name} eliminated. ${activePlayers.length} remaining.`);em;"><option value="">-- Velg --</option><option value="none">Ingen KO</option>${potential
-
-                // Check for Bubble start (players remaining = paid places + 1)
-                if (activePlayers.length ===Assigners.map(pl => `<option value="${pl.id}">${pl.name} (B${pl. state.config.paidPlaces + 1) {
-                    logActivity(state.live.activityLog, `Bobtable}S${pl.seat})</option>`).join('')}</select><div><button id="ko-ok" class="success-button" style="margin-right:10px;padding:8px 1len har startet! ${activePlayers.length} spillere igjen.`);
-                    playSound('BUBBLE');
-                }
-
-                const structChanged = checkAndHandleTableBreak();
-                if (!structChanged) { updateUI(); saveTournamentState5px;font-size:0.95em;">Bekreft</button><button id="ko-cancel" style(currentTournamentId, state); }
-                if (state.live.players.length <= 1) {="padding:8px 15px;font-size:0.95em;">Avbryt</ finishTournament(); }
-            } else {
-                console.log("Elimination cancelled by user confirmation.");
-            }button></div>`;
-            overlay.appendChild(dialogBox); document.body.appendChild(overlay);
-            const closeKo
-        } // --- End proceedWithElimination ---
-    } // --- End handleEliminate ---
-
-
-    function = () => { if (document.body.contains(overlay)) document.body.removeChild(overlay); };
- handleRestore(event){
-        if(state.live.status==='finished'){ alert("Kan ikke gjenopp            document.getElementById('ko-ok').onclick = () => { const selVal = document.getElementById('ko-sel').value; if (!selVal) { alert("Velg spiller/Ingen KO."); return; } potentialEliminatorIdrette spillere i en fullført turnering."); return; }
-        const playerId = parseInt(event.target.dataset. = (selVal === "none") ? null : parseInt(selVal); closeKo(); proceed(); };
-            documentplayerId);
-        const eliminatedIndex = state.live.eliminatedPlayers.findIndex(p => p.id ===.getElementById('ko-cancel').onclick = () => { closeKo(); console.log("KO selection cancelled."); }; playerId);
-        if (eliminatedIndex === -1) { console.error("Player to restore not found in
-        } else {
-            potentialEliminatorId = null; // Ikke KO-turnering
-            proceed eliminated list:", playerId); return; }
-        const player = state.live.eliminatedPlayers[eliminatedIndex(); // Gå direkte til bekreftelse
-        }
-
-        // Funksjon som utfører selve elimineringen etter valg/bekreftelse
-        function proceed() {
-            let eliminatorName = null;
-            let eliminatorObject];
-        const oldPlace = player.place; // Store old place for logging
-
-        if (confirm(`Gjenopprette ${player.name} (var ${oldPlace}. plass)?`)) {
-            const eliminatorId = player = null;
-
-            if (potentialEliminatorId !== null) {
-                eliminatorObject = activePlayers.find(p => p.id === potentialEliminatorId);
-                if (eliminatorObject) { eliminatorName = elimin.eliminatedBy; // ID of player who got the KO bounty
-            player.eliminated = false; player.eliminatedBy = null; player.place = null; // Reset player state
-            state.live.eliminatedPlayers.spliceatorObject.name; }
-                else { console.warn("Selected KO player not found:", potentialEliminatorId); potentialElim(eliminatedIndex, 1); // Remove from eliminated
-            state.live.players.push(player); //inatorId = null; }
-            }
-
-            const confirmMsg = `Eliminere ${player.name}?` Add back to active
-
-            // Reverse Knockout (if applicable)
-            if (state.config.type === ' + (eliminatorName ? ` (KO tildeles ${eliminatorName})` : '');
-
-            // Denneknockout' && eliminatorId) {
-                 let eliminator = state.live.players.find(p => p.id === eliminatorId) || state.live.eliminatedPlayers.find(p => p.id === elimin 'if'-blokken inneholder linje 331 eller deromkring
-            if (confirm(confirmMsg))atorId);
-                 if (eliminator && eliminator.knockouts > 0) {
-                     eliminator {
-                playSound('KNOCKOUT'); // Spill lyd for ALLE eliminasjoner
-
-                // Sjekk om dette starter boblen (FØR spilleren fjernes)
-                // Boblen starter når det er nøyaktig (.knockouts--; console.log(`Knockout reversed for ${eliminator.name}.`);
-                     const logIndex = state.live.knockoutLog.findIndex(log => log.eliminatedPlayerId === player.id &&antall betalte + 1) spillere igjen FØR denne elimineringen
-                if (state.config.paid log.eliminatedByPlayerId === eliminatorId);
-                     if (logIndex > -1) { state.live.Places > 0 && activePlayers.length === state.config.paidPlaces + 1) {
-                    logActivity(knockoutLog.splice(logIndex, 1); console.log("Knockout log entry removed."); }
-                 } else { console.warn("Could not find player who got KO or their KO count was already 0:",state.live.activityLog, `Boblen starter NÅ! ${activePlayers.length} spillere igjen.`); eliminatorId); }
-            }
-            assignTableSeat(player); // Assign a new table and seat
-            
-                    playSound('BUBBLE');
-                }
-
-                // Oppdater spillerstatus
-                player.eliminated = truelogActivity(state.live.activityLog, `${player.name} gjenopprettet fra ${oldPlace}. plass;
-                player.eliminatedBy = potentialEliminatorId;
-                player.place = activePlayers.length (nå B${player.table}S${player.seat}).`);
-            const structureChanged = checkAndHandleTableBreak();; // Plassering er antall spillere før eliminering
-
-                // Oppdater KO-stats hvis relevant
-                if ( if (!structureChanged) { updateUI(); saveTournamentState(currentTournamentId, state); }
-        }
-    eliminatorObject) {
-                    eliminatorObject.knockouts = (eliminatorObject.knockouts || 0}
-
-    function handleEditPlayer(event){
-        if(state.live.status === 'finished') {) + 1;
-                    state.live.knockoutLog.push({ eliminatedPlayerId: player.id alert("Kan ikke redigere spillere i en fullført turnering."); return; }
-        const playerId = parseInt(event.target.dataset.playerId);
-        const player = state.live.players.find(pl => pl.id, eliminatedByPlayerId: eliminatorObject.id, level: state.live.currentLevelIndex + 1, timestamp: new Date().toISOString() });
-                    console.log(`KO: ${eliminatorObject.name} === playerId) || state.live.eliminatedPlayers.find(pl => pl.id === playerId);
-         -> ${player.name}`);
-                }
-
-                // Flytt spiller og loggfør
-                state.live.elimif (!player) { console.error("Player to edit not found:", playerId); return; }
-        const oldName =inatedPlayers.push(player);
-                activePlayers.splice(playerIndex, 1); // Fjern fra player.name;
-        const newName = prompt(`Endre navn for ${oldName}:`, oldName); aktiv liste
-                const logTxt = eliminatorName ? ` av ${eliminatorName}` : '';
-                logActivity
-        if (newName && newName.trim().length > 0 && newName.trim() !== oldName(state.live.activityLog,`${p.name} slått ut (${p.place}.plass${) {
-            player.name = newName.trim();
-            logActivity(state.live.activityLog, `logTxt}).`);
-                console.log(`Player ${p.name} eliminated. ${activePlayers.length} remainingNavn endret: ${oldName} -> ${player.name}.`);
-            renderPlayerList(); // Only.`);
-
-                // Håndter bordstruktur og lagre/oppdater
-                const structChanged = checkAndHandleTableBreak need to re-render player lists for name change
-            saveTournamentState(currentTournamentId, state); // Save();
-                if (!structChanged) { updateUI(); saveTournamentState(currentTournamentId, state); }
-
- the change
-        } else if (newName !== null && newName.trim().length === 0) {
-                // Sjekk om turneringen er over
-                if (state.live.players.length <= 1) finish            alert("Navn kan ikke være tomt.");
-        } else { console.log("Player name edit cancelled or no change made."); }
-    }
-
-    function handleLateRegClick() {
-        if (state.Tournament();
-            } else { // Korrekt avsluttende krøllparentes for if(confirm(...))
-live.status === 'finished') { alert("Kan ikke registrere spillere i en fullført turnering."); return; }
-        const currentLevelNum = state.live.currentLevelIndex + 1;
-        const lateRegOpen = current                console.log("Elimination cancelled by user confirmation.");
-            } // Korrekt avsluttende krøllparentLevelNum <= state.config.lateRegLevel && state.config.lateRegLevel > 0;
-        es for if(confirm(...))
-        } // Slutt på proceed() funksjonen
-    } // Slutt på handleEliminate() funksjonen
-
-
-    function handleRestore(event){ if(state.live.status==if (!lateRegOpen) { const reason = state.config.lateRegLevel > 0 ? `stengte='finished'){ alert("Turnering fullført."); return; } const pId=parseInt(event.target.dataset. etter nivå ${state.config.lateRegLevel}` : "er ikke aktivert"; alert(`Sen registrering ${reasonplayerId); const pI=state.live.eliminatedPlayers.findIndex(p=>p.id===pId}.`); return; }
-        const name = prompt("Navn for spiller (Late Reg):");
-        if (name && name.trim().length > 0) {
-            const newPlayer = { id: generateUniqueId); if(pI===-1) return; const p=state.live.eliminatedPlayers[pI('p'), name: name.trim(), stack: state.config.startStack, table: 0, seat]; const oldP = p.place; if(confirm(`Gjenopprette ${p.name} (var ${oldP}.plass)?`)){ const koById = p.eliminatedBy; p.eliminated=false; p.eliminated: 0, rebuys: 0, addon: false, eliminated: false, eliminatedBy: null,By=null; p.place=null; state.live.eliminatedPlayers.splice(pI,1 place: null, knockouts: 0 };
-            assignTableSeat(newPlayer); state.live.players); state.live.players.push(p); if(state.config.type==='knockout'&&ko.push(newPlayer);
-            state.live.totalPot += state.config.buyIn; state.live.totalById){ let koGetter = state.live.players.find(pl=>pl.id===koById)||state.live.Entries++;
-            logActivity(state.live.activityLog, `${newPlayer.name} registrert (Late Reg, B${newPlayer.table}S${newPlayer.seat}).`);
-            state.live.playerseliminatedPlayers.find(pl=>pl.id===koById); if(koGetter?.knockouts>0){ koGetter.knockouts--; console.log(`KO reversed for ${koGetter.name}.`); const logI = state.sort((a, b) => a.table === b.table ? a.seat - b.seat :.live.knockoutLog.findIndex(l=>l.eliminatedPlayerId===p.id&&l. a.table - b.table);
-            const structureChanged = checkAndHandleTableBreak(); if (!structureChanged) { updateUI(); saveTournamentState(currentTournamentId, state); }
-        } else if (name !== null) { alert("Navn kan ikke være tomt."); } else { console.log("Late registration cancelled."); }eliminatedByPlayerId===koById); if(logI>-1) state.live.knockoutLog.
-    }
-// === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
 
     // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS START ===
     function openTournamentModal() { if (state.live.status === 'finished' || isModalOpen) return; console.log("Opening T modal"); editBlindStructureBody.innerHTML = ''; editBlindLevelCounter = 0; state.config.blindLevels.forEach(level => addEditBlindLevelRow(level)); updateEditLevelNumbers(); editPaidPlacesInput.value = state.config.paidPlaces; editPrizeDistTextarea.value = state.config.prizeDistribution.join(', '); tournamentSettingsModal.classList.remove('hidden'); isModalOpen = true; currentOpenModal = tournamentSettingsModal; }
     function closeTournamentModal() { tournamentSettingsModal.classList.add('hidden'); isModalOpen = false; currentOpenModal = null; }
     function openUiModal() { if (isModalOpen) return; console.log("Opening UI modal"); originalThemeBg = loadThemeBgColor(); originalThemeText = loadThemeTextColor(); originalElementLayouts = loadElementLayouts(); originalSoundVolume = loadSoundVolume(); blockSliderUpdates=true; const [bgR, bgG, bgB] = parseRgbString(originalThemeBg); const bgHSL = rgbToHsl(bgR, bgG, bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; const [textR, textG, textB] = parseRgbString(originalThemeText); const textHSL = rgbToHsl(textR, textG, textB); textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB; textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l; canvasHeightInput.value = canvasHeightSlider.value = originalElementLayouts.canvas.height; titleWidthInput.value = titleWidthSlider.value = originalElementLayouts.title.width; titleFontSizeInput.value = titleFontSizeSlider.value = originalElementLayouts.title.fontSize; timerWidthInput.value = timerWidthSlider.value = originalElementLayouts.timer.width; timerFontSizeInput.value = timerFontSizeSlider.value = originalElementLayouts.timer.fontSize; blindsWidthInput.value = blindsWidthSlider.value = originalElementLayouts.blinds.width; blindsFontSizeInput.value = blindsFontSizeSlider.value = originalElementLayouts.blinds.fontSize; logoWidthInput.value = logoWidthSlider.value = originalElementLayouts.logo.width; logoHeightInput.value = logoHeightSlider.value = originalElementLayouts.logo.height; infoWidthInput.value = infoWidthSlider.value = originalElementLayouts.info.width; infoFontSizeInput.value = infoFontSizeSlider.value = originalElementLayouts.info.fontSize; volumeInput.value = volumeSlider.value = originalSoundVolume; visibilityToggles.forEach(toggle => { const elementId = toggle.dataset.elementId.replace('-element',''); toggle.checked = originalElementLayouts[elementId]?.isVisible ?? true; }); for (const key in infoParagraphs) { const checkboxId = `toggleInfo${key.substring(4)}`; const checkbox = document.getElementById(checkboxId); if (checkbox) checkbox.checked = originalElementLayouts.info[key] ?? true; } blockSliderUpdates=false; populateThemeFavorites(); updateColorAndLayoutPreviews(); addThemeAndLayoutListeners(); uiSettingsModal.classList.remove('hidden'); isModalOpen = true; currentOpenModal = uiSettingsModal; }
-    function closeUiModal(revert = false) { if (revert) { applyThemeAndLayout(originalThemeBg, originalThemeText, originalElementLayouts); currentVolume = originalSoundVolume; /* Revert volume */ saveSoundVolume(currentVolume); } removeThemeAndLayoutListeners(); uiSettingsModal.classList.add('hidden'); isModalOpen = false; currentOpenModal = null; }
+    function closeUiModal(revert = false) { if (revert) { applyThemeAndLayout(originalThemeBg, originalThemeText, originalElementLayouts); currentVolume = originalSoundVolume; saveSoundVolume(currentVolume); } removeThemeAndLayoutListeners(); uiSettingsModal.classList.add('hidden'); isModalOpen = false; currentOpenModal = null; }
     function addEditBlindLevelRow(levelData={}){ editBlindLevelCounter++; const row=editBlindStructureBody.insertRow(); row.dataset.levelNumber=editBlindLevelCounter; const sb=levelData.sb??''; const bb=levelData.bb??''; const ante=levelData.ante??0; const dur=levelData.duration??(state.config.blindLevels?.[0]?.duration||20); const pause=levelData.pauseMinutes??0; const past = levelData.level <= state.live.currentLevelIndex && !state.live.isOnBreak; const dis = past ? 'disabled' : ''; row.innerHTML=`<td><span class="level-number">${editBlindLevelCounter}</span> ${past?'<small>(Låst)</small>':''}</td><td><input type="number" class="sb-input" value="${sb}" min="0" step="1" ${dis}></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="1" ${dis}></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="1" ${dis}></td><td><input type="number" class="duration-input" value="${dur}" min="1" ${dis}></td><td><input type="number" class="pause-duration-input" value="${pause}" min="0" ${dis}></td><td><button type="button" class="btn-remove-level" title="Fjern nivå ${editBlindLevelCounter}" ${dis}>X</button></td>`; const btn=row.querySelector('.btn-remove-level'); if(!past) btn.onclick=()=>{row.remove(); updateEditLevelNumbers();}; else { row.querySelectorAll('input').forEach(inp=>inp.disabled=true); btn.disabled=true; } }
     function updateEditLevelNumbers(){ const rows=editBlindStructureBody.querySelectorAll('tr'); rows.forEach((r,i)=>{ const lvl=i+1; r.dataset.levelNumber=lvl; r.querySelector('.level-number').textContent=lvl; const btn=r.querySelector('.btn-remove-level'); if(btn)btn.title=`Fjern nivå ${lvl}`; }); editBlindLevelCounter=rows.length; }
     function generateEditPayout(){ const p=parseInt(editPaidPlacesInput.value)||0; editPrizeDistTextarea.value = (p > 0 && standardPayouts[p]) ? standardPayouts[p].join(', ') : ''; }
