@@ -193,7 +193,7 @@ main.tournament-live {
 #live-canvas {
     flex-grow: 1;
     position: relative;
-    overflow: hidden;
+    overflow: hidden; /* Behold denne på selve canvaset */
     background-color: inherit;
     color: inherit;
     height: var(--canvas-height);
@@ -204,22 +204,29 @@ main.tournament-live {
 .draggable-element {
     position: absolute;
     box-sizing: border-box;
-    /* padding: 5px; Fjernet generell padding for å unngå konflikter */
+    padding: 5px; /* Gir litt luft rundt innholdet */
     background-color: transparent;
     border: none;
     color: inherit;
-    /* height: auto; Høyde styres av JS eller innhold, men med max */
+    height: auto;
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    overflow: hidden; /* Veldig viktig! */
-    /* Størrelse (width, height) og posisjon (left, top) settes av JS */
+    /* overflow: hidden; */ /* FJERNET: La innholdet vises utenfor boksen */
+    /* Vurder en subtil border KUN under redigering for å se grensene? */
+    /* border: 1px dashed rgba(255, 255, 255, 0.2); */ /* Eksempel */
 }
 
 /* Style when element is actively being dragged */
-.draggable-element.dragging { /* ... (som før) ... */ }
+.draggable-element.dragging {
+    cursor: grabbing;
+    opacity: 0.8;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.5) !important; /* Forsterket border under drag */
+}
 
 /* Class added by JS to hide elements based on toggle */
 .element-hidden { display: none !important; }
@@ -228,45 +235,31 @@ main.tournament-live {
 
 /* Title Element */
 #title-element { text-align: center; padding: 0; line-height: 1.1; z-index: 5; }
-#title-element h1#tournament-name-display { font-size: 1em; margin: 0; padding: 5px 0; color: inherit; background-color: transparent; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
+#title-element h1#tournament-name-display { font-size: 1em; margin: 0; padding: 5px 0; color: inherit; background-color: transparent; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* Klipp lang tittel med ... */ }
 
 /* Timer Element */
-#timer-element { text-align: center; padding: 5px; }
+#timer-element { text-align: center; } /* Padding satt i .draggable-element */
 #timer-element .timer-section h2 { font-size: 0.1em; margin: 0 0 0.05em 0; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit; }
-#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); white-space: nowrap; /* Forhindre linjeskift */ }
 #break-info { font-size: 0.4em; color: var(--warning-color); font-weight: bold; margin-top: 0.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 
 /* Blinds Element */
-#blinds-element { text-align: center; padding: 5px; }
+#blinds-element { text-align: center; } /* Padding satt i .draggable-element */
 #blinds-element .blinds-section h3 { font-size: 0.2em; margin: 0 0 0.1em 0; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit;}
-#blinds-display { font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
+#blinds-display { font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; /* Forhindre linjeskift */ }
 #blinds-display .value { margin: 0 0.1em; }
 #blinds-display .label { font-size: 0.3em; margin: 0 0.1em; opacity: 0.7; font-weight: normal; vertical-align: middle; }
 
-/* Logo Element - NY TILNÆRMING */
-#logo-element { /* Selve containeren satt av JS (left, top, width, height) */
-    padding: 0; /* Ingen intern padding */
-    display: flex; /* Bruk flex for enkel sentrering */
-    justify-content: center;
-    align-items: center;
-    /* overflow: hidden; satt på .draggable-element */
-}
-#logo-element .logo { /* Selve <img> taggen */
-    display: block; /* Unngå ekstra plass under bildet */
-    width: 100%;    /* Fyll containerens bredde */
-    height: 100%;   /* Fyll containerens høyde */
-    max-width: 100%; /* Redundant, men skader ikke */
-    max-height: 100%;/* Redundant, men skader ikke */
-    object-fit: contain; /* VIKTIGST: Skaler bildet ned for å passe, bevarer aspekt */
-    object-position: center center; /* Sentrer bildet innenfor <img>-boksen */
-}
+/* Logo Element */
+#logo-element { padding: 0; display: flex; justify-content: center; align-items: center; }
+#logo-element .logo { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; object-position: center center; }
 
 /* Info Element */
 #info-element { background-color: rgba(0, 0, 0, 0.1); color: inherit; opacity: 0.9; padding: 10px; border-radius: 4px; border: 1px solid var(--live-ui-border); }
 #info-element p { margin: 3px 0; white-space: nowrap; font-size: 1em; line-height: 1.4; }
 #info-element p.hidden { display: none; }
 
-/* Hide old structure - Keep for safety */
+/* Hide old structure */
 .live-split-container, .live-left-column, .live-right-column, .right-col-logo-area, .right-col-blinds-area, .right-col-info-area { display: none; }
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT END === */
 
