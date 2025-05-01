@@ -2,14 +2,13 @@
 // Håndterer spillerhandlinger som rebuy, eliminate, restore, late reg.
 
 import { saveTournamentState } from './storage.js';
-import { updateUI, getPlayerNameById } from './tournament-ui.js'; // Importer getPlayerNameById her
-import { logActivity } from './tournament-logic.js';
-// NYTT: Importer table-funksjoner
+import { updateUI } from './tournament-ui.js';
+// ENDRET: Importer getPlayerNameById og logActivity fra logic
+import { logActivity, getPlayerNameById } from './tournament-logic.js';
 import { checkAndHandleTableBreak, assignTableSeat } from './tournament-tables.js';
 // import { playSound } from './tournament-sound.js'; // TODO
-// import { finishTournament } from './tournament-main.js'; // TODO: Bedre måte å håndtere dette
+// import { finishTournament } from './tournament-main.js'; // TODO
 
-// Mottar state, currentTournamentId og callbacks (for playSound, finishTournament)
 export function handleRebuy(event, state, currentTournamentId, callbacks = {}) {
     console.log("handleRebuy raw dataset ID:", event?.target?.dataset?.playerId);
     const playerId = Number(event?.target?.dataset?.playerId);
@@ -23,7 +22,6 @@ export function handleRebuy(event, state, currentTournamentId, callbacks = {}) {
     if(confirm(`Re-buy (${state.config.rebuyCost}kr/${state.config.rebuyChips}c) for ${p.name}?`)){ p.rebuys=(p.rebuys||0)+1; state.live.totalPot+=state.config.rebuyCost; state.live.totalEntries++; state.live.totalRebuys++; logActivity(state.live.activityLog,`${p.name} tok Re-buy.`); updateUI(state); saveTournamentState(currentTournamentId,state);}
 }
 
-// Mottar state, currentTournamentId og callbacks
 export function handleEliminate(event, state, currentTournamentId, callbacks = {}) {
     const { playSound, finishTournament } = callbacks; // Hent ut callbacks
     console.log("handleEliminate raw dataset ID:", event?.target?.dataset?.playerId);
@@ -51,23 +49,23 @@ export function handleEliminate(event, state, currentTournamentId, callbacks = {
         if (koId !== null && !isNaN(koId)) { koObj = ap.find(pl => pl.id === koId); if (koObj) { koName = koObj.name; } else { console.warn("Selected KO player not found:", koId); koId = null; } }
         const confirmMsg = `Eliminere ${p.name}?` + (koName ? ` (KO til ${koName})` : '');
         if (confirm(confirmMsg)) {
-            if(playSound) playSound('KNOCKOUT'); // Bruk callback
+            if(playSound) playSound('KNOCKOUT');
             p.eliminated = true; p.eliminatedBy = koId; const playersRemainingBefore = ap.length; p.place = playersRemainingBefore;
             if (koObj) { koObj.knockouts = (koObj.knockouts || 0) + 1; state.live.knockoutLog.push({ eliminatedPlayerId: p.id, eliminatedByPlayerId: koObj.id, level: state.live.currentLevelIndex + 1, timestamp: new Date().toISOString() }); console.log(`KO: ${koObj.name} took out ${p.name}`); }
             state.live.eliminatedPlayers.push(p); ap.splice(pI, 1);
-            const logTxt = koName ? ` av ${koName}` : ''; logActivity(state.live.activityLog, `${p.name} slått ut (${p.place}. plass${logTxt}).`); console.log(`Player ${p.name} eliminated. ${ap.length} remaining.`);
+            // ENDRET: Kall getPlayerNameById med state
+            const logTxt = koName ? ` av ${getPlayerNameById(koId, state)}` : ''; // Bruk importert funksjon
+            logActivity(state.live.activityLog, `${p.name} slått ut (${p.place}. plass${logTxt}).`); console.log(`Player ${p.name} eliminated. ${ap.length} remaining.`);
             if (state.config.paidPlaces > 0 && ap.length === state.config.paidPlaces) { logActivity(state.live.activityLog, `Boblen sprakk! ${ap.length} spillere igjen (i pengene).`); if(playSound) playSound('BUBBLE'); }
-            // Kall checkAndHandleTableBreak med callbacks
             const structChanged = checkAndHandleTableBreak(state, currentTournamentId, callbacks);
             if (!structChanged) { updateUI(state); saveTournamentState(currentTournamentId, state); }
             if (state.live.players.length <= 1 && state.live.status !== 'finished') {
-                if (finishTournament) finishTournament(state, currentTournamentId); // Bruk callback
+                if (finishTournament) finishTournament(state, currentTournamentId);
             }
         } else { console.log("Elimination cancelled."); }
     }
 }
 
-// Mottar state, currentTournamentId og callbacks
 export function handleRestore(event, state, currentTournamentId, callbacks = {}) {
     console.log("handleRestore raw dataset ID:", event?.target?.dataset?.playerId);
     const playerId = Number(event?.target?.dataset?.playerId);
@@ -102,7 +100,6 @@ export function handleRestore(event, state, currentTournamentId, callbacks = {})
     }
 }
 
-// Mottar state, currentTournamentId og callbacks
 export function handleLateRegClick(state, currentTournamentId, callbacks = {}) {
     console.log("handleLateRegClick called.");
     if (state.live.status === 'finished') return;
