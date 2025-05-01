@@ -7,9 +7,13 @@ const THEME_BG_COLOR_KEY = 'winjevollThemeBgColor_v1';
 const THEME_TEXT_COLOR_KEY = 'winjevollThemeTextColor_v1';
 const ELEMENT_LAYOUTS_KEY = 'winjevollElementLayouts_v1'; // Combined layout settings
 const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
+const SOUND_ENABLED_KEY = 'winjevollSoundEnabled_v1';
+const SOUND_VOLUME_KEY = 'winjevollSoundVolume_v1';
+const CUSTOM_LOGO_KEY = 'winjevollCustomLogo_v1'; // NY NØKKEL for logo
 
 const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
 const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
+const DEFAULT_SOUND_VOLUME = 0.7; // Default volume (0.0 to 1.0)
 
 // Default layout values including visibility
 const DEFAULT_ELEMENT_LAYOUTS = {
@@ -17,7 +21,7 @@ const DEFAULT_ELEMENT_LAYOUTS = {
     title:  { x: 5,  y: 2,  width: 90, fontSize: 3.5, isVisible: true },
     timer:  { x: 5,  y: 20, width: 55, fontSize: 18,  isVisible: true },
     blinds: { x: 65, y: 40, width: 30, fontSize: 9,   isVisible: true },
-    logo:   { x: 65, y: 5,  width: 30, height: 30,  isVisible: true },
+    logo:   { x: 65, y: 5,  width: 30, height: 30,  isVisible: true }, // Default logo settings
     info:   { x: 65, y: 75, width: 30, fontSize: 1.2, isVisible: true,
               showNextBlinds: true, showAvgStack: true, showPlayers: true,
               showLateReg: true, showNextPause: true }
@@ -26,9 +30,9 @@ const DEFAULT_ELEMENT_LAYOUTS = {
 
 // === 02: UTILITY FUNCTIONS (Load/Save Collections/Items) START ===
 function loadItem(key) { return localStorage.getItem(key); }
-function saveItem(key, value) { try { localStorage.setItem(key, value); } catch(e){ console.error(`Error saving item ${key}:`, e); }}
+function saveItem(key, value) { try { localStorage.setItem(key, value); } catch(e){ console.error(`Error saving item ${key}:`, e); if (e.name === 'QuotaExceededError') alert(`Lagringsplass full (${key})! Kunne ikke lagre. Prøv å slette gamle turneringer/maler eller bruk en mindre logo.`); throw e; /* Re-throw for å stoppe potensielt kritisk lagring */ } }
 function loadObject(key, defaultValue = {}) { try { const json = localStorage.getItem(key); if (json) { const parsed = JSON.parse(json); return typeof parsed === 'object' && parsed !== null ? parsed : defaultValue; } return defaultValue; } catch (e) { console.error(`Error loading object ${key}:`, e); localStorage.removeItem(key); return defaultValue; } }
-function saveObject(key, object) { try { if (typeof object !== 'object' || object === null) throw new Error("Not an object"); localStorage.setItem(key, JSON.stringify(object)); } catch (e) { console.error(`Error saving object ${key}:`, e); if (e.name === 'QuotaExceededError') alert(`Lagringsplass full (${key})!`); else alert(`Ukjent lagringsfeil (${key})!`); throw e; } }
+function saveObject(key, object) { try { if (typeof object !== 'object' || object === null) throw new Error("Not an object"); localStorage.setItem(key, JSON.stringify(object)); } catch (e) { console.error(`Error saving object ${key}:`, e); if (e.name === 'QuotaExceededError') alert(`Lagringsplass full (${key})! Kunne ikke lagre objektet.`); else alert(`Ukjent lagringsfeil (${key})!`); throw e; } }
 // === 02: UTILITY FUNCTIONS (Load/Save Collections/Items) END ===
 
 // === 03: TOURNAMENT FUNCTIONS START ===
@@ -55,14 +59,16 @@ function clearActiveTemplateId() { localStorage.removeItem(ACTIVE_TEMPLATE_ID_KE
 // === 05: ACTIVE ID FUNCTIONS END ===
 
 // === 06: CLEAR ALL DATA FUNCTION START ===
-function clearAllData() { try { localStorage.removeItem(TOURNAMENT_COLLECTION_KEY); localStorage.removeItem(TEMPLATE_COLLECTION_KEY); localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); localStorage.removeItem(THEME_BG_COLOR_KEY); localStorage.removeItem(THEME_TEXT_COLOR_KEY); localStorage.removeItem(ELEMENT_LAYOUTS_KEY); localStorage.removeItem(THEME_FAVORITES_KEY); console.log("All app data cleared."); } catch (e) { console.error("Error clearing all data:", e); alert("Kunne ikke slette all lagret data!"); } }
+function clearAllData() { try { localStorage.removeItem(TOURNAMENT_COLLECTION_KEY); localStorage.removeItem(TEMPLATE_COLLECTION_KEY); localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); localStorage.removeItem(THEME_BG_COLOR_KEY); localStorage.removeItem(THEME_TEXT_COLOR_KEY); localStorage.removeItem(ELEMENT_LAYOUTS_KEY); localStorage.removeItem(THEME_FAVORITES_KEY); localStorage.removeItem(SOUND_ENABLED_KEY); /* NY */ localStorage.removeItem(SOUND_VOLUME_KEY); /* NY */ localStorage.removeItem(CUSTOM_LOGO_KEY); /* NY */ console.log("All app data cleared."); } catch (e) { console.error("Error clearing all data:", e); alert("Kunne ikke slette all lagret data!"); } }
 // === 06: CLEAR ALL DATA FUNCTION END ===
 
 // === 06b: ACTIVITY LOG HELPER START ===
+// Ingen endring her
 function logActivity(logArray, message) { if (!logArray) logArray = []; const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit'}); logArray.unshift({ timestamp, message }); const MAX_LOG_ENTRIES = 50; if (logArray.length > MAX_LOG_ENTRIES) logArray.pop(); console.log(`[Log]: ${message}`); }
 // === 06b: ACTIVITY LOG HELPER END ===
 
 // === 06c: THEME COLOR FUNCTIONS START ===
+// Ingen endring her
 function saveThemeBgColor(rgbString) { saveItem(THEME_BG_COLOR_KEY, rgbString); }
 function loadThemeBgColor() { return loadItem(THEME_BG_COLOR_KEY) || DEFAULT_THEME_BG; }
 function saveThemeTextColor(rgbString) { saveItem(THEME_TEXT_COLOR_KEY, rgbString); }
@@ -73,6 +79,7 @@ function hslToRgb(h, s, l) { s /= 100; l /= 100; let c = (1 - Math.abs(2 * l - 1
 // === 06c: THEME COLOR FUNCTIONS END ===
 
 // === 06d: ELEMENT LAYOUT FUNCTIONS START ===
+// Ingen endring her
 function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); }
 function loadElementLayouts() {
     const loaded = loadObject(ELEMENT_LAYOUTS_KEY);
@@ -111,6 +118,7 @@ function loadElementLayouts() {
 // === 06d: ELEMENT LAYOUT FUNCTIONS END ===
 
 // === 06e: THEME FAVORITES FUNCTIONS START ===
+// Ingen endring her
 function loadThemeFavorites() { return loadObject(THEME_FAVORITES_KEY, []); }
 function saveThemeFavorites(favoritesArray) { saveObject(THEME_FAVORITES_KEY, favoritesArray); }
 function addThemeFavorite(name, bgRgb, textRgb) { const favorites = loadThemeFavorites(); const newFav = { id: generateUniqueId('fav'), name: name || `Favoritt ${favorites.length + 1}`, bg: bgRgb, text: textRgb }; favorites.push(newFav); saveThemeFavorites(favorites); return newFav; }
@@ -118,8 +126,7 @@ function deleteThemeFavorite(favoriteId) { let favorites = loadThemeFavorites();
 // === 06e: THEME FAVORITES FUNCTIONS END ===
 
 // === 06f: SOUND PREFERENCE FUNCTIONS START ===
-const SOUND_ENABLED_KEY = 'winjevollSoundEnabled_v1';
-
+// Ingen endring her
 function saveSoundPreference(isEnabled) {
     saveItem(SOUND_ENABLED_KEY, isEnabled ? 'true' : 'false');
     console.log(`Sound preference saved: ${isEnabled}`);
@@ -133,9 +140,7 @@ function loadSoundPreference() {
 // === 06f: SOUND PREFERENCE FUNCTIONS END ===
 
 // === 06g: SOUND VOLUME FUNCTIONS START ===
-const SOUND_VOLUME_KEY = 'winjevollSoundVolume_v1';
-const DEFAULT_SOUND_VOLUME = 0.7; // Default volume (0.0 to 1.0)
-
+// Ingen endring her
 function saveSoundVolume(volume) {
     // Clamp volume between 0 and 1
     const clampedVolume = Math.max(0, Math.min(1, parseFloat(volume) || DEFAULT_SOUND_VOLUME));
@@ -151,7 +156,40 @@ function loadSoundVolume() {
 }
 // === 06g: SOUND VOLUME FUNCTIONS END ===
 
+// === 06h: CUSTOM LOGO FUNCTIONS START === // NY SEKSJON
+function saveCustomLogoDataUrl(dataUrl) {
+    if (dataUrl && typeof dataUrl === 'string' && dataUrl.startsWith('data:image/')) {
+        try {
+            saveItem(CUSTOM_LOGO_KEY, dataUrl);
+            console.log("Custom logo saved.");
+            return true;
+        } catch (e) {
+            // Feil ble allerede håndtert (og kastet) i saveItem
+            console.error("Failed to save custom logo (likely quota exceeded).");
+            return false;
+        }
+    } else {
+        console.error("Invalid dataURL provided to saveCustomLogoDataUrl:", dataUrl);
+        return false;
+    }
+}
+
+function loadCustomLogoDataUrl() {
+    return loadItem(CUSTOM_LOGO_KEY); // Returnerer null hvis ikke satt
+}
+
+function clearCustomLogo() {
+    try {
+        localStorage.removeItem(CUSTOM_LOGO_KEY);
+        console.log("Custom logo removed.");
+    } catch (e) {
+        console.error("Error removing custom logo:", e);
+    }
+}
+// === 06h: CUSTOM LOGO FUNCTIONS END ===
+
 // === 07: UNIQUE ID GENERATOR SECTION START ===
+// Ingen endring her
 function generateUniqueId(prefix = 'id') { const timestamp = Date.now().toString(36); const randomPart = Math.random().toString(36).substring(2, 9); return `${prefix}-${timestamp}-${randomPart}`; }
 // === 07: UNIQUE ID GENERATOR SECTION END ===
 
