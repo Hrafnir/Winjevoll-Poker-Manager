@@ -268,13 +268,252 @@ document.addEventListener('DOMContentLoaded', async () => {
     function handleBackToMain() { console.log("handleBackToMain called."); if (state && state.live.status !== 'finished') saveTournamentState(currentTournamentId, state); window.location.href = 'index.html'; }
     // === 10: EVENT HANDLERS - CONTROLS END ===
 
-    // === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
-    function handleRebuy(event){ console.log("handleRebuy called for player ID:", event?.target?.dataset?.playerId); const pId=parseInt(event.target.dataset.playerId); const p=state.live.players.find(pl=>pl.id===pId); const lvl=state.live.currentLevelIndex+1; if(!p){ console.warn(`Rebuy: Player ${pId} not found in active list.`); return; } if(state.config.type!=='rebuy'||!(lvl<=state.config.rebuyLevels)){alert("Re-buy er ikke tilgjengelig nå.");return;} if(state.live.status==='finished'){alert("Turnering er fullført.");return;} if(confirm(`Re-buy (${state.config.rebuyCost}kr/${state.config.rebuyChips}c) for ${p.name}?`)){ p.rebuys=(p.rebuys||0)+1; state.live.totalPot+=state.config.rebuyCost; state.live.totalEntries++; state.live.totalRebuys++; logActivity(state.live.activityLog,`${p.name} tok Re-buy.`); updateUI(); saveTournamentState(currentTournamentId,state);} }
-    function handleEliminate(event){ console.log("handleEliminate called for player ID:", event?.target?.dataset?.playerId); if(state.live.status==='finished') return; const pId=parseInt(event.target.dataset.playerId); if (!pId || isNaN(pId)) { console.error("Eliminate: Invalid player ID from button."); return; } const ap=state.live.players; const pI=ap.findIndex(p=>p.id===pId); if(pI===-1) { console.warn(`Eliminate: Player ${pId} not found in active list.`); return; } if (ap.length <= 1 && state.live.status !== 'finished') { alert("Kan ikke eliminere siste spiller før turneringen er fullført."); return; } const p=ap[pI]; let koId = null; if (state.config.type === 'knockout' && (state.config.bountyAmount || 0) > 0) { const assigners = ap.filter(pl=>pl.id!==pId); const overlay = document.createElement('div'); overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:200;'; const box = document.createElement('div'); box.style.cssText = 'background:#fff;color:#333;padding:25px;border-radius:5px;text-align:center;max-width:400px;box-shadow:0 5px 15px rgba(0,0,0,0.3);'; box.innerHTML = `<h3 style="margin-top:0;margin-bottom:15px;color:#333;">Hvem slo ut ${p.name}?</h3><select id="ko-sel" style="padding:8px;margin:10px 0 20px 0;min-width:250px;max-width:100%;border:1px solid #ccc;border-radius:4px;font-size:1em;"><option value="">-- Velg --</option><option value="none">Ingen KO</option>${assigners.map(pl => `<option value="${pl.id}">${pl.name} (B${pl.table}S${pl.seat})</option>`).join('')}</select><div><button id="ko-ok" class="success-button" style="margin-right:10px;padding:8px 15px;font-size:0.95em;">Bekreft</button><button id="ko-cancel" style="padding:8px 15px;font-size:0.95em;">Avbryt</button></div>`; overlay.appendChild(box); document.body.appendChild(overlay); const closeKo = () => { if (document.body.contains(overlay)) document.body.removeChild(overlay); }; document.getElementById('ko-ok').onclick = () => { const selVal = document.getElementById('ko-sel').value; if (!selVal) { alert("Velg spiller/Ingen KO."); return; } koId = (selVal === "none") ? null : parseInt(selVal); closeKo(); proceed(); }; document.getElementById('ko-cancel').onclick = () => { closeKo(); console.log("KO selection cancelled."); }; } else { koId = null; proceed(); } function proceed() { let koName = null; let koObj = null; if (koId !== null) { koObj = ap.find(pl=>pl.id===koId); if (koObj) koName = koObj.name; else { console.warn("Selected KO player not found:", koId); koId = null; } } const confirmMsg = `Eliminere ${p.name}?` + (koName ? ` (KO til ${koName})` : ''); if (confirm(confirmMsg)) { playSound('KNOCKOUT'); p.eliminated=true; p.eliminatedBy=koId; const playersRemainingBefore = ap.length; p.place=playersRemainingBefore; if (koObj) { koObj.knockouts=(koObj.knockouts||0)+1; state.live.knockoutLog.push({ eliminatedPlayerId: p.id, eliminatedByPlayerId: koObj.id, level: state.live.currentLevelIndex + 1, timestamp: new Date().toISOString() }); console.log(`KO: ${koObj.name} -> ${p.name}`); } state.live.eliminatedPlayers.push(p); ap.splice(pI,1); const logTxt = koName ? ` av ${koName}` : ''; logActivity(state.live.activityLog,`${p.name} slått ut (${p.place}.plass${logTxt}).`); console.log(`Player ${p.name} eliminated. ${ap.length} remaining.`); if (state.config.paidPlaces > 0 && ap.length === state.config.paidPlaces) { logActivity(state.live.activityLog, `Boblen sprakk! ${ap.length} spillere igjen (i pengene).`); playSound('BUBBLE'); } const structChanged = checkAndHandleTableBreak(); if (!structChanged) { updateUI(); saveTournamentState(currentTournamentId, state); } if (state.live.players.length <= 1 && state.live.status !== 'finished') finishTournament(); } else console.log("Elimination cancelled."); } }
-    function handleRestore(event){ console.log("handleRestore called for player ID:", event?.target?.dataset?.playerId); if(state.live.status==='finished'){ alert("Turnering fullført."); return; } const pId=parseInt(event.target.dataset.playerId); if (!pId || isNaN(pId)) { console.error("Restore: Invalid player ID from button."); return; } const pI=state.live.eliminatedPlayers.findIndex(p=>p.id===pId); if(pI===-1) { console.warn(`Restore: Player ${pId} not found in eliminated list.`); return; } const p=state.live.eliminatedPlayers[pI]; const oldP = p.place; if(confirm(`Gjenopprette ${p.name} (var ${oldP}.plass)?`)){ const koById = p.eliminatedBy; p.eliminated=false; p.eliminatedBy=null; p.place=null; state.live.eliminatedPlayers.splice(pI,1); state.live.players.push(p); if(state.config.type==='knockout'&&koById){ let koGetter = state.live.players.find(pl=>pl.id===koById)||state.live.eliminatedPlayers.find(pl=>pl.id===koById); if(koGetter?.knockouts>0){ koGetter.knockouts--; console.log(`KO reversed for ${koGetter.name}.`); const logI = state.live.knockoutLog.findIndex(l=>l.eliminatedPlayerId===p.id&&l.eliminatedByPlayerId===koById); if(logI>-1) state.live.knockoutLog.splice(logI,1); } } assignTableSeat(p); logActivity(state.live.activityLog,`${p.name} gjenopprettet fra ${oldP}.plass (B${p.table}S${p.seat}).`); const structChanged = checkAndHandleTableBreak(); if (!structChanged) { updateUI(); saveTournamentState(currentTournamentId, state); } } }
-    function handleEditPlayerClick(event) { console.log("handleEditPlayerClick called for player ID:", event?.target?.dataset?.playerId); if (state.live.status === 'finished') return; const playerId = parseInt(event.target.dataset.playerId); if (!playerId || isNaN(playerId)) { console.error("handleEditPlayerClick: Invalid or missing player ID."); return; } openEditPlayerModal(playerId); }
-    function handleLateRegClick() { if(state.live.status === 'finished') return; const lvl=state.live.currentLevelIndex + 1; const isOpen = lvl <= state.config.lateRegLevel && state.config.lateRegLevel > 0; if (!isOpen) { const reason = state.config.lateRegLevel > 0 ? `stengte etter nivå ${state.config.lateRegLevel}` : "ikke aktivert"; alert(`Sen registrering ${reason}.`); return; } const name = prompt("Navn (Late Reg):"); if (name?.trim()) { const p={id:generateUniqueId('p'), name:name.trim(), stack:state.config.startStack, table:0, seat:0, rebuys:0, addon:false, eliminated:false, eliminatedBy:null, place:null, knockouts:0 }; assignTableSeat(p); state.live.players.push(p); state.live.totalPot+=state.config.buyIn; state.live.totalEntries++; logActivity(state.live.activityLog,`${p.name} registrert (Late Reg, B${p.table}S${p.seat}).`); state.live.players.sort((a,b)=>a.table===b.table?a.seat-b.seat:a.table-b.table); const structChanged = checkAndHandleTableBreak(); if(!structChanged){updateUI(); saveTournamentState(currentTournamentId,state);} } else if(name !== null) alert("Navn tomt."); }
-    // === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
+// === 11: EVENT HANDLERS - PLAYER ACTIONS START ===
+function handleRebuy(event){
+    console.log("handleRebuy called for player ID:", event?.target?.dataset?.playerId); // DEBUG
+    const pId=parseInt(event.target.dataset.playerId);
+    if (!pId || isNaN(pId)) { console.error("Rebuy: Invalid player ID from button."); return; }
+    const p=state.live.players.find(pl=>pl.id===pId);
+    const lvl=state.live.currentLevelIndex+1;
+    if(!p){ console.warn(`Rebuy: Player ${pId} not found in active list.`); return; }
+    if(state.config.type!=='rebuy'||!(lvl<=state.config.rebuyLevels)){alert("Re-buy er ikke tilgjengelig nå.");return;}
+    if(state.live.status==='finished'){alert("Turnering er fullført.");return;}
+    if(confirm(`Re-buy (${state.config.rebuyCost}kr/${state.config.rebuyChips}c) for ${p.name}?`)){
+        p.rebuys=(p.rebuys||0)+1;
+        state.live.totalPot+=state.config.rebuyCost;
+        state.live.totalEntries++; // Rebuy teller også som en 'entry' i pot-sammenheng, men ikke nødvendigvis ny spiller
+        state.live.totalRebuys++;
+        logActivity(state.live.activityLog,`${p.name} tok Re-buy.`);
+        updateUI();
+        saveTournamentState(currentTournamentId,state);
+    }
+}
+
+function handleEliminate(event){
+    console.log("handleEliminate called for player ID:", event?.target?.dataset?.playerId); // DEBUG
+    if(state.live.status==='finished') return;
+    const pId=parseInt(event.target.dataset.playerId);
+    if (!pId || isNaN(pId)) { console.error("Eliminate: Invalid player ID from button."); return; }
+
+    const ap = state.live.players;
+    const pI = ap.findIndex(p=>p.id===pId);
+    if(pI === -1) {
+        console.warn(`Eliminate: Player ${pId} not found in active list.`);
+        // Sjekk om spilleren allerede er eliminert (kan skje ved dobbeltklikk?)
+        const alreadyEliminated = state.live.eliminatedPlayers.find(p => p.id === pId);
+        if (alreadyEliminated) {
+            console.warn(`Player ${pId} is already in the eliminated list.`);
+            alert(`${alreadyEliminated.name} er allerede slått ut.`);
+        } else {
+             alert(`Fant ikke spiller med ID ${pId} i listen over aktive spillere.`);
+        }
+        return;
+    }
+
+    if (ap.length <= 1 && state.live.status !== 'finished') {
+        alert("Kan ikke eliminere siste spiller før turneringen er fullført. Bruk 'Fullfør Turnering'-knappen.");
+        return;
+    }
+
+    const p = ap[pI];
+    let koId = null;
+
+    // Håndter Knockout-valg
+    if (state.config.type === 'knockout' && (state.config.bountyAmount || 0) > 0) {
+        const assigners = ap.filter(pl => pl.id !== pId);
+        if (assigners.length === 0) { // Hvis det bare var 2 spillere igjen
+            console.log("Only one other player left, assigning KO automatically.");
+            koId = null; // Kan ikke assigne KO til seg selv, eller ingen hvis bare 1 igjen totalt? Eller den siste?
+            proceed(); // Gå videre uten valg
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:200;';
+        const box = document.createElement('div');
+        box.style.cssText = 'background:#fff;color:#333;padding:25px;border-radius:5px;text-align:center;max-width:400px;box-shadow:0 5px 15px rgba(0,0,0,0.3);';
+        box.innerHTML = `
+            <h3 style="margin-top:0;margin-bottom:15px;color:#333;">Hvem slo ut ${p.name}?</h3>
+            <select id="ko-sel" style="padding:8px;margin:10px 0 20px 0;min-width:250px;max-width:100%;border:1px solid #ccc;border-radius:4px;font-size:1em;">
+                <option value="">-- Velg --</option>
+                <option value="none">Ingen KO / Delt pott</option>
+                ${assigners.map(pl => `<option value="${pl.id}">${pl.name} (B${pl.table}S${pl.seat})</option>`).join('')}
+            </select>
+            <div>
+                <button id="ko-ok" class="success-button" style="margin-right:10px;padding:8px 15px;font-size:0.95em;">Bekreft</button>
+                <button id="ko-cancel" style="padding:8px 15px;font-size:0.95em;">Avbryt</button>
+            </div>`;
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        const closeKo = () => { if (document.body.contains(overlay)) document.body.removeChild(overlay); };
+
+        document.getElementById('ko-ok').onclick = () => {
+            const selVal = document.getElementById('ko-sel').value;
+            if (!selVal) { alert("Velg spiller eller 'Ingen KO'."); return; }
+            koId = (selVal === "none") ? null : parseInt(selVal);
+            closeKo();
+            proceed();
+        };
+        document.getElementById('ko-cancel').onclick = () => {
+            closeKo();
+            console.log("KO selection cancelled.");
+        };
+    } else {
+        // Ikke knockout-turnering, gå direkte videre
+        koId = null;
+        proceed();
+    }
+
+    // Inner function to proceed after KO check (or if no KO)
+    function proceed() {
+        let koName = null;
+        let koObj = null;
+        if (koId !== null) {
+            koObj = ap.find(pl => pl.id === koId); // Finn KO-mottaker blant de *aktive*
+            if (koObj) {
+                koName = koObj.name;
+            } else {
+                console.warn("Selected KO player not found in active list:", koId);
+                koId = null; // Nullstill hvis spiller ikke finnes (burde ikke skje)
+            }
+        }
+
+        const confirmMsg = `Eliminere ${p.name}?` + (koName ? ` (KO til ${koName})` : '');
+
+        // ---- START FIKS: Legg til krøllparentes ----
+        if (confirm(confirmMsg)) {
+        // ---- START FIKS: Legg til krøllparentes ----
+            playSound('KNOCKOUT');
+            p.eliminated = true;
+            p.eliminatedBy = koId;
+            const playersRemainingBefore = ap.length; // Antall spillere FØR denne ble fjernet
+            p.place = playersRemainingBefore;        // Plassering settes til antall spillere igjen
+
+            if (koObj) { // Hvis en spiller fikk KO
+                koObj.knockouts = (koObj.knockouts || 0) + 1;
+                state.live.knockoutLog.push({
+                    eliminatedPlayerId: p.id,
+                    eliminatedByPlayerId: koObj.id,
+                    level: state.live.currentLevelIndex + 1,
+                    timestamp: new Date().toISOString()
+                });
+                console.log(`KO: ${koObj.name} took out ${p.name}`);
+            }
+
+            state.live.eliminatedPlayers.push(p); // Legg til i eliminert-listen
+            ap.splice(pI, 1); // Fjern fra aktiv-listen
+
+            const logTxt = koName ? ` av ${koName}` : '';
+            logActivity(state.live.activityLog, `${p.name} slått ut (${p.place}. plass${logTxt}).`);
+            console.log(`Player ${p.name} eliminated. ${ap.length} remaining.`);
+
+            // Sjekk for boble
+            if (state.config.paidPlaces > 0 && ap.length === state.config.paidPlaces) {
+                logActivity(state.live.activityLog, `Boblen sprakk! ${ap.length} spillere igjen (i pengene).`);
+                playSound('BUBBLE');
+            }
+
+            // Sjekk for bordstruktur endring
+            const structChanged = checkAndHandleTableBreak();
+            if (!structChanged) { // Hvis ingen bord ble slått sammen/balansert
+                updateUI(); // Oppdater UI umiddelbart
+                saveTournamentState(currentTournamentId, state); // Lagre state
+            }
+            // Ellers håndteres UI-oppdatering og lagring inne i checkAndHandleTableBreak/balanceTables
+
+            // Sjekk om turneringen er over
+            if (state.live.players.length <= 1 && state.live.status !== 'finished') {
+                finishTournament();
+            }
+        // ---- SLUTT FIKS: Legg til krøllparentes ----
+        } else {
+             console.log("Elimination cancelled.");
+        }
+        // ---- SLUTT FIKS: Legg til krøllparentes ----
+    } // End of proceed function
+} // End of handleEliminate
+
+function handleRestore(event){
+    console.log("handleRestore called for player ID:", event?.target?.dataset?.playerId); // DEBUG
+    if(state.live.status==='finished'){ alert("Turnering fullført."); return; }
+    const pId=parseInt(event.target.dataset.playerId);
+    if (!pId || isNaN(pId)) { console.error("Restore: Invalid player ID from button."); return; }
+
+    const pI=state.live.eliminatedPlayers.findIndex(p=>p.id===pId);
+    if(pI===-1) { console.warn(`Restore: Player ${pId} not found in eliminated list.`); return; }
+
+    const p=state.live.eliminatedPlayers[pI];
+    const oldP = p.place;
+
+    if(confirm(`Gjenopprette ${p.name} (var ${oldP}. plass)?`)){
+        const koById = p.eliminatedBy;
+        // Reset player state
+        p.eliminated = false;
+        p.eliminatedBy = null;
+        p.place = null;
+
+        state.live.eliminatedPlayers.splice(pI, 1); // Fjern fra eliminert
+        state.live.players.push(p); // Legg til aktiv
+
+        // Reverse KO if applicable
+        if(state.config.type === 'knockout' && koById){
+            // Finner spilleren som fikk KOen, uansett om de er aktive eller eliminerte nå
+            let koGetter = state.live.players.find(pl => pl.id === koById) || state.live.eliminatedPlayers.find(pl => pl.id === koById);
+            if(koGetter?.knockouts > 0){
+                koGetter.knockouts--;
+                console.log(`KO reversed for ${koGetter.name}.`);
+                // Fjern også fra knockoutLog hvis vi finner den
+                const logI = state.live.knockoutLog.findIndex(l => l.eliminatedPlayerId === p.id && l.eliminatedByPlayerId === koById);
+                if(logI > -1) {
+                    state.live.knockoutLog.splice(logI, 1);
+                }
+            } else if (koGetter) {
+                 console.warn(`Restore: KO getter ${koGetter.name} found, but had ${koGetter.knockouts} KOs.`);
+            }
+        }
+
+        assignTableSeat(p); // Gi spilleren et nytt sete
+        logActivity(state.live.activityLog, `${p.name} gjenopprettet fra ${oldP}. plass (nå B${p.table}S${p.seat}).`);
+
+        const structChanged = checkAndHandleTableBreak();
+        if (!structChanged) {
+            updateUI();
+            saveTournamentState(currentTournamentId, state);
+        }
+    }
+}
+
+function handleEditPlayerClick(event) {
+    console.log("handleEditPlayerClick called for player ID:", event?.target?.dataset?.playerId); // DEBUG
+    if (state.live.status === 'finished') return;
+    const playerId = parseInt(event.target.dataset.playerId);
+    if (!playerId || isNaN(playerId)) { console.error("handleEditPlayerClick: Invalid or missing player ID."); return; }
+    openEditPlayerModal(playerId);
+}
+
+function handleLateRegClick() {
+    console.log("handleLateRegClick called."); // DEBUG
+    if(state.live.status === 'finished') return;
+    const lvl=state.live.currentLevelIndex + 1;
+    const isOpen = lvl <= state.config.lateRegLevel && state.config.lateRegLevel > 0;
+    if (!isOpen) { const reason = state.config.lateRegLevel > 0 ? `stengte etter nivå ${state.config.lateRegLevel}` : "ikke aktivert"; alert(`Sen registrering ${reason}.`); return; }
+    const name = prompt("Navn (Late Reg):");
+    if (name?.trim()) {
+        const p={id:generateUniqueId('p'), name:name.trim(), stack:state.config.startStack, table:0, seat:0, rebuys:0, addon:false, eliminated:false, eliminatedBy:null, place:null, knockouts:0 };
+        assignTableSeat(p);
+        state.live.players.push(p);
+        state.live.totalPot+=state.config.buyIn;
+        state.live.totalEntries++; // Teller som en ny entry
+        logActivity(state.live.activityLog,`${p.name} registrert (Late Reg, B${p.table}S${p.seat}).`);
+        state.live.players.sort((a,b)=>a.table===b.table?a.seat-b.seat:a.table-b.table);
+        const structChanged = checkAndHandleTableBreak();
+        if(!structChanged){updateUI(); saveTournamentState(currentTournamentId,state);}
+    } else if(name !== null) { // Hvis brukeren trykket OK men feltet var tomt
+         alert("Navn kan ikke være tomt.");
+    }
+}
+// === 11: EVENT HANDLERS - PLAYER ACTIONS END ===
 
     // === 12: EVENT HANDLERS - MODAL & EDIT SETTINGS START ===
     function openTournamentModal() { if (state.live.status === 'finished' || isModalOpen) return; console.log("Opening T modal"); editBlindStructureBody.innerHTML = ''; editBlindLevelCounter = 0; state.config.blindLevels.forEach(level => addEditBlindLevelRow(level)); updateEditLevelNumbers(); editPaidPlacesInput.value = state.config.paidPlaces; editPrizeDistTextarea.value = state.config.prizeDistribution.join(', '); tournamentSettingsModal.classList.remove('hidden'); isModalOpen = true; currentOpenModal = tournamentSettingsModal; }
