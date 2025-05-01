@@ -11,135 +11,27 @@
 <body>
         <!-- === 03: MAIN CONTENT SECTION START === -->
     <main class="tournament-live">
-        <!-- Tittel er nå INNE i canvas -->
-        <!-- Header controls er FLYTTET under canvas -->
-
         <div id="live-canvas">
-            <!-- Tittel som manipulerbart element -->
-            <div id="title-element" class="draggable-element" data-element-id="title">
-                 <h1 id="tournament-name-display" class="main-tournament-title">Laster...</h1>
-            </div>
-            <!-- Timer -->
-            <div id="timer-element" class="draggable-element" data-element-id="timer">
-                <div class="timer-section">
-                    <h2>Tid Igjen</h2>
-                    <div id="timer-display">--:--</div>
-                    <div id="break-info" class="hidden">PAUSE</div>
-                </div>
-            </div>
-            <!-- Blinds -->
-            <div id="blinds-element" class="draggable-element" data-element-id="blinds">
-                <div class="blinds-section">
-                    <h3>Blinds <span id="current-level"></span></h3>
-                    <div id="blinds-display">
-                        <span class="value">--</span>/<span class="value">--</span><span class="label">A:</span><span class="value">--</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Logo -->
-            <div id="logo-element" class="draggable-element" data-element-id="logo">
-                <div class="logo-area">
-                    <!-- MERK: src settes av JS basert på lagret logo eller default -->
-                    <img src="placeholder-logo.png" alt="Turnering Logo" class="logo">
-                </div>
-            </div>
-            <!-- Info Boks -->
-            <div id="info-element" class="draggable-element info-box" data-element-id="info">
-                 <p id="info-next-blinds">Neste: <span id="next-blinds">--</span></p>
-                 <p id="info-next-pause" class="hidden">Neste Pause: <span id="next-pause-time">--</span></p>
-                 <p id="info-avg-stack">Average Stack: <span id="average-stack">--</span></p>
-                 <p id="info-players">Spillere: <span id="players-remaining">--</span> (<span id="total-entries">--</span>)</p>
-                 <p id="info-late-reg">Late Reg: <span id="late-reg-status">--</span></p>
-            </div>
+            <div id="title-element" class="draggable-element" data-element-id="title"> <h1 id="tournament-name-display" class="main-tournament-title">Laster...</h1> </div>
+            <div id="timer-element" class="draggable-element" data-element-id="timer"> <div class="timer-section"> <h2>Tid Igjen</h2> <div id="timer-display">--:--</div> <div id="break-info" class="hidden">PAUSE</div> </div> </div>
+            <div id="blinds-element" class="draggable-element" data-element-id="blinds"> <div class="blinds-section"> <h3>Blinds <span id="current-level"></span></h3> <div id="blinds-display"> <span class="value">--</span>/<span class="value">--</span><span class="label">A:</span><span class="value">--</span> </div> </div> </div>
+            <div id="logo-element" class="draggable-element" data-element-id="logo"> <div class="logo-area"> <img src="placeholder-logo.png" alt="Turnering Logo" class="logo"> </div> </div>
+            <div id="info-element" class="draggable-element info-box" data-element-id="info"> <p id="info-next-blinds">Neste: <span id="next-blinds">--</span></p> <p id="info-next-pause" class="hidden">Neste Pause: <span id="next-pause-time">--</span></p> <p id="info-avg-stack">Average Stack: <span id="average-stack">--</span></p> <p id="info-players">Spillere: <span id="players-remaining">--</span> (<span id="total-entries">--</span>)</p> <p id="info-late-reg">Late Reg: <span id="late-reg-status">--</span></p> </div>
         </div>
-
-        <!-- FLYTTET HIT: Header controls (under canvas) -->
-        <div class="sub-canvas-controls header-right-controls">
-             <p>Klokke: <span id="current-time">--:--:--</span></p>
-             <button id="btn-toggle-sound" title="Slå lyd av/på" class="small-button">🔊 Lyd På</button>
-             <button id="btn-edit-tournament-settings" title="Rediger Turneringsregler (Blinds, Premier)" class="small-button">📜 Regler</button>
-             <button id="btn-edit-ui-settings" title="Rediger Utseende (Layout, Farger, Logo, Lyd)" class="small-button">🎨 Utseende</button> <!-- Tittel oppdatert -->
-             <button id="btn-back-to-main-live" title="Tilbake til Start" class="small-button"> Hjem</button>
-        </div>
-
-        <!-- Premievisning -->
-        <div id="prize-display-live" class="live-info-prizes hidden">
-            <h3>Premiefordeling (Totalpott: <span id="total-pot">--</span> kr)</h3>
-            <p>Laster...</p>
-        </div>
-
-        <!-- Hovedkontroller -->
-        <div class="controls">
-            <button id="btn-start-pause">Start Klokke</button>
-            <button id="btn-prev-level"><< Nivå</button>
-            <button id="btn-next-level">Nivå >></button>
-            <button id="btn-adjust-time-minus">-1 min</button>
-            <button id="btn-adjust-time-plus">+1 min</button>
-            <button id="btn-late-reg" disabled>Late Reg</button>
-        </div>
-
-        <!-- Spilleradministrasjon -->
-        <div class="player-management">
-            <div class="player-column">
-                <h2>Aktive (<span id="active-player-count">--</span>)</h2>
-                <p id="table-balance-info" class="warning hidden">Ubalanserte bord!</p>
-                <ul id="player-list" class="item-list player-list-live"><li>Laster...</li></ul>
-            </div>
-            <div class="player-column">
-                <h2>Eliminerte (<span id="eliminated-player-count">--</span>)</h2>
-                <ul id="eliminated-player-list" class="item-list player-list-live"></ul>
-            </div>
-        </div>
-
-        <!-- Aktivitetslogg -->
-        <div id="activity-log-container">
-            <h3>Aktivitetslogg</h3>
-            <ul id="activity-log-list"><li>Loggen starter...</li></ul>
-        </div>
+        <div class="sub-canvas-controls header-right-controls"> <p>Klokke: <span id="current-time">--:--:--</span></p> <button id="btn-toggle-sound" title="Slå lyd av/på" class="small-button">🔊 Lyd På</button> <button id="btn-edit-tournament-settings" title="Rediger Turneringsregler (Blinds, Premier)" class="small-button">📜 Regler</button> <button id="btn-edit-ui-settings" title="Rediger Utseende (Layout, Farger, Logo, Lyd)" class="small-button">🎨 Utseende</button> <button id="btn-back-to-main-live" title="Tilbake til Start" class="small-button"> Hjem</button> </div>
+        <div id="prize-display-live" class="live-info-prizes hidden"> <h3>Premiefordeling (Totalpott: <span id="total-pot">--</span> kr)</h3> <p>Laster...</p> </div>
+        <div class="controls"> <button id="btn-start-pause">Start Klokke</button> <button id="btn-prev-level"><< Nivå</button> <button id="btn-next-level">Nivå >></button> <button id="btn-adjust-time-minus">-1 min</button> <button id="btn-adjust-time-plus">+1 min</button> <button id="btn-late-reg" disabled>Late Reg</button> </div>
+        <div class="player-management"> <div class="player-column"> <h2>Aktive (<span id="active-player-count">--</span>)</h2> <p id="table-balance-info" class="warning hidden">Ubalanserte bord!</p> <ul id="player-list" class="item-list player-list-live"><li>Laster...</li></ul> </div> <div class="player-column"> <h2>Eliminerte (<span id="eliminated-player-count">--</span>)</h2> <ul id="eliminated-player-list" class="item-list player-list-live"></ul> </div> </div>
+        <div id="activity-log-container"> <h3>Aktivitetslogg</h3> <ul id="activity-log-list"><li>Loggen starter...</li></ul> </div>
     </main>
     <!-- === 03: MAIN CONTENT SECTION END === -->
 
     <!-- === 04: FOOTER SECTION START === -->
-    <footer>
-        <p>© 2024 Winjevoll Pokerklubb</p>
-        <div>
-            <button id="btn-force-save" class="small-button">Lagre Nå</button>
-            <button id="btn-end-tournament" class="danger-button">Fullfør Turnering</button>
-        </div>
-    </footer>
+    <footer> <p>© 2024 Winjevoll Pokerklubb</p> <div> <button id="btn-force-save" class="small-button">Lagre Nå</button> <button id="btn-end-tournament" class="danger-button">Fullfør Turnering</button> </div> </footer>
     <!-- === 04: FOOTER SECTION END === -->
 
     <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS START === -->
-    <div id="tournament-settings-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-button" id="close-tournament-modal-button" title="Lukk">×</span>
-            <h2>Rediger Turneringsregler</h2>
-            <p class="warning">Endringer underveis kan ha utilsiktede konsekvenser!</p>
-            <div id="edit-blinds-section">
-                <h3>Fremtidige Nivåer/Pauser</h3>
-                <p><small>(Historiske er låst.)</small></p>
-                <div class="blind-table-container">
-                    <table id="edit-blind-structure-table">
-                        <thead><tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet</th><th>Pause Etter (min)</th><th></th></tr></thead>
-                        <tbody id="edit-blind-structure-body"></tbody>
-                    </table>
-                </div>
-                <button type="button" id="btn-add-edit-level">Legg til Nivå</button>
-            </div>
-            <div id="edit-prizes-section">
-                <h3>Premier</h3>
-                <label for="edit-paid-places">Antall Betalte:</label>
-                <input type="number" id="edit-paid-places" min="1">
-                <label for="edit-prize-distribution">Ny Fordeling (%):</label>
-                <textarea id="edit-prize-distribution" rows="2"></textarea>
-                <button type="button" id="btn-generate-edit-payout">Generer Standard</button>
-            </div>
-            <div class="modal-actions">
-                <button id="btn-save-tournament-settings" class="success-button">Lagre Regelendringer</button>
-                <button id="btn-cancel-tournament-edit" type="button">Avbryt</button>
-            </div>
-        </div>
-    </div>
+    <div id="tournament-settings-modal" class="modal hidden"> <div class="modal-content"> <span class="close-button" id="close-tournament-modal-button" title="Lukk">×</span> <h2>Rediger Turneringsregler</h2> <p class="warning">Endringer underveis kan ha utilsiktede konsekvenser!</p> <div id="edit-blinds-section"> <h3>Fremtidige Nivåer/Pauser</h3> <p><small>(Historiske er låst.)</small></p> <div class="blind-table-container"> <table id="edit-blind-structure-table"> <thead><tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet</th><th>Pause Etter (min)</th><th></th></tr></thead> <tbody id="edit-blind-structure-body"></tbody> </table> </div> <button type="button" id="btn-add-edit-level">Legg til Nivå</button> </div> <div id="edit-prizes-section"> <h3>Premier</h3> <label for="edit-paid-places">Antall Betalte:</label> <input type="number" id="edit-paid-places" min="1"> <label for="edit-prize-distribution">Ny Fordeling (%):</label> <textarea id="edit-prize-distribution" rows="2"></textarea> <button type="button" id="btn-generate-edit-payout">Generer Standard</button> </div> <div class="modal-actions"> <button id="btn-save-tournament-settings" class="success-button">Lagre Regelendringer</button> <button id="btn-cancel-tournament-edit" type="button">Avbryt</button> </div> </div> </div>
     <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS END === -->
 
     <!-- === 05b: MODAL FOR UI SETTINGS START === -->
@@ -149,7 +41,6 @@
             <h2>Rediger Utseende & Lyd</h2>
             <p class="warning">Endringer gjelder umiddelbart! Lagre for å beholde.<br>Dra elementer på skjermen bak for å flytte dem.</p>
 
-            <!-- LAYOUT SECTION -->
             <div id="edit-layout-section">
                 <h3>Layout Justering</h3>
                 <div class="control-group layout-control"><label for="canvasHeightSlider">Canvas Høyde (vh):</label><input type="range" id="canvasHeightSlider" min="30" max="95" value="65"><input type="number" id="canvasHeightInput" min="30" max="95" value="65"><span>vh</span></div>
@@ -158,85 +49,32 @@
                 <div class="element-visibility-toggles"><label><input type="checkbox" id="toggleTitleElement" data-element-id="title"> Tittel</label><label><input type="checkbox" id="toggleTimerElement" data-element-id="timer"> Timer</label><label><input type="checkbox" id="toggleBlindsElement" data-element-id="blinds"> Blinds</label><label><input type="checkbox" id="toggleLogoElement" data-element-id="logo"> Logo</label><label><input type="checkbox" id="toggleInfoElement" data-element-id="info"> Info Boks</label></div>
                 <hr>
                 <h4>Element Størrelse (Posisjon justeres ved å dra):</h4>
+                <p><small>Hvis tekst blir kuttet av, øk bredde eller reduser skriftstørrelse.</small></p> <!-- NYTT: Hint til bruker -->
                 <div class="element-layout-grid">
                     <div class="element-layout-controls"><h5>Tittel</h5><div class="control-group layout-control"><label>Bredde (%):</label><input type="range" id="titleWidthSlider" min="10" max="90" value="90"><input type="number" id="titleWidthInput" min="10" max="90" value="90"></div><div class="control-group layout-control"><label>Skrift (em):</label><input type="range" id="titleFontSizeSlider" min="1.5" max="8" step="0.1" value="3.5"><input type="number" id="titleFontSizeInput" min="1.5" max="8" step="0.1" value="3.5"></div></div>
-                    <div class="element-layout-controls"><h5>Timer</h5><div class="control-group layout-control"><label>Bredde (%):</label><input type="range" id="timerWidthSlider" min="10" max="90" value="55"><input type="number" id="timerWidthInput" min="10" max="90" value="55"></div><div class="control-group layout-control"><label>Skrift (em):</label><input type="range" id="timerFontSizeSlider" min="5" max="30" step="0.5" value="18"><input type="number" id="timerFontSizeInput" min="5" max="30" step="0.5" value="18"></div></div>
-                    <div class="element-layout-controls"><h5>Blinds</h5><div class="control-group layout-control"><label>Bredde (%):</label><input type="range" id="blindsWidthSlider" min="10" max="90" value="30"><input type="number" id="blindsWidthInput" min="10" max="90" value="30"></div><div class="control-group layout-control"><label>Skrift (em):</label><input type="range" id="blindsFontSizeSlider" min="2" max="20" step="0.5" value="9"><input type="number" id="blindsFontSizeInput" min="2" max="20" step="0.5" value="9"></div></div>
+                    <div class="element-layout-controls"><h5>Timer</h5><div class="control-group layout-control"><label>Bredde (%):</label><input type="range" id="timerWidthSlider" min="10" max="90" value="55"><input type="number" id="timerWidthInput" min="10" max="90" value="55"></div>
+                        <!-- ENDRET: Redusert max font size -->
+                        <div class="control-group layout-control"><label>Skrift (em):</label><input type="range" id="timerFontSizeSlider" min="5" max="25" step="0.5" value="18"><input type="number" id="timerFontSizeInput" min="5" max="25" step="0.5" value="18"></div></div>
+                    <div class="element-layout-controls"><h5>Blinds</h5><div class="control-group layout-control"><label>Bredde (%):</label><input type="range" id="blindsWidthSlider" min="10" max="90" value="30"><input type="number" id="blindsWidthInput" min="10" max="90" value="30"></div>
+                        <!-- ENDRET: Redusert max font size -->
+                        <div class="control-group layout-control"><label>Skrift (em):</label><input type="range" id="blindsFontSizeSlider" min="2" max="15" step="0.5" value="9"><input type="number" id="blindsFontSizeInput" min="2" max="15" step="0.5" value="9"></div></div>
                     <div class="element-layout-controls"><h5>Logo</h5><div class="control-group layout-control"><label>Bredde (%):</label><input type="range" id="logoWidthSlider" min="5" max="90" value="30"><input type="number" id="logoWidthInput" min="5" max="90" value="30"></div><div class="control-group layout-control"><label>Høyde (%):</label><input type="range" id="logoHeightSlider" min="5" max="90" value="30"><input type="number" id="logoHeightInput" min="5" max="90" value="30"></div></div>
                     <div class="element-layout-controls"><h5>Info Boks</h5><div class="control-group layout-control"><label>Bredde (%):</label><input type="range" id="infoWidthSlider" min="10" max="90" value="30"><input type="number" id="infoWidthInput" min="10" max="90" value="30"></div><div class="control-group layout-control"><label>Skrift (em):</label><input type="range" id="infoFontSizeSlider" min="0.8" max="3" step="0.1" value="1.2"><input type="number" id="infoFontSizeInput" min="0.8" max="3" step="0.1" value="1.2"></div><div class="info-toggles"><label><input type="checkbox" id="toggleInfoNextBlinds" checked> Neste Blinds</label><label><input type="checkbox" id="toggleInfoNextPause" checked> Neste Pause</label><label><input type="checkbox" id="toggleInfoAvgStack" checked> Avg Stack</label><label><input type="checkbox" id="toggleInfoPlayers" checked> Spillere</label><label><input type="checkbox" id="toggleInfoLateReg" checked> Late Reg</label></div></div>
                 </div>
             </div> <!-- End edit-layout-section -->
 
-            <!-- === 05c: LOGO UPLOAD SECTION START === --> <!-- NY SEKSJON -->
-            <div id="edit-logo-section">
-                <h3>Egendefinert Logo</h3>
-                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;">
-                    <div style="flex-grow: 1;">
-                        <label for="customLogoInput" style="display: block; margin-bottom: 5px;">Velg bildefil (PNG, JPG, GIF, SVG):</label>
-                        <input type="file" id="customLogoInput" accept="image/*" style="max-width: 300px;">
-                    </div>
-                    <div>
-                         <img id="logoPreview" src="placeholder-logo.png" alt="Logo Forhåndsvisning" style="max-height: 60px; max-width: 150px; border: 1px solid #ccc; padding: 3px; background-color: #f0f0f0; object-fit: contain;">
-                    </div>
-                </div>
-                <button type="button" id="btnRemoveCustomLogo" class="small-button warning-button">Fjern Egendefinert Logo</button>
-                <small style="display: block; margin-top: 5px;">Store bilder kan fylle lagringsplassen. Prøv å holde størrelsen under 1MB.</small>
-            </div>
-            <hr> <!-- Separator -->
-            <!-- === 05c: LOGO UPLOAD SECTION END === -->
+            <div id="edit-logo-section"> <h3>Egendefinert Logo</h3> <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px;"> <div style="flex-grow: 1;"> <label for="customLogoInput" style="display: block; margin-bottom: 5px;">Velg bildefil (PNG, JPG, GIF, SVG):</label> <input type="file" id="customLogoInput" accept="image/*" style="max-width: 300px;"> </div> <div> <img id="logoPreview" src="placeholder-logo.png" alt="Logo Forhåndsvisning" style="max-height: 60px; max-width: 150px; border: 1px solid #ccc; padding: 3px; background-color: #f0f0f0; object-fit: contain;"> </div> </div> <button type="button" id="btnRemoveCustomLogo" class="small-button warning-button">Fjern Egendefinert Logo</button> <small style="display: block; margin-top: 5px;">Store bilder lagres lokalt i nettleseren din.</small> </div>
+            <hr>
 
-            <!-- THEME SECTION -->
-            <div id="edit-theme-section">
-                <h3>Fargetema</h3>
-                <!-- Predefinerte temaer -->
-                <div class="predefined-themes-section" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee;">
-                    <label for="predefinedThemeSelect" style="display: block; margin-bottom: 5px;">Velg forhåndsdefinert tema:</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <select id="predefinedThemeSelect" style="flex-grow: 1; max-width: 250px;"><option value="">-- Velg et tema --</option></select>
-                        <button type="button" id="btnLoadPredefinedTheme" class="small-button info-button" disabled>Last inn</button>
-                    </div>
-                </div>
-                <!-- Eksisterende Favoritter -->
-                <div class="theme-favorites-section">
-                    <select id="themeFavoritesSelect"><option value="">Velg favoritt...</option></select>
-                    <button type="button" id="btnLoadThemeFavorite" class="small-button info-button">Last</button>
-                    <input type="text" id="newThemeFavoriteName" placeholder="Navn på ny favoritt">
-                    <button type="button" id="btnSaveThemeFavorite" class="small-button success-button">Lagre</button>
-                    <button type="button" id="btnDeleteThemeFavorite" class="small-button danger-button" disabled>Slett</button>
-                </div>
-                <!-- Fargevelgere -->
-                <div class="theme-editor-row">
-                    <div class="theme-editor-color"><h4>Bakgrunn</h4><div class="control-group hsl-group"><label>H:</label><input type="range" class="hue-slider" id="bgHueSlider" min="0" max="360"><input type="number" id="bgHueInput" min="0" max="360"></div><div class="control-group hsl-group"><label>S:</label><input type="range" id="bgSatSlider" min="0" max="100"><input type="number" id="bgSatInput" min="0" max="100"><span>%</span></div><div class="control-group hsl-group"><label>L:</label><input type="range" id="bgLigSlider" min="0" max="100"><input type="number" id="bgLigInput" min="0" max="100"><span>%</span></div><hr><div class="control-group rgb-group"><label>R:</label><input type="range" id="bgRedSlider" min="0" max="255"><input type="number" id="bgRedInput" min="0" max="255"></div><div class="control-group rgb-group"><label>G:</label><input type="range" id="bgGreenSlider" min="0" max="255"><input type="number" id="bgGreenInput" min="0" max="255"></div><div class="control-group rgb-group"><label>B:</label><input type="range" id="bgBlueSlider" min="0" max="255"><input type="number" id="bgBlueInput" min="0" max="255"></div></div>
-                    <div class="theme-editor-preview"><label>Preview BG:</label><div id="bg-color-preview" class="color-preview-box"></div></div>
-                </div>
-                <div class="theme-editor-row">
-                    <div class="theme-editor-color"><h4>Tekst</h4><div class="control-group hsl-group"><label>H:</label><input type="range" class="hue-slider" id="textHueSlider" min="0" max="360"><input type="number" id="textHueInput" min="0" max="360"></div><div class="control-group hsl-group"><label>S:</label><input type="range" id="textSatSlider" min="0" max="100"><input type="number" id="textSatInput" min="0" max="100"><span>%</span></div><div class="control-group hsl-group"><label>L:</label><input type="range" id="textLigSlider" min="0" max="100"><input type="number" id="textLigInput" min="0" max="100"><span>%</span></div><hr><div class="control-group rgb-group"><label>R:</label><input type="range" id="textRedSlider" min="0" max="255"><input type="number" id="textRedInput" min="0" max="255"></div><div class="control-group rgb-group"><label>G:</label><input type="range" id="textGreenSlider" min="0" max="255"><input type="number" id="textGreenInput" min="0" max="255"></div><div class="control-group rgb-group"><label>B:</label><input type="range" id="textBlueSlider" min="0" max="255"><input type="number" id="textBlueInput" min="0" max="255"></div></div>
-                    <div class="theme-editor-preview"><label>Preview Text:</label><div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div></div>
-                </div>
-            </div> <!-- End edit-theme-section -->
-             <hr> <!-- Separator -->
+            <div id="edit-theme-section"> <h3>Fargetema</h3> <div class="predefined-themes-section" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee;"> <label for="predefinedThemeSelect" style="display: block; margin-bottom: 5px;">Velg forhåndsdefinert tema:</label> <div style="display: flex; gap: 10px; align-items: center;"> <select id="predefinedThemeSelect" style="flex-grow: 1; max-width: 250px;"><option value="">-- Velg et tema --</option></select> <button type="button" id="btnLoadPredefinedTheme" class="small-button info-button" disabled>Last inn</button> </div> </div> <div class="theme-favorites-section"> <select id="themeFavoritesSelect"><option value="">Velg favoritt...</option></select> <button type="button" id="btnLoadThemeFavorite" class="small-button info-button">Last</button> <input type="text" id="newThemeFavoriteName" placeholder="Navn på ny favoritt"> <button type="button" id="btnSaveThemeFavorite" class="small-button success-button">Lagre</button> <button type="button" id="btnDeleteThemeFavorite" class="small-button danger-button" disabled>Slett</button> </div> <div class="theme-editor-row"> <div class="theme-editor-color"><h4>Bakgrunn</h4><div class="control-group hsl-group"><label>H:</label><input type="range" class="hue-slider" id="bgHueSlider" min="0" max="360"><input type="number" id="bgHueInput" min="0" max="360"></div><div class="control-group hsl-group"><label>S:</label><input type="range" id="bgSatSlider" min="0" max="100"><input type="number" id="bgSatInput" min="0" max="100"><span>%</span></div><div class="control-group hsl-group"><label>L:</label><input type="range" id="bgLigSlider" min="0" max="100"><input type="number" id="bgLigInput" min="0" max="100"><span>%</span></div><hr><div class="control-group rgb-group"><label>R:</label><input type="range" id="bgRedSlider" min="0" max="255"><input type="number" id="bgRedInput" min="0" max="255"></div><div class="control-group rgb-group"><label>G:</label><input type="range" id="bgGreenSlider" min="0" max="255"><input type="number" id="bgGreenInput" min="0" max="255"></div><div class="control-group rgb-group"><label>B:</label><input type="range" id="bgBlueSlider" min="0" max="255"><input type="number" id="bgBlueInput" min="0" max="255"></div></div> <div class="theme-editor-preview"><label>Preview BG:</label><div id="bg-color-preview" class="color-preview-box"></div></div> </div> <div class="theme-editor-row"> <div class="theme-editor-color"><h4>Tekst</h4><div class="control-group hsl-group"><label>H:</label><input type="range" class="hue-slider" id="textHueSlider" min="0" max="360"><input type="number" id="textHueInput" min="0" max="360"></div><div class="control-group hsl-group"><label>S:</label><input type="range" id="textSatSlider" min="0" max="100"><input type="number" id="textSatInput" min="0" max="100"><span>%</span></div><div class="control-group hsl-group"><label>L:</label><input type="range" id="textLigSlider" min="0" max="100"><input type="number" id="textLigInput" min="0" max="100"><span>%</span></div><hr><div class="control-group rgb-group"><label>R:</label><input type="range" id="textRedSlider" min="0" max="255"><input type="number" id="textRedInput" min="0" max="255"></div><div class="control-group rgb-group"><label>G:</label><input type="range" id="textGreenSlider" min="0" max="255"><input type="number" id="textGreenInput" min="0" max="255"></div><div class="control-group rgb-group"><label>B:</label><input type="range" id="textBlueSlider" min="0" max="255"><input type="number" id="textBlueInput" min="0" max="255"></div></div> <div class="theme-editor-preview"><label>Preview Text:</label><div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div></div> </div> </div>
+            <hr>
 
-            <!-- SOUND SECTION -->
-            <div id="edit-sound-section">
-                <h3>Lydinnstillinger</h3>
-                 <div class="control-group layout-control">
-                      <label for="volumeSlider">Volum:</label>
-                      <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.7">
-                      <input type="number" id="volumeInput" min="0" max="1" step="0.05" value="0.7">
-                      <button type="button" id="btn-test-sound" class="small-button" style="margin-left: 10px;">Test</button>
-                 </div>
-            </div><!-- End edit-sound-section -->
+            <div id="edit-sound-section"> <h3>Lydinnstillinger</h3> <div class="control-group layout-control"> <label for="volumeSlider">Volum:</label> <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.7"> <input type="number" id="volumeInput" min="0" max="1" step="0.05" value="0.7"> <button type="button" id="btn-test-sound" class="small-button" style="margin-left: 10px;">Test</button> </div> </div>
 
-
-            <div class="modal-actions">
-                 <button type="button" id="btnResetLayoutTheme" class="warning-button">Tilbakestill Utseende</button>
-                 <button id="btn-save-ui-settings" class="success-button">Lagre Utseende & Lyd</button>
-                 <button id="btn-cancel-ui-edit" type="button">Avbryt</button>
-            </div>
+            <div class="modal-actions"> <button type="button" id="btnResetLayoutTheme" class="warning-button">Tilbakestill Utseende</button> <button id="btn-save-ui-settings" class="success-button">Lagre Utseende & Lyd</button> <button id="btn-cancel-ui-edit" type="button">Avbryt</button> </div>
         </div>
     </div>
     <!-- === 05b: MODAL FOR UI SETTINGS END === -->
-
 
     <!-- === 06: SCRIPTS SECTION START === -->
     <script src="js/storage.js"></script>
