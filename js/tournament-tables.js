@@ -1,126 +1,235 @@
-// === tournament-player-actions.js ===
-// Håndterer spillerhandlinger som rebuy, eliminate, restore, late reg.
+// === tournament-tables.js ===
+// Funksjoner for bordtildeling, sammenslåing og balansering.
 
-import { saveTournamentState } from './storage.js';
-import { updateUI, getPlayerNameById } from './tournament-ui.js'; // Importer getPlayerNameById her
 import { logActivity } from './tournament-logic.js';
-// NYTT: Importer table-funksjoner
-import { checkAndHandleTableBreak, assignTableSeat } from './tournament-tables.js';
-// import { playSound } from './tournament-sound.js'; // TODO
-// import { finishTournament } from './tournament-main.js'; // TODO: Bedre måte å håndtere dette
+// Importer funksjoner som trengs av denne modulen
+// import { updateUI } from './tournament-ui.js'; // Trengs av balanceTables
+// import { saveTournamentState } from './storage.js'; // Trengs av balanceTables
 
-// Mottar state, currentTournamentId og callbacks (for playSound, finishTournament)
-export function handleRebuy(event, state, currentTournamentId, callbacks = {}) {
-    console.log("handleRebuy raw dataset ID:", event?.target?.dataset?.playerId);
-    const playerId = Number(event?.target?.dataset?.playerId);
-    console.log("handleRebuy called for player ID:", playerId);
-    if (!playerId || isNaN(playerId)) { console.error("Rebuy: Invalid player ID from button."); return; }
-    const p=state.live.players.find(pl=>pl.id===playerId);
-    const lvl=state.live.currentLevelIndex+1;
-    if(!p){ console.warn(`Rebuy: Player ${playerId} not found in active list.`); return; }
-    if(state.config.type!=='rebuy'||!(lvl<=state.config.rebuyLevels)){alert("Re-buy er ikke tilgjengelig nå.");return;}
-    if(state.live.status==='finished'){alert("Turnering er fullført.");return;}
-    if(confirm(`Re-buy (${state.config.rebuyCost}kr/${state.config.rebuyChips}c) for ${p.name}?`)){ p.rebuys=(p.rebuys||0)+1; state.live.totalPot+=state.config.rebuyCost; state.live.totalEntries++; state.live.totalRebuys++; logActivity(state.live.activityLog,`${p.name} tok Re-buy.`); updateUI(state); saveTournamentState(currentTournamentId,state);}
-}
-
-// Mottar state, currentTournamentId og callbacks
-export function handleEliminate(event, state, currentTournamentId, callbacks = {}) {
-    const { playSound, finishTournament } = callbacks; // Hent ut callbacks
-    console.log("handleEliminate raw dataset ID:", event?.target?.dataset?.playerId);
-    const playerId = Number(event?.target?.dataset?.playerId);
-    console.log("handleEliminate called for player ID:", playerId);
-    if (!playerId || isNaN(playerId)) { console.error("Eliminate: Invalid player ID from button."); return; }
-    if(state.live.status === 'finished') return;
-
-    const ap = state.live.players;
-    const pI = ap.findIndex(p=>p.id===playerId);
-    if(pI === -1) { console.warn(`Eliminate: Player ${playerId} not found in active list.`); const alreadyEliminated = state.live.eliminatedPlayers.find(p => p.id === playerId); if (alreadyEliminated) { console.warn(`Player ${playerId} is already eliminated.`); alert(`${alreadyEliminated.name} er allerede slått ut.`); } else { alert(`Fant ikke spiller med ID ${playerId} i listen over aktive spillere.`); } return; }
-    if (ap.length <= 1 && state.live.status !== 'finished') { alert("Kan ikke eliminere siste spiller før turneringen er fullført."); return; }
-
-    const p = ap[pI];
-    let koId = null;
-
-    if (state.config.type === 'knockout' && (state.config.bountyAmount || 0) > 0) {
-        const assigners = ap.filter(pl => pl.id !== playerId);
-        if (assigners.length === 0) { console.log("Only one other player left."); koId = null; proceed(); return; }
-        const overlay = document.createElement('div'); overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;justify-content:center;align-items:center;z-index:200;'; const box = document.createElement('div'); box.style.cssText = 'background:#fff;color:#333;padding:25px;border-radius:5px;text-align:center;max-width:400px;box-shadow:0 5px 15px rgba(0,0,0,0.3);'; box.innerHTML = `<h3 style="margin-top:0;margin-bottom:15px;color:#333;">Hvem slo ut ${p.name}?</h3><select id="ko-sel" style="padding:8px;margin:10px 0 20px 0;min-width:250px;max-width:100%;border:1px solid #ccc;border-radius:4px;font-size:1em;"><option value="">-- Velg --</option><option value="none">Ingen KO / Delt pott</option>${assigners.map(pl => `<option value="${pl.id}">${pl.name} (B${pl.table}S${pl.seat})</option>`).join('')}</select><div><button id="ko-ok" class="success-button" style="margin-right:10px;padding:8px 15px;font-size:0.95em;">Bekreft</button><button id="ko-cancel" style="padding:8px 15px;font-size:0.95em;">Avbryt</button></div>`; overlay.appendChild(box); document.body.appendChild(overlay); const closeKo = () => { if (document.body.contains(overlay)) document.body.removeChild(overlay); }; document.getElementById('ko-ok').onclick = () => { const selVal = document.getElementById('ko-sel').value; if (!selVal) { alert("Velg spiller eller 'Ingen KO'."); return; } koId = (selVal === "none") ? null : Number(selVal); closeKo(); proceed(); }; document.getElementById('ko-cancel').onclick = () => { closeKo(); console.log("KO selection cancelled."); };
-    } else { koId = null; proceed(); }
-
-    function proceed() {
-        let koName = null; let koObj = null;
-        if (koId !== null && !isNaN(koId)) { koObj = ap.find(pl => pl.id === koId); if (koObj) { koName = koObj.name; } else { console.warn("Selected KO player not found:", koId); koId = null; } }
-        const confirmMsg = `Eliminere ${p.name}?` + (koName ? ` (KO til ${koName})` : '');
-        if (confirm(confirmMsg)) {
-            if(playSound) playSound('KNOCKOUT'); // Bruk callback
-            p.eliminated = true; p.eliminatedBy = koId; const playersRemainingBefore = ap.length; p.place = playersRemainingBefore;
-            if (koObj) { koObj.knockouts = (koObj.knockouts || 0) + 1; state.live.knockoutLog.push({ eliminatedPlayerId: p.id, eliminatedByPlayerId: koObj.id, level: state.live.currentLevelIndex + 1, timestamp: new Date().toISOString() }); console.log(`KO: ${koObj.name} took out ${p.name}`); }
-            state.live.eliminatedPlayers.push(p); ap.splice(pI, 1);
-            const logTxt = koName ? ` av ${koName}` : ''; logActivity(state.live.activityLog, `${p.name} slått ut (${p.place}. plass${logTxt}).`); console.log(`Player ${p.name} eliminated. ${ap.length} remaining.`);
-            if (state.config.paidPlaces > 0 && ap.length === state.config.paidPlaces) { logActivity(state.live.activityLog, `Boblen sprakk! ${ap.length} spillere igjen (i pengene).`); if(playSound) playSound('BUBBLE'); }
-            // Kall checkAndHandleTableBreak med callbacks
-            const structChanged = checkAndHandleTableBreak(state, currentTournamentId, callbacks);
-            if (!structChanged) { updateUI(state); saveTournamentState(currentTournamentId, state); }
-            if (state.live.players.length <= 1 && state.live.status !== 'finished') {
-                if (finishTournament) finishTournament(state, currentTournamentId); // Bruk callback
+// Hjelpefunksjoner (kan holdes private her hvis de kun brukes internt)
+function findTargetTable(state, excludeTableNum = null) {
+    const tables = {};
+    let validTables = [];
+    state.live.players.forEach(p => {
+        if (p.id !== player.id && p.table && p.table !== excludeTableNum) { // Antar 'player' er definert i scope som kaller? Nei, trenger ikke player her.
+             if (p.table && p.table !== excludeTableNum) { // Korrigert sjekk
+                tables[p.table] = (tables[p.table] || 0) + 1;
             }
-        } else { console.log("Elimination cancelled."); }
-    }
-}
-
-// Mottar state, currentTournamentId og callbacks
-export function handleRestore(event, state, currentTournamentId, callbacks = {}) {
-    console.log("handleRestore raw dataset ID:", event?.target?.dataset?.playerId);
-    const playerId = Number(event?.target?.dataset?.playerId);
-    console.log("handleRestore called for player ID:", playerId);
-    if (!playerId || isNaN(playerId)) { console.error("Restore: Invalid player ID from button."); return; }
-    if (state.live.status === 'finished') { alert("Turnering fullført."); return; }
-
-    const pI = state.live.eliminatedPlayers.findIndex(p => p.id === playerId);
-    if (pI === -1) { console.warn(`Restore: Player ${playerId} not found in eliminated list.`); return; }
-    const p = state.live.eliminatedPlayers[pI];
-    const oldP = p.place;
-
-    if (confirm(`Gjenopprette ${p.name} (var ${oldP}. plass)?`)) {
-        const koById = p.eliminatedBy;
-        p.eliminated = false; p.eliminatedBy = null; p.place = null;
-        state.live.eliminatedPlayers.splice(pI, 1);
-        state.live.players.push(p);
-
-        if (state.config.type === 'knockout' && koById) {
-            let koGetter = state.live.players.find(pl => pl.id === koById) || state.live.eliminatedPlayers.find(pl => pl.id === koById);
-            if (koGetter?.knockouts > 0) { koGetter.knockouts--; console.log(`KO reversed for ${koGetter.name}.`); const logI = state.live.knockoutLog.findIndex(l => l.eliminatedPlayerId === p.id && l.eliminatedByPlayerId === koById); if(logI > -1) { state.live.knockoutLog.splice(logI, 1); } }
-            else if (koGetter) { console.warn(`Restore: KO getter ${koGetter.name} found, but had ${koGetter.knockouts} KOs.`); }
         }
+    });
 
-        assignTableSeat(p, state, null); // Send state
-        logActivity(state.live.activityLog, `${p.name} gjenopprettet fra ${oldP}.plass (nå B${p.table}S${p.seat}).`);
-        const structChanged = checkAndHandleTableBreak(state, currentTournamentId, callbacks); // Send state/id/callbacks
-        if (!structChanged) {
-            updateUI(state);
-            saveTournamentState(currentTournamentId, state);
+    validTables = Object.entries(tables).map(([n, c]) => ({ tableNum: parseInt(n), count: c })).filter(t => t.tableNum !== excludeTableNum);
+    validTables.sort((a, b) => a.count - b.count); // Sorter etter færrest spillere
+
+    let targetTable = -1;
+    for (const t of validTables) {
+        if (t.count < state.config.playersPerTable) {
+            targetTable = t.tableNum;
+            break; // Fant et bord med ledig plass
         }
     }
+
+    // Hvis ingen eksisterende bord har plass, lag et nytt
+    if (targetTable === -1) {
+        const existingTables = [...new Set(state.live.players.map(p => p.table).filter(t => t > 0))];
+        let nextTableNum = existingTables.length > 0 ? Math.max(0, ...existingTables) + 1 : 1;
+        if (nextTableNum === excludeTableNum) { // Hopp over bordet som skal brytes
+            nextTableNum++;
+        }
+        targetTable = nextTableNum;
+         console.log("Creating new table:", targetTable);
+    }
+    return targetTable;
 }
 
-// Mottar state, currentTournamentId og callbacks
-export function handleLateRegClick(state, currentTournamentId, callbacks = {}) {
-    console.log("handleLateRegClick called.");
-    if (state.live.status === 'finished') return;
-    const lvl = state.live.currentLevelIndex + 1;
-    const isOpen = lvl <= state.config.lateRegLevel && state.config.lateRegLevel > 0;
-    if (!isOpen) { const reason = state.config.lateRegLevel > 0 ? `stengte etter nivå ${state.config.lateRegLevel}` : "ikke aktivert"; alert(`Sen registrering ${reason}.`); return; }
+function findSeatAtTable(state, tableNum) {
+    const occupiedSeats = state.live.players
+        .filter(p => p.table === tableNum)
+        .map(p => p.seat);
 
-    const name = prompt("Navn (Late Reg):");
-    if (name?.trim()) {
-        const newPlayerId = state.live.nextPlayerId++;
-        const p = { id: newPlayerId, name: name.trim(), stack: state.config.startStack, table: 0, seat: 0, rebuys: 0, addon: false, eliminated: false, eliminatedBy: null, place: null, knockouts: 0 };
-        assignTableSeat(p, state, null); // Send state
-        state.live.players.push(p);
-        state.live.totalPot += state.config.buyIn;
-        state.live.totalEntries++;
-        logActivity(state.live.activityLog, `${p.name} (ID: ${p.id}) registrert (Late Reg, B${p.table}S${p.seat}).`);
-        state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table);
-        const structChanged = checkAndHandleTableBreak(state, currentTournamentId, callbacks); // Send state/id/callbacks
-        if (!structChanged) { updateUI(state); saveTournamentState(currentTournamentId, state); }
-    } else if (name !== null) { alert("Navn kan ikke være tomt."); }
+    let seat = 1;
+    while (occupiedSeats.includes(seat)) {
+        seat++;
+    }
+
+    // Sjekk om bordet er "fullt" i henhold til config (dette er mer en advarsel)
+    if (seat > state.config.playersPerTable && occupiedSeats.length >= state.config.playersPerTable) {
+        console.warn(`Attempting to assign seat ${seat} to table ${tableNum} which should be full (${state.config.playersPerTable} players max).`);
+    }
+    return seat;
+}
+
+// === Eksporterte funksjoner ===
+
+export function assignTableSeat(player, state, excludeTableNum = null) {
+    const targetTable = findTargetTable(state, excludeTableNum);
+    const seat = findSeatAtTable(state, targetTable);
+    player.table = targetTable;
+    player.seat = seat;
+    console.log(`Assigned ${player.name} -> T${player.table}S${player.seat}`);
+}
+
+export function reassignAllSeats(state, targetTableNum) {
+    logActivity(state.live.activityLog, `Finalebord (B${targetTableNum})! Trekker seter...`);
+    const players = state.live.players;
+    const numP = players.length;
+    if (numP === 0) return;
+
+    // Lag en tilfeldig rekkefølge av seter
+    const seats = Array.from({ length: numP }, (_, i) => i + 1);
+    for (let i = seats.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [seats[i], seats[j]] = [seats[j], seats[i]]; // Bytt plass
+    }
+
+    // Tildel seter
+    players.forEach((p, i) => {
+        p.table = targetTableNum;
+        p.seat = seats[i];
+        logActivity(state.live.activityLog, ` -> ${p.name} S${p.seat}.`);
+    });
+
+    // Sorter spillerlisten etter sete for konsistens
+    state.live.players.sort((a, b) => a.seat - b.seat);
+    console.log("Final table seats assigned.");
+}
+
+
+// Funksjon for å balansere bord (krever callbacks for UI/Save)
+export function balanceTables(state, currentTournamentId, callbacks) {
+    const { updateUI, saveTournamentState } = callbacks;
+    const tableBalanceInfo = document.getElementById('table-balance-info'); // Trenger denne referansen
+
+    if (state.live.status === 'finished' || state.live.players.length <= state.config.playersPerTable) {
+        if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden');
+        return false; // Ingen balansering nødvendig
+    }
+
+    let balanced = false;
+    const maxDiff = 1;
+
+    while (true) { // Loop til bordene er balansert
+        const tables = {};
+        state.live.players.forEach(p => {
+            if(p.table > 0) tables[p.table] = (tables[p.table] || 0) + 1;
+        });
+        const tableCounts = Object.entries(tables).map(([n, c]) => ({ tableNum: parseInt(n), count: c })).filter(tc => tc.count > 0);
+
+        if (tableCounts.length < 2) {
+            if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden');
+            break; // Kan ikke balansere ett eller færre bord
+        }
+
+        tableCounts.sort((a, b) => a.count - b.count); // Sorter etter antall spillere (lavest først)
+        const minT = tableCounts[0];
+        const maxT = tableCounts[tableCounts.length - 1];
+
+        if (maxT.count - minT.count <= maxDiff) {
+            if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden');
+            break; // Bordene er balansert
+        }
+
+        // Ubalanse funnet
+        balanced = true;
+        if (tableBalanceInfo) tableBalanceInfo.classList.remove('hidden');
+        console.log(`Balancing: MaxT${maxT.tableNum}(${maxT.count}), MinT${minT.tableNum}(${minT.count})`);
+
+        // Finn en tilfeldig spiller fra bordet med flest spillere
+        const maxPlayers = state.live.players.filter(p => p.table === maxT.tableNum);
+        if (maxPlayers.length === 0) { console.error(`Balance Err: No players on maxT ${maxT.tableNum}`); if (tableBalanceInfo) tableBalanceInfo.textContent = "FEIL!"; break; }
+        const playerToMove = maxPlayers[Math.floor(Math.random() * maxPlayers.length)];
+
+        // Finn et ledig sete ved bordet med færrest spillere
+        const newSeat = findSeatAtTable(state, minT.tableNum);
+        if (newSeat > state.config.playersPerTable) { console.error(`Balance Err: No seat on minT ${minT.tableNum}.`); alert(`Feil: Fant ikke ledig sete på B${minT.tableNum}.`); if (tableBalanceInfo) tableBalanceInfo.textContent = "FEIL!"; break; }
+
+        const oldT = playerToMove.table;
+        const oldS = playerToMove.seat;
+        const msg = `Balansering: ${playerToMove.name} fra B${oldT}S${oldS} til B${minT.tableNum}S${newSeat}.`;
+
+        // Flytt spilleren
+        playerToMove.table = minT.tableNum;
+        playerToMove.seat = newSeat;
+
+        logActivity(state.live.activityLog, msg);
+        state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table); // Sorter listen på nytt
+
+        // Kall callbacks for å oppdatere UI og lagre state
+        if (updateUI) updateUI(state);
+        if (saveTournamentState) saveTournamentState(currentTournamentId, state);
+
+        // Fortsett loopen for å sjekke om ytterligere balansering trengs
+    } // End while loop
+
+    if (balanced) console.log("Balancing done for this iteration.");
+    return balanced; // Returner om en balanseringshandling ble utført
+}
+
+
+// Hovedfunksjon for å sjekke og håndtere bordstruktur (krever callbacks)
+export function checkAndHandleTableBreak(state, currentTournamentId, callbacks) {
+    const { updateUI, saveTournamentState, playSound } = callbacks; // Trenger playSound også
+    const tableBalanceInfo = document.getElementById('table-balance-info');
+
+    if (state.live.status === 'finished') return false;
+
+    const pCount = state.live.players.length;
+    const maxPPT = state.config.playersPerTable;
+    const tablesSet = new Set(state.live.players.map(p => p.table).filter(t => t > 0));
+    const tableCount = tablesSet.size;
+    const targetTCount = Math.ceil(pCount / maxPPT);
+    const finalTSize = maxPPT; // Størrelse for finalebord
+
+    console.log(`Table check: Players=${pCount}, Tables=${tableCount}, Target=${targetTCount}`);
+    let actionTaken = false;
+
+    // 1. Sjekk for finalebord
+    if (tableCount > 1 && pCount <= finalTSize) {
+        const finalTNum = 1; // Finalebord er alltid bord 1
+        logActivity(state.live.activityLog, `Finalebord (${pCount})! Flytter til B${finalTNum}...`);
+        alert(`Finalebord (${pCount})! Flytter til B${finalTNum}.`);
+        if (playSound) playSound('FINAL_TABLE');
+
+        // Flytt alle spillere til bord 1 (reassignAllSeats setter riktig sete)
+        state.live.players.forEach(p => p.table = finalTNum);
+        reassignAllSeats(state, finalTNum); // Trekker nye seter for finalebordet
+        actionTaken = true;
+    }
+    // 2. Sjekk om et bord må brytes (for mange bord)
+    else if (tableCount > targetTCount && tableCount > 1) {
+        const tables = {};
+        state.live.players.forEach(p => { if(p.table > 0) tables[p.table] = (tables[p.table] || 0) + 1; });
+        const sortedTs = Object.entries(tables).map(([n, c]) => ({ tableNum: parseInt(n), count: c })).sort((a, b) => a.count - b.count);
+
+        if (sortedTs.length > 0) {
+            const breakTNum = sortedTs[0].tableNum; // Bryt bordet med færrest spillere
+            const msg = `Slår sammen! Flytter spillere fra B${breakTNum}.`;
+            logActivity(state.live.activityLog, msg);
+            alert(msg);
+
+            const playersToMove = state.live.players.filter(p => p.table === breakTNum);
+            playersToMove.forEach(p => {
+                const oldT = p.table; const oldS = p.seat;
+                p.table = 0; p.seat = 0; // Nullstill midlertidig
+                assignTableSeat(p, state, breakTNum); // Tildel nytt sete, unngå bordet som brytes
+                logActivity(state.live.activityLog, ` -> ${p.name} (B${oldT}S${oS}) til B${p.table}S${p.seat}.`);
+            });
+            state.live.players.sort((a, b) => a.table === b.table ? a.seat - b.seat : a.table - b.table);
+            actionTaken = true;
+        }
+    }
+
+    // 3. Balanser bord (selv om ingen bord ble brutt)
+    const balancedNow = balanceTables(state, currentTournamentId, callbacks);
+
+    // Oppdater UI og lagre hvis en handling ble utført (sammenslåing eller balansering)
+    if (actionTaken || balancedNow) {
+        if (updateUI) updateUI(state);
+        if (saveTournamentState) saveTournamentState(currentTournamentId, state);
+        return true; // Indikerer at struktur endret seg
+    } else {
+        // Ingen sammenslåing eller balansering skjedde
+        if (tableBalanceInfo) tableBalanceInfo.classList.add('hidden'); // Skjul balanseringsinfo hvis alt er ok
+        return false; // Ingen endring i struktur
+    }
 }
