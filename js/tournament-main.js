@@ -2,14 +2,16 @@
 // Hovedfil for turneringssiden. Initialiserer, setter opp listeners, importerer moduler.
 
 import { getActiveTournamentId, loadTournamentState, saveTournamentState, clearActiveTournamentId, loadSoundPreference, saveSoundPreference, loadThemeBgColor, loadThemeTextColor, loadElementLayouts, loadLogoBlob } from './storage.js';
-import { applyThemeAndLayout, updateMainLogoImage, updateSoundToggleVisuals, updateUI, renderPlayerList, displayPrizes, renderActivityLog } from './tournament-ui.js';
-import { logActivity } from './tournament-logic.js';
-// NYTT: Importer spillerhandlinger
-import { handleRebuy, handleEliminate, handleRestore, handleLateRegClick } from './tournament-player-actions.js';
-// Importer andre moduler etter hvert som de lages...
-// import { startTimer, stopTimer, tick } from './tournament-timer.js';
-// import { openTournamentModal, openUiModal, openAddonModal, openEditPlayerModal, handleEditPlayerClick } from './tournament-modals.js'; // handleEditPlayerClick flyttes hit
-// import { startDrag } from './tournament-dragdrop.js'; // Hvis vi lager denne
+import { applyThemeAndLayout, updateMainLogoImage, updateSoundToggleVisuals, updateUI, renderPlayerList, displayPrizes, renderActivityLog, formatBlindsHTML, formatTime, formatNextBlindsText, revokeObjectUrl } from './tournament-ui.js'; // Importer flere UI-hjelpere
+import { logActivity, calculateAverageStack, calculatePrizes, findNextPauseInfo } from './tournament-logic.js'; // Importer logikk-hjelpere
+import { startMainTimer, stopMainTimer, startRealTimeClock, stopRealTimeClock } from './tournament-timer.js'; // Importer timer
+import { handleRebuy, handleEliminate, handleRestore, handleLateRegClick } from './tournament-player-actions.js'; // Importer spillerhandlinger
+// TODO: Importer modaler, tables, sound, dragdrop når de er laget
+// import { openTournamentModal, openUiModal, openAddonModal, openEditPlayerModal, handleEditPlayerClick } from './tournament-modals.js';
+// import { startDrag } from './tournament-dragdrop.js';
+// import { playSound } from './tournament-sound.js';
+// import { assignTableSeat, checkAndHandleTableBreak } from './tournament-tables.js';
+
 
 // === 01: DOMContentLoaded LISTENER START ===
 document.addEventListener('DOMContentLoaded', async () => {
@@ -17,19 +19,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // === 02: STATE VARIABLES START ===
     const currentTournamentId = getActiveTournamentId();
-    let state = null;
-    let timerInterval = null;
-    let realTimeInterval = null;
+    let state = null; // Hele state holdes her
     let soundsEnabled = loadSoundPreference();
     let currentLogoBlob = null;
     let isModalOpen = false;
     let currentOpenModal = null;
     let isDragging = false; let draggedElement = null; let offsetX = 0; let offsetY = 0;
+    // UI Modal spesifikk state (kun relevant når modal er åpen)
+    let originalThemeBg = '', originalThemeText = '', originalElementLayouts = {}, originalSoundVolume = 0.7;
+    let logoBlobInModal = null;
+    let previewLogoObjectUrl = null;
+    let blockSliderUpdates = false;
     // === 02: STATE VARIABLES END ===
 
 
     // === 03: DOM REFERENCES START ===
-    // ... (hent referanser som før) ...
     const currentTimeDisplay = document.getElementById('current-time'); const btnToggleSound = document.getElementById('btn-toggle-sound'); const btnEditTournamentSettings = document.getElementById('btn-edit-tournament-settings'); const btnEditUiSettings = document.getElementById('btn-edit-ui-settings'); const btnBackToMainLive = document.getElementById('btn-back-to-main-live'); const prizeDisplayLive = document.getElementById('prize-display-live'); const totalPotPrizeSpan = document.getElementById('total-pot'); const startPauseButton = document.getElementById('btn-start-pause'); const prevLevelButton = document.getElementById('btn-prev-level'); const nextLevelButton = document.getElementById('btn-next-level'); const adjustTimeMinusButton = document.getElementById('btn-adjust-time-minus'); const adjustTimePlusButton = document.getElementById('btn-adjust-time-plus'); const lateRegButton = document.getElementById('btn-late-reg'); const playerListUl = document.getElementById('player-list'); const eliminatedPlayerListUl = document.getElementById('eliminated-player-list'); const activePlayerCountSpan = document.getElementById('active-player-count'); const eliminatedPlayerCountSpan = document.getElementById('eliminated-player-count'); const tableBalanceInfo = document.getElementById('table-balance-info'); const btnForceSave = document.getElementById('btn-force-save'); const endTournamentButton = document.getElementById('btn-end-tournament'); const activityLogUl = document.getElementById('activity-log-list'); const headerRightControls = document.querySelector('.header-right-controls'); const liveCanvas = document.getElementById('live-canvas'); const titleElement = document.getElementById('title-element'); const timerElement = document.getElementById('timer-element'); const blindsElement = document.getElementById('blinds-element'); const logoElement = document.getElementById('logo-element'); const infoElement = document.getElementById('info-element'); const draggableElements = [titleElement, timerElement, blindsElement, logoElement, infoElement]; const nameDisplay = document.getElementById('tournament-name-display'); const timerDisplay = document.getElementById('timer-display'); const breakInfo = document.getElementById('break-info'); const currentLevelDisplay = document.getElementById('current-level'); const blindsDisplay = document.getElementById('blinds-display'); const logoImg = logoElement?.querySelector('.logo'); const nextBlindsDisplay = document.getElementById('next-blinds'); const infoNextPauseParagraph = document.getElementById('info-next-pause'); const averageStackDisplay = document.getElementById('average-stack'); const playersRemainingDisplay = document.getElementById('players-remaining'); const totalEntriesDisplay = document.getElementById('total-entries'); const lateRegStatusDisplay = document.getElementById('late-reg-status');
     const tournamentSettingsModal = document.getElementById('tournament-settings-modal'); const uiSettingsModal = document.getElementById('ui-settings-modal'); const addonModal = document.getElementById('addon-modal'); const editPlayerModal = document.getElementById('edit-player-modal');
     const btnManageAddons = document.getElementById('btn-manage-addons');
@@ -54,106 +58,79 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // === Midlertidige Handlers / Funksjoner som ennå ikke er flyttet ===
     // TODO: Flytt disse til respektive moduler
-    function handleStartPause() { console.log("handleStartPause called. Status:", state.live.status); if (!state || !state.live) return; if (state.live.status === 'finished') return; if (state.live.status === 'paused') { state.live.status = 'running'; if (!timerInterval) { timerInterval = setInterval(tick, 1000); } logActivity(state.live.activityLog, "Klokke startet."); } else if (state.live.status === 'running') { state.live.status = 'paused'; if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } logActivity(state.live.activityLog, "Klokke pauset."); saveTournamentState(currentTournamentId, state); } updateUI(state); }
-    function handleAdjustLevel(delta) { console.log("handleAdjustLevel", delta); /* ... logikk ... */ updateUI(state); }
-    function handleAdjustTime(delta) { console.log("handleAdjustTime", delta); /* ... logikk ... */ updateUI(state); }
-    function handleEndTournament() { console.log("handleEndTournament"); /* ... logikk ... */ updateUI(state); }
+    // Timer-funksjoner er flyttet.
+    // Spillerhandlinger er flyttet.
+    function handleAdjustLevel(delta) { console.log("TEMP handleAdjustLevel", delta); /* ... logikk ... */ updateUI(state); }
+    function handleAdjustTime(delta) { console.log("TEMP handleAdjustTime", delta); /* ... logikk ... */ updateUI(state); }
+    async function finishTournament(_state = state, _tournamentId = currentTournamentId) { if (_state.live.status === 'finished') return; console.log("Finishing T..."); logActivity(_state.live.activityLog,"Turnering fullføres."); /* playSound('TOURNAMENT_END'); */ stopMainTimer(); stopRealTimeClock(); _state.live.status='finished'; _state.live.isOnBreak=false; _state.live.timeRemainingInLevel=0; _state.live.timeRemainingInBreak=0; if(_state.live.players.length===1){const w=_state.live.players[0];w.place=1;_state.live.eliminatedPlayers.push(w);_state.live.players.splice(0,1);logActivity(_state.live.activityLog,`Vinner: ${w.name}!`);} else if(_state.live.players.length>1){logActivity(_state.live.activityLog,`Fullført med ${_state.live.players.length} spillere igjen.`); _state.live.players.forEach(p=>{p.eliminated=true;p.place=null;_state.live.eliminatedPlayers.push(p);}); _state.live.players=[];} else{logActivity(_state.live.activityLog,`Fullført uten aktive spillere.`);} _state.live.eliminatedPlayers.sort((a,b)=>(a.place??Infinity)-(b.place??Infinity)); updateUI(_state); saveTournamentState(_tournamentId,_state); alert("Turneringen er fullført!"); }
+    function handleEndTournament() { console.log("handleEndTournament called."); finishTournament(state, currentTournamentId); }
     function handleForceSave() { console.log("handleForceSave"); saveTournamentState(currentTournamentId, state); }
     function handleBackToMain() { console.log("handleBackToMain"); saveTournamentState(currentTournamentId, state); window.location.href = 'index.html';}
     function openTournamentModal() { console.log("TEMP openTournamentModal"); /* ... logikk ... */ }
     function openUiModal() { console.log("TEMP openUiModal"); /* ... logikk ... */ }
     function openAddonModal() { console.log("TEMP openAddonModal"); /* ... logikk ... */ }
     function handleEditPlayerClick(event) { const pId = Number(event?.target?.dataset?.playerId); console.log("TEMP handleEditPlayerClick", pId); /* ... logikk for å åpne edit modal ... */ }
-    function tick() { /* Timer logikk - skal flyttes */ if(state.live.status === 'running'){ /*...*/ } }
-    function startRealTimeClock() { /* ... */ }
     function startDrag(event, element) { /* Drag logic - skal flyttes */ }
-    async function finishTournament() { /* Finish logic - skal flyttes */ } // Gjort async pga logActivity
     // === Slutt Midlertidige Handlers ===
 
 
+    // === CALLBACKS FOR TIMER ===
+    const timerCallbacks = {
+        updateUI: updateUI, // Send inn UI-oppdateringsfunksjonen fra ui.js
+        playSound: null, // TODO: playSound,
+        finishTournament: finishTournament, // Bruk lokal definisjon foreløpig
+        logActivity: logActivity // Bruk logActivity fra logic.js
+        // formatBlindsHTML // Trengs ikke direkte av tick lenger
+    };
+    // === END CALLBACKS FOR TIMER ===
+
+
     // === EVENT LISTENER ATTACHMENT (General) ===
-    startPauseButton?.addEventListener('click', handleStartPause);
+    startPauseButton?.addEventListener('click', () => { console.log("Start/Pause Button Clicked. Current Status:", state.live.status); if (state.live.status === 'paused') { state.live.status = 'running'; startMainTimer(state, currentTournamentId, timerCallbacks); logActivity(state.live.activityLog, "Klokke startet."); updateUI(state); } else if (state.live.status === 'running') { state.live.status = 'paused'; stopMainTimer(); logActivity(state.live.activityLog, "Klokke pauset."); saveTournamentState(currentTournamentId, state); updateUI(state); } });
     prevLevelButton?.addEventListener('click', () => handleAdjustLevel(-1));
     nextLevelButton?.addEventListener('click', () => handleAdjustLevel(1));
     adjustTimeMinusButton?.addEventListener('click', () => handleAdjustTime(-60));
     adjustTimePlusButton?.addEventListener('click', () => handleAdjustTime(60));
-    // ENDRET: Sender state og id til importert funksjon
-    lateRegButton?.addEventListener('click', () => handleLateRegClick(state, currentTournamentId));
+    lateRegButton?.addEventListener('click', () => handleLateRegClick(state, currentTournamentId)); // Kall importert
     endTournamentButton?.addEventListener('click', handleEndTournament);
     btnForceSave?.addEventListener('click', handleForceSave);
     btnBackToMainLive?.addEventListener('click', handleBackToMain);
     btnToggleSound?.addEventListener('click', () => { console.log("btnToggleSound clicked."); soundsEnabled = !soundsEnabled; saveSoundPreference(soundsEnabled); updateSoundToggleVisuals(soundsEnabled); logActivity(state.live.activityLog, `Lyd ${soundsEnabled ? 'PÅ' : 'AV'}.`); });
-    btnEditTournamentSettings?.addEventListener('click', openTournamentModal); // TODO: Implementer i modals.js
-    btnEditUiSettings?.addEventListener('click', openUiModal); // TODO: Implementer i modals.js
-    btnManageAddons?.addEventListener('click', openAddonModal); // TODO: Implementer i modals.js
+    btnEditTournamentSettings?.addEventListener('click', openTournamentModal); // TODO: Kall modal-funksjon
+    btnEditUiSettings?.addEventListener('click', openUiModal); // TODO: Kall modal-funksjon
+    btnManageAddons?.addEventListener('click', openAddonModal); // TODO: Kall modal-funksjon
 
-    // Drag & Drop
     draggableElements.forEach(el => { if (el) { el.addEventListener('mousedown', (e) => startDrag(e, el)); } });
+    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { console.log("Clicked outside modal content."); /* TODO: Kall riktige close-funksjoner */ } });
 
-    // Klikk utenfor modal (trenger referanse til close-funksjoner fra modals.js)
-    window.addEventListener('click', (e) => {
-        if (isModalOpen && currentOpenModal && e.target === currentOpenModal) {
-            console.log("Clicked outside modal content.");
-            // TODO: Kall riktige close-funksjoner fra modals.js når de er laget
-            // if (currentOpenModal === uiSettingsModal) { closeUiModal(true); }
-            // else if (currentOpenModal === tournamentSettingsModal) { closeTournamentModal(); }
-            // else if (currentOpenModal === addonModal) { closeAddonModal(); }
-            // else if (currentOpenModal === editPlayerModal) { closeEditPlayerModal(); }
-        }
-    });
-
-    // Listeners for knapper inne i spillerlistene (må legges til dynamisk)
-    // delegering fra listene selv er et alternativ, men vi gjør det enkelt foreløpig
     function setupPlayerActionDelegation() {
         const handleActions = (event) => {
-            const button = event.target.closest('button');
-            if (!button) return;
-
-            const action = Array.from(button.classList).find(cls => cls.startsWith('btn-'));
-            if (!action) return;
-
-            const playerId = Number(button.dataset.playerId);
-            if (!playerId || isNaN(playerId)) {
-                 console.warn("Could not get valid player ID from button", button);
-                 return;
-            }
-
+            const button = event.target.closest('button'); if (!button) return;
+            const action = Array.from(button.classList).find(cls => cls.startsWith('btn-')); if (!action) return;
+            const playerId = Number(button.dataset.playerId); if (!playerId || isNaN(playerId)) { console.warn("Could not get valid player ID from button", button); return; }
             console.log(`Delegated action: ${action} for player ID: ${playerId}`);
-
             switch (action) {
-                case 'btn-edit-player':
-                    handleEditPlayerClick(event); // Bruker fortsatt event for dataset
-                    break;
-                case 'btn-rebuy':
-                    handleRebuy(event, state, currentTournamentId); // Send state og id
-                    break;
-                case 'btn-eliminate':
-                    handleEliminate(event, state, currentTournamentId); // Send state og id
-                    break;
-                case 'btn-restore':
-                    handleRestore(event, state, currentTournamentId); // Send state og id
-                    break;
-                // Individuell add-on knapp er deaktivert, håndteres via modal
+                case 'btn-edit-player': handleEditPlayerClick(event); break; // Kall TEMP funksjon
+                case 'btn-rebuy': handleRebuy(event, state, currentTournamentId); break;
+                case 'btn-eliminate': handleEliminate(event, state, currentTournamentId); break;
+                case 'btn-restore': handleRestore(event, state, currentTournamentId); break;
             }
         };
-
         playerListUl?.addEventListener('click', handleActions);
         eliminatedPlayerListUl?.addEventListener('click', handleActions);
         console.log("Player action delegation listeners added.");
     }
-    setupPlayerActionDelegation(); // Sett opp delegering
+    setupPlayerActionDelegation();
     // === EVENT LISTENER ATTACHMENT END ===
 
 
     // === INITIAL UI RENDER & TIMER START ===
     console.log("Performing final setup steps...");
     try {
-        // Kall updateUI for å rendre alt basert på state FØR timere starter
-        updateUI(state); // Send inn state
-        startRealTimeClock();
-        if (state.live.status === 'running') { console.log("State is 'running', starting timer."); if (timerInterval) clearInterval(timerInterval); timerInterval = setInterval(tick, 1000); }
-        else if (state.live.status === 'finished') { console.log("State is 'finished'."); }
-        else { console.log(`State is '${state.live.status}'. Timer not started.`); if (timerInterval) clearInterval(timerInterval); timerInterval = null; }
+        updateUI(state); // Første UI render
+        startRealTimeClock(currentTimeDisplay);
+        if (state.live.status === 'running') { console.log("State is 'running', starting main timer."); startMainTimer(state, currentTournamentId, timerCallbacks); }
+        else { console.log(`State is '${state.live.status}'. Main timer not started.`); stopMainTimer(); }
         console.log("Tournament page fully initialized and ready.");
     } catch (err) { console.error("Error during final setup or UI update:", err); alert("En feil oppstod under lasting av siden. Sjekk konsollen."); }
     // === INITIAL UI RENDER & TIMER START ===
