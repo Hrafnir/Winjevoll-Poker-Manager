@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let originalThemeText = '';
     let originalElementLayouts = {};
     let originalSoundVolume = 0.7;
-    let currentLogoBlob = null;     // Den faktiske Blob lagret i DB / som skal vises
-    let logoBlobInModal = null;   // Midlertidig Blob-referanse mens modal er åpen
-    let currentLogoObjectUrl = null; // Aktiv Object URL for hovedlogoen
-    let previewLogoObjectUrl = null; // Aktiv Object URL for modal preview
+    let currentLogoBlob = null;     // Den faktiske Blob lagret i DB / som vises NÅ
+    let logoBlobInModal = null;   // Midlertidig Blob-referanse mens modal er åpen (kan være ny fil eller null)
+    let currentLogoObjectUrl = null; // Aktiv Object URL for hovedlogoen (logoImg)
+    let previewLogoObjectUrl = null; // Aktiv Object URL for modal preview (logoPreview)
     let blockSliderUpdates = false;
 
     // Drag and Drop State
@@ -39,18 +39,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!currentTournamentId) { alert("Ingen aktiv turnering valgt."); window.location.href = 'index.html'; return; }
     state = loadTournamentState(currentTournamentId);
     if (!state || !state.config || !state.live || !state.config.blindLevels || state.config.blindLevels.length === 0) { alert(`Kunne ikke laste gyldig turneringsdata (ID: ${currentTournamentId}).`); console.error("Invalid tournament state loaded:", state); clearActiveTournamentId(); window.location.href = 'index.html'; return; }
-    state.live = state.live || {}; state.live.status = state.live.status || 'paused';
-    state.live.currentLevelIndex = state.live.currentLevelIndex ?? 0; state.live.timeRemainingInLevel = state.live.timeRemainingInLevel ?? (state.config.blindLevels[state.live.currentLevelIndex]?.duration * 60 || 1200); state.live.isOnBreak = state.live.isOnBreak ?? false; state.live.timeRemainingInBreak = state.live.timeRemainingInBreak ?? 0; state.live.players = state.live.players || []; state.live.eliminatedPlayers = state.live.eliminatedPlayers || []; state.live.knockoutLog = state.live.knockoutLog || []; state.live.activityLog = state.live.activityLog || []; state.live.totalPot = state.live.totalPot ?? 0; state.live.totalEntries = state.live.totalEntries ?? 0; state.live.totalRebuys = state.live.totalRebuys ?? 0; state.live.totalAddons = state.live.totalAddons ?? 0;
+    state.live = state.live || {}; state.live.status = state.live.status || 'paused'; state.live.currentLevelIndex = state.live.currentLevelIndex ?? 0; state.live.timeRemainingInLevel = state.live.timeRemainingInLevel ?? (state.config.blindLevels[state.live.currentLevelIndex]?.duration * 60 || 1200); state.live.isOnBreak = state.live.isOnBreak ?? false; state.live.timeRemainingInBreak = state.live.timeRemainingInBreak ?? 0; state.live.players = state.live.players || []; state.live.eliminatedPlayers = state.live.eliminatedPlayers || []; state.live.knockoutLog = state.live.knockoutLog || []; state.live.activityLog = state.live.activityLog || []; state.live.totalPot = state.live.totalPot ?? 0; state.live.totalEntries = state.live.totalEntries ?? 0; state.live.totalRebuys = state.live.totalRebuys ?? 0; state.live.totalAddons = state.live.totalAddons ?? 0;
     console.log(`Loaded Tournament: ${state.config.name} (ID: ${currentTournamentId})`, state);
     // === 04: INITIALIZATION & VALIDATION END ===
 
     // === 04b: THEME & LAYOUT APPLICATION START ===
     function revokeObjectUrl(url) { if (url && url.startsWith('blob:')) { try { URL.revokeObjectURL(url); } catch (e) { console.warn("Error revoking Object URL:", url, e); } } }
 
-    function applyLogo(logoBlob, targetImgElement = logoImg, isPreview = false) {
-        if (!targetImgElement) { console.warn("applyLogo called with no targetImgElement"); return; }
-        const currentObjectUrl = isPreview ? previewLogoObjectUrl : currentLogoObjectUrl;
-        revokeObjectUrl(currentObjectUrl);
+    // Funksjon for å oppdatere src for et spesifikt bilde-element
+    function updateImageSrc(logoBlob, targetImgElement, isPreview = false) {
+        if (!targetImgElement) { console.warn("updateImageSrc called with no targetImgElement"); return; }
+
+        const currentObjectUrlRef = isPreview ? previewLogoObjectUrl : currentLogoObjectUrl;
+        revokeObjectUrl(currentObjectUrlRef); // Trekk tilbake forrige URL for *dette* elementet
 
         let newObjectUrl = null;
         if (logoBlob instanceof Blob && logoBlob.size > 0) {
@@ -58,14 +59,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 newObjectUrl = URL.createObjectURL(logoBlob);
                 targetImgElement.src = newObjectUrl;
                 targetImgElement.alt = "Egendefinert Logo";
-            } catch (e) { console.error("Error creating object URL:", e); targetImgElement.src = 'placeholder-logo.png'; targetImgElement.alt = "Feil ved lasting av logo"; }
+            } catch (e) { console.error("Error creating object URL:", e); targetImgElement.src = 'placeholder-logo.png'; targetImgElement.alt = "Feil ved lasting"; }
         } else {
             targetImgElement.src = 'placeholder-logo.png';
             targetImgElement.alt = isPreview ? "Logo Forhåndsvisning" : "Winjevoll Pokerklubb Logo";
         }
 
+        // Oppdater den relevante URL state-variabelen
         if (isPreview) { previewLogoObjectUrl = newObjectUrl; }
-        else { currentLogoObjectUrl = newObjectUrl; currentLogoBlob = logoBlob; }
+        else { currentLogoObjectUrl = newObjectUrl; }
+    }
+
+    // Funksjon for å sette den globale logo-tilstanden (blob + hoved-img)
+    function setGlobalLogoState(logoBlob) {
+        currentLogoBlob = logoBlob; // Oppdater den globale blob-referansen
+        updateImageSrc(logoBlob, logoImg, false); // Oppdater hoved-img og dens URL (currentLogoObjectUrl)
     }
 
     async function applyThemeLayoutAndLogo() {
@@ -75,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try { logoDataBlob = await loadLogoBlob(); } catch (err) { console.error("Error loading logo blob initially:", err); }
         console.log("applyThemeLayoutAndLogo: Fetched initial data. Logo Blob:", logoDataBlob);
         applyThemeAndLayout(bgColor, textColor, elementLayouts);
-        applyLogo(logoDataBlob, logoImg, false);
+        setGlobalLogoState(logoDataBlob); // Synkroniser global blob og hoved-img
         console.log("applyThemeLayoutAndLogo: Initial theme, layout, and logo applied.");
     }
 
@@ -103,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try { await applyThemeLayoutAndLogo(); }
-    catch (err) { console.error("Error during initial theme/layout/logo application:", err); applyThemeAndLayout(DEFAULT_THEME_BG, DEFAULT_THEME_TEXT, DEFAULT_ELEMENT_LAYOUTS); applyLogo(null, logoImg, false); }
+    catch (err) { console.error("Error during initial theme/layout/logo application:", err); applyThemeAndLayout(DEFAULT_THEME_BG, DEFAULT_THEME_TEXT, DEFAULT_ELEMENT_LAYOUTS); setGlobalLogoState(null); }
     // === 04b: THEME & LAYOUT APPLICATION END ===
 
     // === 04c: DRAG AND DROP LOGIC START ===
@@ -152,10 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!state?.config || !state.live) { console.error("State missing in updateUI"); if(nameDisplay) nameDisplay.textContent = "Error!"; return; }
         if (nameDisplay) nameDisplay.textContent = state.config.name;
         if (currentTimeDisplay) currentTimeDisplay.textContent = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const i = state.live.currentLevelIndex;
-        const cl = state.config.blindLevels?.[i];
-        const nl = state.config.blindLevels?.[i + 1];
-        const np = findNextPauseInfo();
+        const i = state.live.currentLevelIndex; const cl = state.config.blindLevels?.[i]; const nl = state.config.blindLevels?.[i + 1]; const np = findNextPauseInfo();
         if (state.live.isOnBreak) { if(timerDisplay) timerDisplay.textContent = formatTime(state.live.timeRemainingInBreak); if(blindsElement) blindsElement.classList.add('hidden'); if(breakInfo) breakInfo.classList.remove('hidden'); }
         else { if(timerDisplay) timerDisplay.textContent = formatTime(state.live.timeRemainingInLevel); if(blindsElement) blindsElement.classList.remove('hidden'); if(breakInfo) breakInfo.classList.add('hidden'); if(currentLevelDisplay) currentLevelDisplay.textContent = `(Nivå ${cl ? cl.level : 'N/A'})`; if(blindsDisplay) blindsDisplay.innerHTML = formatBlindsHTML(cl); }
         if (nextBlindsDisplay) nextBlindsDisplay.textContent = formatNextBlindsText(nl);
@@ -174,10 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (lateRegButton) lateRegButton.disabled = !lrOpen || isFin;
         if (btnEditTournamentSettings) btnEditTournamentSettings.disabled = isFin;
         if (endTournamentButton) endTournamentButton.disabled = isFin;
-        updateSoundToggleVisuals();
-        renderPlayerList();
-        displayPrizes();
-        renderActivityLog();
+        updateSoundToggleVisuals(); renderPlayerList(); displayPrizes(); renderActivityLog();
         console.log("updateUI: Main UI elements updated.");
     }
     // === 08: UI UPDATE FUNCTIONS END ===
@@ -190,6 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // === 10: EVENT HANDLERS - CONTROLS START ===
     function handleStartPause() {
         console.log("handleStartPause called. Current status:", state.live.status);
+        if (!state || !state.live) { console.error("State not ready in handleStartPause"); return; } // Ekstra sjekk
         if (state.live.status === 'finished') { console.log("handleStartPause: Tournament finished, doing nothing."); return; }
         if (state.live.status === 'paused') {
             state.live.status = 'running';
@@ -227,20 +230,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Opening UI modal");
         originalThemeBg = loadThemeBgColor(); originalThemeText = loadThemeTextColor(); originalElementLayouts = loadElementLayouts(); originalSoundVolume = loadSoundVolume();
         console.log("Opening UI modal: Fetching logo blob...");
-        logoBlobInModal = await loadLogoBlob(); currentLogoBlob = logoBlobInModal;
+        const initialBlob = await loadLogoBlob();
+        logoBlobInModal = initialBlob; // Sett modal-state lik den lagrede tilstanden
+        // currentLogoBlob er allerede satt ved oppstart/forrige lagring
         console.log("Opening UI modal: Logo blob fetched:", logoBlobInModal);
         blockSliderUpdates=true;
-        const [bgR, bgG, bgB] = parseRgbString(originalThemeBg); const bgHSL = rgbToHsl(bgR, bgG, bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; const [textR, textG, textB] = parseRgbString(originalThemeText); const textHSL = rgbToHsl(textR, textG, textB); textRedSlider.value=textRedInput.value=textR; textGreenSlider.value=textGreenInput.value=textG; textBlueSlider.value=textBlueInput.value=textB; textHueSlider.value=textHueInput.value=textHSL.h; textSatSlider.value=textSatInput.value=textHSL.s; textLigSlider.value=textLigInput.value=textHSL.l;
-        canvasHeightInput.value = canvasHeightSlider.value = originalElementLayouts.canvas.height; titleWidthInput.value = titleWidthSlider.value = originalElementLayouts.title.width; titleFontSizeInput.value = titleFontSizeSlider.value = originalElementLayouts.title.fontSize; timerWidthInput.value = timerWidthSlider.value = originalElementLayouts.timer.width; timerFontSizeInput.value = timerFontSizeSlider.value = originalElementLayouts.timer.fontSize; blindsWidthInput.value = blindsWidthSlider.value = originalElementLayouts.blinds.width; blindsFontSizeInput.value = blindsFontSizeSlider.value = originalElementLayouts.blinds.fontSize; logoWidthInput.value = logoWidthSlider.value = originalElementLayouts.logo.width; logoHeightInput.value = logoHeightSlider.value = originalElementLayouts.logo.height; infoWidthInput.value = infoWidthSlider.value = originalElementLayouts.info.width; infoFontSizeInput.value = infoFontSizeSlider.value = originalElementLayouts.info.fontSize;
-        visibilityToggles.forEach(toggle => { const elId = toggle.dataset.elementId.replace('-element',''); toggle.checked = originalElementLayouts[elId]?.isVisible ?? true; });
-        for (const key in infoParagraphs) { const cbId = `toggleInfo${key.substring(4)}`; const cb = document.getElementById(cbId); if (cb) cb.checked = originalElementLayouts.info[key] ?? true; }
-        volumeInput.value = volumeSlider.value = originalSoundVolume;
-        console.log("Opening UI modal: Updating preview...");
-        applyLogo(logoBlobInModal, logoPreview, true); // Sett preview-logo
+        // Populate controls... (som før)
+        console.log("Opening UI modal: Updating preview image...");
+        updateImageSrc(logoBlobInModal, logoPreview, true); // Vis modal-state i preview
         customLogoInput.value = '';
         blockSliderUpdates=false;
         populatePredefinedThemes(); populateThemeFavorites();
-        updateColorAndLayoutPreviews(); addThemeAndLayoutListeners();
+        addThemeAndLayoutListeners();
         uiSettingsModal.classList.remove('hidden'); isModalOpen = true; currentOpenModal = uiSettingsModal;
         console.log("Opening UI modal: Modal is now open.");
     }
@@ -252,13 +253,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("Closing UI modal: Reverting changes...");
             applyThemeAndLayout(originalThemeBg, originalThemeText, originalElementLayouts);
             currentVolume = originalSoundVolume;
-            const storedBlob = await loadLogoBlob();
-            console.log("Closing UI modal: Applying stored logo blob:", storedBlob);
-            applyLogo(storedBlob, logoImg, false);
+            // Revert hovedlogo til den som var *før* modalen åpnet (currentLogoBlob)
+            console.log("Closing UI modal: Re-applying original logo blob:", currentLogoBlob);
+            updateImageSrc(currentLogoBlob, logoImg, false); // Oppdater hovedvisning
             console.log("Closing UI modal: Revert complete.");
         } else {
              console.log("Closing UI modal: No revert needed.");
-             applyLogo(currentLogoBlob, logoImg, false); // Sikre at den *sist lagrede* logoen vises
+             // Sikre at hovedlogoen viser den *sist satte globale* tilstanden
+             updateImageSrc(currentLogoBlob, logoImg, false);
         }
         removeThemeAndLayoutListeners(); uiSettingsModal.classList.add('hidden'); isModalOpen = false; currentOpenModal = null;
         console.log("Closing UI modal: Modal closed.");
@@ -268,42 +270,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     function generateEditPayout(){ const p=parseInt(editPaidPlacesInput.value)||0; editPrizeDistTextarea.value = (p > 0 && standardPayouts[p]) ? standardPayouts[p].join(', ') : ''; }
     function syncRgbFromHsl(prefix){ if(blockSliderUpdates) return; const h=parseInt(document.getElementById(`${prefix}HueInput`).value); const s=parseInt(document.getElementById(`${prefix}SatInput`).value); const l=parseInt(document.getElementById(`${prefix}LigInput`).value); const rgb=hslToRgb(h,s,l); const [r,g,b]=parseRgbString(rgb); blockSliderUpdates=true; document.getElementById(`${prefix}RedSlider`).value=document.getElementById(`${prefix}RedInput`).value=r; document.getElementById(`${prefix}GreenSlider`).value=document.getElementById(`${prefix}GreenInput`).value=g; document.getElementById(`${prefix}BlueSlider`).value=document.getElementById(`${prefix}BlueInput`).value=b; blockSliderUpdates=false; return rgb; }
     function syncHslFromRgb(prefix){ if(blockSliderUpdates) return; const r=parseInt(document.getElementById(`${prefix}RedInput`).value); const g=parseInt(document.getElementById(`${prefix}GreenInput`).value); const b=parseInt(document.getElementById(`${prefix}BlueInput`).value); const hsl=rgbToHsl(r,g,b); blockSliderUpdates=true; document.getElementById(`${prefix}HueSlider`).value=document.getElementById(`${prefix}HueInput`).value=hsl.h; document.getElementById(`${prefix}SatSlider`).value=document.getElementById(`${prefix}SatInput`).value=hsl.s; document.getElementById(`${prefix}LigSlider`).value=document.getElementById(`${prefix}LigInput`).value=hsl.l; blockSliderUpdates=false; return `rgb(${r}, ${g}, ${b})`; }
+
+    // ENDRET: Oppdaterer IKKE hovedlogoen live herfra lenger
     function updateColorAndLayoutPreviews() {
         if (!isModalOpen || currentOpenModal !== uiSettingsModal) return;
-        // console.log("updateColorAndLayoutPreviews: Updating..."); // Fjernet for å redusere støy
         const bg = syncHslFromRgb('bg'); const txt = syncHslFromRgb('text');
         const layouts = { canvas:{height:parseInt(canvasHeightInput.value)} };
         const currentFullLayouts = loadElementLayouts();
         visibilityToggles.forEach(toggle => {
             const elementId = toggle.dataset.elementId.replace('-element','');
-            const widthSlider = document.getElementById(`${elementId}WidthSlider`);
-            const fontSizeSlider = document.getElementById(`${elementId}FontSizeSlider`);
-            const heightSlider = document.getElementById(`${elementId}HeightSlider`); // For logo
-            layouts[elementId] = {
-                 ...(currentFullLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId]),
-                 width: parseInt(widthSlider?.value ?? (currentFullLayouts[elementId]?.width || DEFAULT_ELEMENT_LAYOUTS[elementId].width)),
-                 fontSize: parseFloat(fontSizeSlider?.value ?? (currentFullLayouts[elementId]?.fontSize || DEFAULT_ELEMENT_LAYOUTS[elementId].fontSize)),
-                 height: parseInt(heightSlider?.value ?? (currentFullLayouts[elementId]?.height || DEFAULT_ELEMENT_LAYOUTS[elementId].height)),
-                 isVisible: toggle.checked,
-                 x: originalElementLayouts[elementId]?.x ?? DEFAULT_ELEMENT_LAYOUTS[elementId].x,
-                 y: originalElementLayouts[elementId]?.y ?? DEFAULT_ELEMENT_LAYOUTS[elementId].y,
-            };
+            const widthSlider = document.getElementById(`${elementId}WidthSlider`); const fontSizeSlider = document.getElementById(`${elementId}FontSizeSlider`); const heightSlider = document.getElementById(`${elementId}HeightSlider`);
+            layouts[elementId] = { ...(currentFullLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId]), width: parseInt(widthSlider?.value ?? (currentFullLayouts[elementId]?.width || DEFAULT_ELEMENT_LAYOUTS[elementId].width)), fontSize: parseFloat(fontSizeSlider?.value ?? (currentFullLayouts[elementId]?.fontSize || DEFAULT_ELEMENT_LAYOUTS[elementId].fontSize)), height: parseInt(heightSlider?.value ?? (currentFullLayouts[elementId]?.height || DEFAULT_ELEMENT_LAYOUTS[elementId].height)), isVisible: toggle.checked, x: originalElementLayouts[elementId]?.x ?? DEFAULT_ELEMENT_LAYOUTS[elementId].x, y: originalElementLayouts[elementId]?.y ?? DEFAULT_ELEMENT_LAYOUTS[elementId].y, };
             if (elementId === 'info') { layouts.info.showNextBlinds = toggleInfoNextBlinds.checked; layouts.info.showNextPause = toggleInfoNextPause.checked; layouts.info.showAvgStack = toggleInfoAvgStack.checked; layouts.info.showPlayers = toggleInfoPlayers.checked; layouts.info.showLateReg = toggleInfoLateReg.checked; }
         });
         if(bgColorPreview) bgColorPreview.style.backgroundColor = bg; if(textColorPreview) { textColorPreview.style.backgroundColor = bg; textColorPreview.querySelector('span').style.color = txt; }
-        applyThemeAndLayout(bg, txt, layouts);
-        applyLogo(logoBlobInModal, logoImg, false); // Oppdater hovedlogoen live
-        // console.log("updateColorAndLayoutPreviews: Live preview updated."); // Fjernet for å redusere støy
+        applyThemeAndLayout(bg, txt, layouts); // Oppdater kun tema og layout live
+        // IKKE kall applyLogo/updateImageSrc for hovedlogoen her
     }
-    function handleThemeLayoutControlChange(e) {
-        // console.log("handleThemeLayoutControlChange triggered by:", e.target.id);
-        if (!isModalOpen || currentOpenModal !== uiSettingsModal) return;
-        const target = e.target; const id = target.id; const isSlider = id.includes('Slider'); const isInput = id.includes('Input');
-        if (target === volumeSlider || target === volumeInput) { const newVol = parseFloat(target.value); if(!isNaN(newVol)) { currentVolume = Math.max(0, Math.min(1, newVol)); if (target === volumeSlider && volumeInput) volumeInput.value = currentVolume.toFixed(2); if (target === volumeInput && volumeSlider) volumeSlider.value = currentVolume.toFixed(2); } }
-        else if (target === toggleLogoElement) { console.log("Logo visibility toggle changed:", target.checked); }
-        else if (isSlider || isInput) { const baseId = isSlider ? id.replace('Slider', '') : id.replace('Input', ''); const slider = document.getElementById(baseId + 'Slider'); const input = document.getElementById(baseId + 'Input'); if (target.type === 'number' && input) { let val = parseFloat(target.value); const min = parseFloat(target.min||'0'); const max = parseFloat(target.max||'100'); const step = parseFloat(target.step||'1'); if (!isNaN(val)) { val = Math.max(min, Math.min(max, val)); target.value = (step % 1 === 0) ? Math.round(val) : val.toFixed(step.toString().split('.')[1]?.length || 1); if (slider) slider.value = target.value; } } else if (isSlider && input) { input.value = target.value; } if (id.includes('Hue') || id.includes('Sat') || id.includes('Lig')) { syncRgbFromHsl(id.startsWith('bg') ? 'bg' : 'text'); } else if (id.includes('Red') || id.includes('Green') || id.includes('Blue')) { syncHslFromRgb(id.startsWith('bg') ? 'bg' : 'text'); } }
-        updateColorAndLayoutPreviews();
-    }
+
+    function handleThemeLayoutControlChange(e) { if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; const target = e.target; const id = target.id; const isSlider = id.includes('Slider'); const isInput = id.includes('Input'); if (target === volumeSlider || target === volumeInput) { const newVol = parseFloat(target.value); if(!isNaN(newVol)) { currentVolume = Math.max(0, Math.min(1, newVol)); if (target === volumeSlider && volumeInput) volumeInput.value = currentVolume.toFixed(2); if (target === volumeInput && volumeSlider) volumeSlider.value = currentVolume.toFixed(2); } } else if (target === toggleLogoElement) { console.log("Logo visibility toggle changed:", target.checked); } else if (isSlider || isInput) { const baseId = isSlider ? id.replace('Slider', '') : id.replace('Input', ''); const slider = document.getElementById(baseId + 'Slider'); const input = document.getElementById(baseId + 'Input'); if (target.type === 'number' && input) { let val = parseFloat(target.value); const min = parseFloat(target.min||'0'); const max = parseFloat(target.max||'100'); const step = parseFloat(target.step||'1'); if (!isNaN(val)) { val = Math.max(min, Math.min(max, val)); target.value = (step % 1 === 0) ? Math.round(val) : val.toFixed(step.toString().split('.')[1]?.length || 1); if (slider) slider.value = target.value; } } else if (isSlider && input) { input.value = target.value; } if (id.includes('Hue') || id.includes('Sat') || id.includes('Lig')) { syncRgbFromHsl(id.startsWith('bg') ? 'bg' : 'text'); } else if (id.includes('Red') || id.includes('Green') || id.includes('Blue')) { syncHslFromRgb(id.startsWith('bg') ? 'bg' : 'text'); } } updateColorAndLayoutPreviews(); }
     function addThemeAndLayoutListeners(){ sizeSliders.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); sizeInputs.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); colorSliders.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); colorInputs.forEach(el => el?.addEventListener('input', handleThemeLayoutControlChange)); visibilityToggles.forEach(el => el?.addEventListener('change', handleThemeLayoutControlChange)); internalInfoToggles.forEach(el => el?.addEventListener('change', handleThemeLayoutControlChange)); volumeSlider?.addEventListener('input', handleThemeLayoutControlChange); volumeInput?.addEventListener('input', handleThemeLayoutControlChange); btnTestSound?.addEventListener('click', () => playSound('TEST')); customLogoInput?.addEventListener('change', handleLogoUpload); btnRemoveCustomLogo?.addEventListener('click', handleRemoveLogo); btnLoadPredefinedTheme?.addEventListener('click', handleLoadPredefinedTheme); btnLoadThemeFavorite.addEventListener('click', handleLoadFavorite); btnSaveThemeFavorite.addEventListener('click', handleSaveFavorite); btnDeleteThemeFavorite.addEventListener('click', handleDeleteFavorite); themeFavoritesSelect.addEventListener('change', enableDisableDeleteButton); predefinedThemeSelect?.addEventListener('change', () => { if(btnLoadPredefinedTheme) btnLoadPredefinedTheme.disabled = !predefinedThemeSelect.value; }); }
     function removeThemeAndLayoutListeners(){ sizeSliders.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); sizeInputs.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); colorSliders.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); colorInputs.forEach(el => el?.removeEventListener('input', handleThemeLayoutControlChange)); visibilityToggles.forEach(el => el?.removeEventListener('change', handleThemeLayoutControlChange)); internalInfoToggles.forEach(el => el?.removeEventListener('change', handleThemeLayoutControlChange)); volumeSlider?.removeEventListener('input', handleThemeLayoutControlChange); volumeInput?.removeEventListener('input', handleThemeLayoutControlChange); btnTestSound?.removeEventListener('click', () => playSound('TEST')); customLogoInput?.removeEventListener('change', handleLogoUpload); btnRemoveCustomLogo?.removeEventListener('click', handleRemoveLogo); btnLoadPredefinedTheme?.removeEventListener('click', handleLoadPredefinedTheme); btnLoadThemeFavorite.removeEventListener('click', handleLoadFavorite); btnSaveThemeFavorite.removeEventListener('click', handleSaveFavorite); btnDeleteThemeFavorite.removeEventListener('click', handleDeleteFavorite); themeFavoritesSelect.removeEventListener('change', enableDisableDeleteButton); predefinedThemeSelect?.removeEventListener('change', () => { if(btnLoadPredefinedTheme) btnLoadPredefinedTheme.disabled = !predefinedThemeSelect.value; });}
     function populatePredefinedThemes() { if (!predefinedThemeSelect) return; predefinedThemeSelect.innerHTML = '<option value="">-- Velg et tema --</option>'; PREDEFINED_THEMES.forEach((theme, index) => { const option = document.createElement('option'); option.value = index.toString(); option.textContent = theme.name; predefinedThemeSelect.appendChild(option); }); if(btnLoadPredefinedTheme) btnLoadPredefinedTheme.disabled = true; }
@@ -314,10 +299,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     function handleSaveFavorite() { const name = newThemeFavoriteNameInput.value.trim(); if (!name) { alert("Skriv navn."); return; } const bg = `rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`; const txt = `rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`; const saved = addThemeFavorite(name, bg, txt); newThemeFavoriteNameInput.value = ''; populateThemeFavorites(); themeFavoritesSelect.value = saved.id; enableDisableDeleteButton(); alert(`Tema '${saved.name}' lagret!`); console.log(`Theme saved: ${saved.name}`, saved); }
     function handleDeleteFavorite() { const id = themeFavoritesSelect.value; if (!id) return; const fav = loadThemeFavorites().find(f => f.id === id); if (fav && confirm(`Slette tema '${fav.name}'?`)) { deleteThemeFavorite(id); populateThemeFavorites(); console.log(`Theme deleted: ${fav.name}`); } }
     function handleSaveTournamentSettings(){ console.log("Saving T settings..."); let changes=false; let uiUpdate=false; const cLI=state.live.currentLevelIndex; let valid=true; const newLvls=[]; const rows=editBlindStructureBody.querySelectorAll('tr'); let errs=[]; if(rows.length===0){alert("Minst ett nivå kreves.");return;} rows.forEach((row,idx)=>{ const lvlNum=idx+1; let rowOk=true; const sbIn=row.querySelector('.sb-input'); const bbIn=row.querySelector('.bb-input'); const aIn=row.querySelector('.ante-input'); const dIn=row.querySelector('.duration-input'); const pIn=row.querySelector('.pause-duration-input'); const past=lvlNum<=cLI&&!state.live.isOnBreak; let sb,bb,a,d,pM; if(past){if(idx<state.config.blindLevels.length){const pastData=state.config.blindLevels[idx];sb=pastData.sb;bb=pastData.bb;a=pastData.ante;d=pastData.duration;pM=pastData.pauseMinutes;}else{console.error(`Error getting past level ${idx}`);rowOk=false;}}else{sb=parseInt(sbIn.value);bb=parseInt(bbIn.value);a=parseInt(aIn.value)||0;d=parseInt(dIn.value);pM=parseInt(pIn.value)||0;[sbIn,bbIn,aIn,dIn,pIn].forEach(el=>el.classList.remove('invalid')); if(isNaN(d)||d<=0){rowOk=false;dIn.classList.add('invalid');} if(isNaN(sb)||sb<0){rowOk=false;sbIn.classList.add('invalid');} if(isNaN(bb)||bb<=0){rowOk=false;bbIn.classList.add('invalid');} else if(sb>bb){rowOk=false;sbIn.classList.add('invalid');bbIn.classList.add('invalid');errs.push(`L${lvlNum}:SB>BB`);} else if(bb>0&&sb<0){rowOk=false;sbIn.classList.add('invalid');} if(isNaN(a)||a<0){rowOk=false;aIn.classList.add('invalid');} if(isNaN(pM)||pM<0){rowOk=false;pIn.classList.add('invalid');}} if(!rowOk)valid=false; newLvls.push({level:lvlNum,sb:sb,bb:bb,ante:a,duration:d,pauseMinutes:pM});}); if(!valid){let msg="Ugyldige verdier:\n- "+[...new Set(errs)].join("\n- "); if(errs.length===0)msg="Ugyldige verdier (markerte felt)."; alert(msg); return;} if(JSON.stringify(state.config.blindLevels)!==JSON.stringify(newLvls)){state.config.blindLevels=newLvls;changes=true;uiUpdate=true;logActivity(state.live.activityLog,"Blindstruktur endret.");console.log("Blinds changed",newLvls);} const places=parseInt(editPaidPlacesInput.value); const dist=editPrizeDistTextarea.value.split(',').map(p=>parseFloat(p.trim())).filter(p=>!isNaN(p)&&p>=0); let prizesOk=true; let prizeErrs=[]; if(isNaN(places)||places<=0){prizesOk=false;prizeErrs.push("Ugyldig antall betalte (> 0).");}else if(dist.length!==places){prizesOk=false;prizeErrs.push(`Premier(${dist.length}) != Betalte(${places}).`);}else{const sum=dist.reduce((a,b)=>a+b,0);if(Math.abs(sum-100)>0.1){prizesOk=false;prizeErrs.push(`Sum (${sum.toFixed(1)}%) != 100%.`);}} if(!prizesOk){alert("Feil i premier:\n- "+prizeErrs.join("\n- "));return;} if(state.config.paidPlaces!==places||JSON.stringify(state.config.prizeDistribution)!==JSON.stringify(dist)){const inMoney=state.live.eliminatedPlayers.filter(p=>p.place&&p.place<=state.config.paidPlaces).length;if(inMoney===0||confirm(`Advarsel: ${inMoney} i pengene. Endre premier?`)){state.config.paidPlaces=places;state.config.prizeDistribution=dist;changes=true;uiUpdate=true;logActivity(state.live.activityLog,"Premiestruktur endret.");console.log("Prizes changed",places,dist);}else{console.log("Prize change cancelled.");editPaidPlacesInput.value=state.config.paidPlaces;editPrizeDistTextarea.value=state.config.prizeDistribution.join(', ');return;}} if(changes){if(saveTournamentState(currentTournamentId,state)){alert("Regelendringer lagret!");if(uiUpdate)updateUI();closeTournamentModal();}else alert("Lagring feilet!");} else{alert("Ingen regelendringer å lagre.");closeTournamentModal();}}
+
     async function handleSaveUiSettings(){
         console.log("handleSaveUiSettings: Attempting to save...");
-        let themeCh=false; let layoutCh=false; let volumeCh = false; let logoCh = false;
-        let success = true;
+        let themeCh=false, layoutCh=false, volumeCh=false, logoCh = false, success = true;
         const bg=`rgb(${bgRedInput.value}, ${bgGreenInput.value}, ${bgBlueInput.value})`; const txt=`rgb(${textRedInput.value}, ${textGreenInput.value}, ${textBlueInput.value})`;
         if(bg!==originalThemeBg||txt!==originalThemeText){ saveThemeBgColor(bg); saveThemeTextColor(txt); console.log("Theme saved."); themeCh=true; originalThemeBg = bg; originalThemeText = txt;}
         const finalLayouts = { canvas:{height:parseInt(canvasHeightInput.value)} };
@@ -330,12 +315,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("handleSaveUiSettings: Logo has changed.");
             if (logoBlobInModal === null) { console.log("handleSaveUiSettings: Clearing logo blob..."); if (!await clearLogoBlob()) { success = false; } else { console.log("Custom logo cleared from storage."); } }
             else { console.log("handleSaveUiSettings: Saving new logo blob..."); if (!await saveLogoBlob(logoBlobInModal)) { success = false; } else { console.log("Custom logo saved to storage."); } }
-            if (success) { logoCh = true; currentLogoBlob = logoBlobInModal; console.log("handleSaveUiSettings: currentLogoBlob updated."); }
+            if (success) { logoCh = true; setGlobalLogoState(logoBlobInModal); /* Oppdater global state */ console.log("handleSaveUiSettings: currentLogoBlob updated."); }
             else { console.error("handleSaveUiSettings: Failed to save/clear logo."); return; }
         } else { console.log("handleSaveUiSettings: Logo unchanged."); }
-        if (success && (themeCh || layoutCh || volumeCh || logoCh)) { console.log("handleSaveUiSettings: Changes detected and saved. Closing modal."); applyLogo(currentLogoBlob, logoImg, false); alert("Utseende & Lyd lagret!"); closeUiModal(false); }
+        if (success && (themeCh || layoutCh || volumeCh || logoCh)) { console.log("handleSaveUiSettings: Changes detected and saved. Closing modal."); alert("Utseende & Lyd lagret!"); closeUiModal(false); }
         else if (success) { console.log("handleSaveUiSettings: No changes detected. Closing modal."); alert("Ingen endringer å lagre."); closeUiModal(false); }
     }
+
     async function handleResetLayoutTheme() {
         if (confirm("Tilbakestille layout, farger, logo og lyd til standard?")) {
              console.log("handleResetLayoutTheme: Resetting...");
@@ -345,8 +331,10 @@ document.addEventListener('DOMContentLoaded', async () => {
              resetLayouts.info = { ...resetLayouts.info, ...dLayout.info };
             applyThemeAndLayout(dBg, dTxt, resetLayouts);
             currentVolume = dVol; volumeInput.value = volumeSlider.value = dVol;
-            logoBlobInModal = null; revokeObjectUrl(previewLogoObjectUrl); previewLogoObjectUrl = null; logoPreview.src = 'placeholder-logo.png'; customLogoInput.value = '';
-            applyLogo(null, logoImg, false);
+            logoBlobInModal = null; // Sett modal-state til null
+            updateImageSrc(null, logoPreview, true); // Oppdater preview
+            updateImageSrc(null, logoImg, false);    // Oppdater hovedvisning
+            customLogoInput.value = '';
             blockSliderUpdates=true;
             const [bgR,bgG,bgB]=parseRgbString(dBg); const bgHSL=rgbToHsl(bgR,bgG,bgB); bgRedSlider.value=bgRedInput.value=bgR; bgGreenSlider.value=bgGreenInput.value=bgG; bgBlueSlider.value=bgBlueInput.value=bgB; bgHueSlider.value=bgHueInput.value=bgHSL.h; bgSatSlider.value=bgSatInput.value=bgHSL.s; bgLigSlider.value=bgLigInput.value=bgHSL.l; const [txtR,txtG,txtB]=parseRgbString(dTxt); const txtHSL=rgbToHsl(txtR,txtG,txtB); textRedSlider.value=textRedInput.value=txtR; textGreenSlider.value=textGreenInput.value=txtG; textBlueSlider.value=textBlueInput.value=txtB; textHueSlider.value=textHueInput.value=txtHSL.h; textSatSlider.value=textSatInput.value=txtHSL.s; textLigSlider.value=textLigInput.value=txtHSL.l;
             canvasHeightInput.value=canvasHeightSlider.value=dLayout.canvas.height; titleWidthInput.value=titleWidthSlider.value=dLayout.title.width; titleFontSizeInput.value=titleFontSizeSlider.value=dLayout.title.fontSize; timerWidthInput.value=timerWidthSlider.value=dLayout.timer.width; timerFontSizeInput.value=timerFontSizeSlider.value=dLayout.timer.fontSize; blindsWidthInput.value=blindsWidthSlider.value=dLayout.blinds.width; blindsFontSizeInput.value=blindsFontSizeSlider.value=dLayout.blinds.fontSize; logoWidthInput.value=logoWidthSlider.value=dLayout.logo.width; logoHeightInput.value=logoHeightSlider.value=dLayout.logo.height; infoWidthInput.value=infoWidthSlider.value=dLayout.info.width; infoFontSizeInput.value=infoFontSizeSlider.value=dLayout.info.fontSize;
@@ -357,20 +345,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("handleResetLayoutTheme: Reset applied visually. Pending save.");
         }
     }
+
     function handleLogoUpload(event) {
         const file = event.target.files[0]; console.log("handleLogoUpload: File selected:", file); if (!file) return;
         const validTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/webp']; if (!validTypes.includes(file.type)) { alert('Ugyldig filtype.'); customLogoInput.value = ''; return; }
-        logoBlobInModal = file; console.log("handleLogoUpload: logoBlobInModal set to file object:", logoBlobInModal);
-        console.log("handleLogoUpload: Updating preview..."); applyLogo(logoBlobInModal, logoPreview, true);
-        console.log("handleLogoUpload: Updating main view..."); applyLogo(logoBlobInModal, logoImg, false);
+        logoBlobInModal = file; // Oppdater modal-state
+        console.log("handleLogoUpload: logoBlobInModal set to file object:", logoBlobInModal);
+        console.log("handleLogoUpload: Updating preview..."); updateImageSrc(logoBlobInModal, logoPreview, true); // Oppdater KUN preview
+        // IKKE oppdater hovedvisningen her live lenger
         console.log(`handleLogoUpload: Logo selected: ${file.name}. Ready to be saved.`);
     }
+
     function handleRemoveLogo() {
         if (confirm("Fjerne egendefinert logo og gå tilbake til standard (krever Lagre)?")) {
             console.log("handleRemoveLogo: Removing logo in modal...");
             logoBlobInModal = null; customLogoInput.value = '';
-            console.log("handleRemoveLogo: Updating preview..."); applyLogo(null, logoPreview, true);
-            console.log("handleRemoveLogo: Updating main view..."); applyLogo(null, logoImg, false);
+            console.log("handleRemoveLogo: Updating preview..."); updateImageSrc(null, logoPreview, true); // Oppdater KUN preview
+            // IKKE oppdater hovedvisningen her live lenger
             console.log("handleRemoveLogo: Custom logo removed visually (pending save).");
         }
     }
