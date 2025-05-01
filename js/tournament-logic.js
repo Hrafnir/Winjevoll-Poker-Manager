@@ -1,9 +1,19 @@
 // === tournament-logic.js ===
 // Kalkuleringer og spill-logikk
 
-import { getPlayerNameById } from './tournament-ui.js'; // Importer formateringshjelper
+// Fjernet: import { getPlayerNameById } from './tournament-ui.js'; // Feil import
+
+// === Eksporterte funksjoner ===
+
+export function getPlayerNameById(playerId, state) { // NY DEFINISJON + EKSPORT
+    const targetId = Number(playerId); // Sikre at vi sammenligner tall
+    if (!state || !state.live) return 'Ukjent (feil)';
+    const player = state.live.players.find(p => p.id === targetId) || state.live.eliminatedPlayers.find(p => p.id === targetId);
+    return player ? player.name : 'Ukjent Spiller';
+}
 
 export function calculateTotalChips(state) {
+    if (!state || !state.config || !state.live) return 0;
     const sChips = (state.live.totalEntries || 0) * (state.config.startStack || 0);
     const rChips = (state.live.totalRebuys || 0) * (state.config.rebuyChips || 0);
     const aChips = (state.live.totalAddons || 0) * (state.config.addonChips || 0);
@@ -11,6 +21,7 @@ export function calculateTotalChips(state) {
 }
 
 export function calculateAverageStack(state) {
+    if (!state || !state.live) return 0;
     const ap = state.live.players.length;
     if (ap === 0) return 0;
     const tc = calculateTotalChips(state);
@@ -18,6 +29,7 @@ export function calculateAverageStack(state) {
 }
 
 export function calculatePrizes(state) {
+    if (!state || !state.config || !state.live) return [];
     const prizes = [];
     const places = state.config.paidPlaces || 0;
     const dist = state.config.prizeDistribution || [];
@@ -40,7 +52,6 @@ export function calculatePrizes(state) {
     }
     if (Math.abs(sum - pPot) > 1 && places > 1) {
         console.warn(`Prize calc warning: Sum ${sum} != Pot ${pPot}`);
-        // Juster siste premie for å matche?
         if (prizes.length > 0) {
              const diff = pPot - sum;
              prizes[prizes.length - 1].amount += diff;
@@ -51,6 +62,7 @@ export function calculatePrizes(state) {
 }
 
 export function findNextPauseInfo(state) {
+    if (!state || !state.config || !state.live) return null;
     const idx = state.live.currentLevelIndex;
     const lvls = state.config.blindLevels;
     if (!lvls) return null;
@@ -63,12 +75,14 @@ export function findNextPauseInfo(state) {
     return null;
 }
 
-// Loggfunksjon (kan evt. flyttes til egen logg-modul senere)
 export function logActivity(logArray, message) {
-    if (!logArray) logArray = []; // Bør håndteres der state opprettes
+    if (!logArray) {
+        console.warn("logActivity called without a valid logArray!");
+        logArray = []; // Forsøk å initialisere, men dette bør skje i main state
+    }
     const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     logArray.unshift({ timestamp, message });
-    const MAX_LOG_ENTRIES = 100; // Definer konstant
+    const MAX_LOG_ENTRIES = 100;
     if (logArray.length > MAX_LOG_ENTRIES) logArray.pop();
     console.log(`[Log ${timestamp}] ${message}`);
 }
