@@ -193,7 +193,7 @@ main.tournament-live {
 #live-canvas {
     flex-grow: 1;
     position: relative;
-    overflow: hidden; /* Sikrer at absolutt posisjonerte elementer ikke går utenfor */
+    overflow: hidden;
     background-color: inherit;
     color: inherit;
     height: var(--canvas-height);
@@ -204,32 +204,25 @@ main.tournament-live {
 .draggable-element {
     position: absolute;
     box-sizing: border-box;
-    padding: 5px;
+    /* padding: 5px; Fjernet generell padding for å unngå konflikter */
     background-color: transparent;
     border: none;
     color: inherit;
-    height: auto;
+    /* height: auto; Høyde styres av JS eller innhold, men med max */
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    overflow: hidden !important; /* VIKTIG: Lagt til !important for testing */
+    overflow: hidden; /* Veldig viktig! */
+    /* Størrelse (width, height) og posisjon (left, top) settes av JS */
 }
 
 /* Style when element is actively being dragged */
-.draggable-element.dragging {
-    cursor: grabbing;
-    opacity: 0.8;
-    z-index: 100;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    border: 1px dashed rgba(255, 255, 255, 0.5);
-}
+.draggable-element.dragging { /* ... (som før) ... */ }
 
 /* Class added by JS to hide elements based on toggle */
-.element-hidden {
-    display: none !important;
-}
+.element-hidden { display: none !important; }
 
 /* --- Styling for individual canvas elements --- */
 
@@ -238,34 +231,34 @@ main.tournament-live {
 #title-element h1#tournament-name-display { font-size: 1em; margin: 0; padding: 5px 0; color: inherit; background-color: transparent; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
 
 /* Timer Element */
-#timer-element { text-align: center; }
+#timer-element { text-align: center; padding: 5px; }
 #timer-element .timer-section h2 { font-size: 0.1em; margin: 0 0 0.05em 0; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit; }
 #timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
 #break-info { font-size: 0.4em; color: var(--warning-color); font-weight: bold; margin-top: 0.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 
 /* Blinds Element */
-#blinds-element { text-align: center; }
+#blinds-element { text-align: center; padding: 5px; }
 #blinds-element .blinds-section h3 { font-size: 0.2em; margin: 0 0 0.1em 0; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit;}
 #blinds-display { font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
 #blinds-display .value { margin: 0 0.1em; }
 #blinds-display .label { font-size: 0.3em; margin: 0 0.1em; opacity: 0.7; font-weight: normal; vertical-align: middle; }
 
-/* Logo Element */
-#logo-element { /* Selve containeren */
-    padding: 0;
-    display: flex;
+/* Logo Element - NY TILNÆRMING */
+#logo-element { /* Selve containeren satt av JS (left, top, width, height) */
+    padding: 0; /* Ingen intern padding */
+    display: flex; /* Bruk flex for enkel sentrering */
     justify-content: center;
     align-items: center;
-    /* overflow: hidden; er nå på .draggable-element */
+    /* overflow: hidden; satt på .draggable-element */
 }
-/* #logo-element .logo-area er ikke lenger nødvendig, fjernet for enkelhet */
 #logo-element .logo { /* Selve <img> taggen */
-    display: block;
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-    object-fit: contain; /* VIKTIG: Skalerer ned bildet for å passe, bevarer aspekt */
+    display: block; /* Unngå ekstra plass under bildet */
+    width: 100%;    /* Fyll containerens bredde */
+    height: 100%;   /* Fyll containerens høyde */
+    max-width: 100%; /* Redundant, men skader ikke */
+    max-height: 100%;/* Redundant, men skader ikke */
+    object-fit: contain; /* VIKTIGST: Skaler bildet ned for å passe, bevarer aspekt */
+    object-position: center center; /* Sentrer bildet innenfor <img>-boksen */
 }
 
 /* Info Element */
