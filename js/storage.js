@@ -9,24 +9,23 @@ const ELEMENT_LAYOUTS_KEY = 'winjevollElementLayouts_v1';
 const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
 const SOUND_ENABLED_KEY = 'winjevollSoundEnabled_v1';
 const SOUND_VOLUME_KEY = 'winjevollSoundVolume_v1';
-// Fjernet: const CUSTOM_LOGO_KEY = 'winjevollCustomLogo_v1';
+const DB_NAME = 'winjevollDB_v1';
+const DB_VERSION = 1;
+const LOGO_STORE_NAME = 'customLogoStore';
+const LOGO_KEY = 'userLogo';
 
 const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
 const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
 const DEFAULT_SOUND_VOLUME = 0.7;
 
-// --- NYTT: IndexedDB Konstanter ---
-const DB_NAME = 'winjevollDB_v1';
-const DB_VERSION = 1; // Øk denne hvis strukturen endres i fremtiden
-const LOGO_STORE_NAME = 'customLogoStore';
-const LOGO_KEY = 'userLogo'; // Fast nøkkel for den ene logoen vi lagrer
-
 // Default layout values including visibility
 const DEFAULT_ELEMENT_LAYOUTS = {
     canvas: { height: 65 },
     title:  { x: 5,  y: 2,  width: 90, fontSize: 3.5, isVisible: true },
-    timer:  { x: 5,  y: 20, width: 55, fontSize: 18,  isVisible: true },
-    blinds: { x: 65, y: 40, width: 30, fontSize: 9,   isVisible: true },
+    // ENDRET: Redusert standard font-size for timer litt
+    timer:  { x: 5,  y: 20, width: 55, fontSize: 16,  isVisible: true },
+    // ENDRET: Redusert standard font-size for blinds litt
+    blinds: { x: 65, y: 40, width: 30, fontSize: 8,   isVisible: true },
     logo:   { x: 65, y: 5,  width: 30, height: 30,  isVisible: true },
     info:   { x: 65, y: 75, width: 30, fontSize: 1.2, isVisible: true,
               showNextBlinds: true, showAvgStack: true, showPlayers: true,
@@ -41,141 +40,13 @@ function loadObject(key, defaultValue = {}) { try { const json = localStorage.ge
 function saveObject(key, object) { try { if (typeof object !== 'object' || object === null) throw new Error("Not an object"); localStorage.setItem(key, JSON.stringify(object)); } catch (e) { console.error(`Error saving object ${key}:`, e); if (e.name === 'QuotaExceededError') alert(`Lagringsplass full (${key})! Kunne ikke lagre objektet.`); else alert(`Ukjent lagringsfeil (${key})!`); throw e; } }
 // === 02: UTILITY FUNCTIONS (Load/Save localStorage) END ===
 
-// === 02b: IndexedDB HELPER FUNCTIONS START === // NY SEKSJON
-let dbPromise = null; // Holder på promise for DB-tilkobling
-
-function openWinjevollDB() {
-    if (dbPromise) {
-        return dbPromise; // Returner eksisterende promise hvis det finnes
-    }
-
-    dbPromise = new Promise((resolve, reject) => {
-        if (!window.indexedDB) {
-            console.error("IndexedDB not supported by this browser.");
-            reject(new Error("IndexedDB not supported"));
-            return;
-        }
-
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = (event) => {
-            console.log(`Upgrading IndexedDB from version ${event.oldVersion} to ${event.newVersion}`);
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(LOGO_STORE_NAME)) {
-                db.createObjectStore(LOGO_STORE_NAME);
-                console.log(`Object store "${LOGO_STORE_NAME}" created.`);
-            }
-            // Add other upgrades here if DB_VERSION increases later
-        };
-
-        request.onsuccess = (event) => {
-            console.log("IndexedDB opened successfully.");
-            const db = event.target.result;
-            // Viktig: Håndter plutselig lukking (f.eks. i private browsing)
-            db.onclose = () => {
-                console.warn("IndexedDB connection closed unexpectedly.");
-                dbPromise = null; // Reset promise so it reopens on next call
-            };
-            db.onerror = (closeEvent) => {
-                 console.error("IndexedDB database error:", closeEvent.target.error);
-                 dbPromise = null; // Reset on error too
-            };
-            resolve(db);
-        };
-
-        request.onerror = (event) => {
-            console.error("IndexedDB opening error:", event.target.error);
-            dbPromise = null; // Reset promise on error
-            reject(event.target.error);
-        };
-
-         request.onblocked = () => {
-            console.warn("IndexedDB open request blocked, potentially due to an open connection in another tab during upgrade.");
-             alert("Kan ikke oppdatere databasen. Lukk andre faner med denne appen og prøv igjen.");
-             reject(new Error("IndexedDB blocked"));
-         };
-    });
-    return dbPromise;
-}
-
-// Hjelpefunksjon for transaksjoner
-async function performIDBOperation(storeName, mode, operation) {
-    const db = await openWinjevollDB(); // Få databasetilkobling
-    return new Promise((resolve, reject) => {
-        if (!db.objectStoreNames.contains(storeName)) {
-            console.error(`Object store "${storeName}" not found.`);
-            return reject(new Error(`Object store "${storeName}" not found.`));
-        }
-        const transaction = db.transaction(storeName, mode);
-        const store = transaction.objectStore(storeName);
-        const request = operation(store); // Utfør den spesifikke operasjonen (get, put, delete)
-
-        request.onsuccess = () => {
-            resolve(request.result); // Returner resultatet (f.eks. hentet data)
-        };
-
-        request.onerror = () => {
-            console.error(`IndexedDB request error in ${storeName} (${mode}):`, request.error);
-            reject(request.error);
-        };
-
-        transaction.oncomplete = () => {
-             // Transaksjon fullført (men request.onsuccess kjører først)
-            // console.log(`IndexedDB transaction complete for ${storeName} (${mode})`);
-        };
-
-        transaction.onerror = () => {
-            console.error(`IndexedDB transaction error in ${storeName} (${mode}):`, transaction.error);
-            reject(transaction.error); // Avvis hovedpromiset hvis transaksjonen feiler
-        };
-    });
-}
-
-// NYE LOGO FUNKSJONER (IndexedDB)
-async function saveLogoBlob(blob) {
-    if (!(blob instanceof Blob)) {
-        console.error("Invalid data provided to saveLogoBlob. Expected a Blob.");
-        return Promise.reject(new TypeError("Invalid data: Expected a Blob."));
-    }
-    try {
-        await performIDBOperation(LOGO_STORE_NAME, 'readwrite', (store) => store.put(blob, LOGO_KEY));
-        console.log("Logo Blob saved to IndexedDB.");
-        return true; // Indikerer suksess
-    } catch (error) {
-        console.error("Failed to save Logo Blob:", error);
-        // Sjekk spesifikt for QuotaExceededError hvis mulig (kan være i error.name)
-        if (error.name === 'QuotaExceededError') {
-             alert("Lagringsplass full! Kunne ikke lagre logoen i databasen.");
-        } else {
-            alert("En feil oppstod ved lagring av logo i databasen.");
-        }
-        return false; // Indikerer feil
-    }
-}
-
-async function loadLogoBlob() {
-    try {
-        // Henter blob. Resultatet er bloben eller 'undefined' hvis nøkkelen ikke finnes.
-        const blob = await performIDBOperation(LOGO_STORE_NAME, 'readonly', (store) => store.get(LOGO_KEY));
-        console.log("Logo Blob loaded from IndexedDB:", blob);
-        return blob instanceof Blob ? blob : null; // Returner blob eller null
-    } catch (error) {
-        console.error("Failed to load Logo Blob:", error);
-        return null; // Returner null ved feil
-    }
-}
-
-async function clearLogoBlob() {
-    try {
-        await performIDBOperation(LOGO_STORE_NAME, 'readwrite', (store) => store.delete(LOGO_KEY));
-        console.log("Logo Blob cleared from IndexedDB.");
-        return true;
-    } catch (error) {
-        console.error("Failed to clear Logo Blob:", error);
-        alert("En feil oppstod ved fjerning av logo fra databasen.");
-        return false;
-    }
-}
+// === 02b: IndexedDB HELPER FUNCTIONS START ===
+let dbPromise = null;
+function openWinjevollDB() { if (dbPromise) { return dbPromise; } dbPromise = new Promise((resolve, reject) => { if (!window.indexedDB) { console.error("IndexedDB not supported"); return reject(new Error("IndexedDB not supported")); } const request = indexedDB.open(DB_NAME, DB_VERSION); request.onupgradeneeded = (event) => { console.log(`Upgrading IndexedDB from ${event.oldVersion} to ${event.newVersion}`); const db = event.target.result; if (!db.objectStoreNames.contains(LOGO_STORE_NAME)) { db.createObjectStore(LOGO_STORE_NAME); console.log(`Object store "${LOGO_STORE_NAME}" created.`); } }; request.onsuccess = (event) => { console.log("IndexedDB opened."); const db = event.target.result; db.onclose = () => { console.warn("IndexedDB connection closed."); dbPromise = null; }; db.onerror = (closeEvent) => { console.error("IndexedDB DB error:", closeEvent.target.error); dbPromise = null; }; resolve(db); }; request.onerror = (event) => { console.error("IndexedDB opening error:", event.target.error); dbPromise = null; reject(event.target.error); }; request.onblocked = () => { console.warn("IndexedDB blocked."); alert("Kan ikke oppdatere databasen. Lukk andre faner."); reject(new Error("IndexedDB blocked")); }; }); return dbPromise; }
+async function performIDBOperation(storeName, mode, operation) { const db = await openWinjevollDB(); return new Promise((resolve, reject) => { if (!db.objectStoreNames.contains(storeName)) { return reject(new Error(`Object store "${storeName}" not found.`)); } const transaction = db.transaction(storeName, mode); const store = transaction.objectStore(storeName); const request = operation(store); request.onsuccess = () => { resolve(request.result); }; request.onerror = () => { console.error(`IDB request error in ${storeName} (${mode}):`, request.error); reject(request.error); }; transaction.onerror = () => { console.error(`IDB transaction error in ${storeName} (${mode}):`, transaction.error); reject(transaction.error); }; }); }
+async function saveLogoBlob(blob) { if (!(blob instanceof Blob)) { console.error("Invalid data: Expected Blob."); return Promise.reject(new TypeError("Expected Blob.")); } try { await performIDBOperation(LOGO_STORE_NAME, 'readwrite', (store) => store.put(blob, LOGO_KEY)); console.log("Logo Blob saved."); return true; } catch (error) { console.error("Failed save Logo Blob:", error); if (error.name === 'QuotaExceededError') { alert("Lagringsplass full!"); } else { alert("Feil ved lagring av logo."); } return false; } }
+async function loadLogoBlob() { try { const blob = await performIDBOperation(LOGO_STORE_NAME, 'readonly', (store) => store.get(LOGO_KEY)); console.log("Logo Blob loaded:", blob); return blob instanceof Blob ? blob : null; } catch (error) { console.error("Failed load Logo Blob:", error); return null; } }
+async function clearLogoBlob() { try { await performIDBOperation(LOGO_STORE_NAME, 'readwrite', (store) => store.delete(LOGO_KEY)); console.log("Logo Blob cleared."); return true; } catch (error) { console.error("Failed clear Logo Blob:", error); alert("Feil ved fjerning av logo."); return false; } }
 // === 02b: IndexedDB HELPER FUNCTIONS END ===
 
 // === 03: TOURNAMENT FUNCTIONS START ===
@@ -202,32 +73,7 @@ function clearActiveTemplateId() { localStorage.removeItem(ACTIVE_TEMPLATE_ID_KE
 // === 05: ACTIVE ID FUNCTIONS END ===
 
 // === 06: CLEAR ALL DATA FUNCTION START ===
-async function clearAllData() { // ENDRET: Gjort async pga. IndexedDB
-    try {
-        // Clear localStorage items
-        localStorage.removeItem(TOURNAMENT_COLLECTION_KEY);
-        localStorage.removeItem(TEMPLATE_COLLECTION_KEY);
-        localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY);
-        localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY);
-        localStorage.removeItem(THEME_BG_COLOR_KEY);
-        localStorage.removeItem(THEME_TEXT_COLOR_KEY);
-        localStorage.removeItem(ELEMENT_LAYOUTS_KEY);
-        localStorage.removeItem(THEME_FAVORITES_KEY);
-        localStorage.removeItem(SOUND_ENABLED_KEY);
-        localStorage.removeItem(SOUND_VOLUME_KEY);
-        console.log("localStorage data cleared.");
-
-        // Clear IndexedDB logo store (NYTT)
-        await clearLogoBlob(); // Kall den nye funksjonen
-
-        console.log("All app data cleared (localStorage + IndexedDB logo).");
-        return true; // Indiker suksess
-    } catch (e) {
-        console.error("Error clearing all data:", e);
-        alert("Kunne ikke slette all lagret data!");
-        return false; // Indiker feil
-    }
-}
+async function clearAllData() { try { localStorage.removeItem(TOURNAMENT_COLLECTION_KEY); localStorage.removeItem(TEMPLATE_COLLECTION_KEY); localStorage.removeItem(ACTIVE_TOURNAMENT_ID_KEY); localStorage.removeItem(ACTIVE_TEMPLATE_ID_KEY); localStorage.removeItem(THEME_BG_COLOR_KEY); localStorage.removeItem(THEME_TEXT_COLOR_KEY); localStorage.removeItem(ELEMENT_LAYOUTS_KEY); localStorage.removeItem(THEME_FAVORITES_KEY); localStorage.removeItem(SOUND_ENABLED_KEY); localStorage.removeItem(SOUND_VOLUME_KEY); console.log("localStorage data cleared."); await clearLogoBlob(); console.log("All app data cleared."); return true; } catch (e) { console.error("Error clearing all data:", e); alert("Kunne ikke slette all lagret data!"); return false; } }
 // === 06: CLEAR ALL DATA FUNCTION END ===
 
 // === 06b: ACTIVITY LOG HELPER START ===
@@ -246,25 +92,7 @@ function hslToRgb(h, s, l) { s /= 100; l /= 100; let c = (1 - Math.abs(2 * l - 1
 
 // === 06d: ELEMENT LAYOUT FUNCTIONS START ===
 function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); }
-function loadElementLayouts() {
-    const loaded = loadObject(ELEMENT_LAYOUTS_KEY);
-    const mergedLayouts = {};
-    for (const key in DEFAULT_ELEMENT_LAYOUTS) {
-        mergedLayouts[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key] };
-        if (loaded && loaded[key]) { mergedLayouts[key] = { ...mergedLayouts[key], ...loaded[key] }; }
-        mergedLayouts[key].isVisible = mergedLayouts[key].isVisible ?? true;
-        if (key === 'info') {
-             const defaultInfo = DEFAULT_ELEMENT_LAYOUTS.info;
-             mergedLayouts.info.showNextBlinds = mergedLayouts.info.showNextBlinds ?? defaultInfo.showNextBlinds;
-             mergedLayouts.info.showAvgStack = mergedLayouts.info.showAvgStack ?? defaultInfo.showAvgStack;
-             mergedLayouts.info.showPlayers = mergedLayouts.info.showPlayers ?? defaultInfo.showPlayers;
-             mergedLayouts.info.showLateReg = mergedLayouts.info.showLateReg ?? defaultInfo.showLateReg;
-             mergedLayouts.info.showNextPause = mergedLayouts.info.showNextPause ?? defaultInfo.showNextPause;
-        }
-    }
-    for (const key in loaded) { if (!mergedLayouts[key]) { mergedLayouts[key] = loaded[key]; mergedLayouts[key].isVisible = mergedLayouts[key].isVisible ?? true; } }
-    return mergedLayouts;
-}
+function loadElementLayouts() { const loaded = loadObject(ELEMENT_LAYOUTS_KEY); const mergedLayouts = {}; for (const key in DEFAULT_ELEMENT_LAYOUTS) { mergedLayouts[key] = { ...DEFAULT_ELEMENT_LAYOUTS[key] }; if (loaded && loaded[key]) { mergedLayouts[key] = { ...mergedLayouts[key], ...loaded[key] }; } mergedLayouts[key].isVisible = mergedLayouts[key].isVisible ?? true; if (key === 'info') { const defaultInfo = DEFAULT_ELEMENT_LAYOUTS.info; mergedLayouts.info.showNextBlinds = mergedLayouts.info.showNextBlinds ?? defaultInfo.showNextBlinds; mergedLayouts.info.showAvgStack = mergedLayouts.info.showAvgStack ?? defaultInfo.showAvgStack; mergedLayouts.info.showPlayers = mergedLayouts.info.showPlayers ?? defaultInfo.showPlayers; mergedLayouts.info.showLateReg = mergedLayouts.info.showLateReg ?? defaultInfo.showLateReg; mergedLayouts.info.showNextPause = mergedLayouts.info.showNextPause ?? defaultInfo.showNextPause; } } for (const key in loaded) { if (!mergedLayouts[key]) { mergedLayouts[key] = loaded[key]; mergedLayouts[key].isVisible = mergedLayouts[key].isVisible ?? true; } } return mergedLayouts; }
 // === 06d: ELEMENT LAYOUT FUNCTIONS END ===
 
 // === 06e: THEME FAVORITES FUNCTIONS START ===
@@ -283,11 +111,6 @@ function loadSoundPreference() { const storedValue = loadItem(SOUND_ENABLED_KEY)
 function saveSoundVolume(volume) { const clampedVolume = Math.max(0, Math.min(1, parseFloat(volume) || DEFAULT_SOUND_VOLUME)); saveItem(SOUND_VOLUME_KEY, clampedVolume.toString()); console.log(`Sound volume saved: ${clampedVolume}`); }
 function loadSoundVolume() { const storedValue = loadItem(SOUND_VOLUME_KEY); const volume = parseFloat(storedValue); return !isNaN(volume) && volume >= 0 && volume <= 1 ? volume : DEFAULT_SOUND_VOLUME; }
 // === 06g: SOUND VOLUME FUNCTIONS END ===
-
-// === 06h: CUSTOM LOGO FUNCTIONS (IndexedDB) - ERSTATTET ===
-// Fjernet: saveCustomLogoDataUrl, loadCustomLogoDataUrl, clearCustomLogo
-// De nye er i seksjon 02b: saveLogoBlob, loadLogoBlob, clearLogoBlob
-// === 06h: CUSTOM LOGO FUNCTIONS (IndexedDB) - ERSTATTET ===
 
 // === 07: UNIQUE ID GENERATOR SECTION START ===
 function generateUniqueId(prefix = 'id') { const timestamp = Date.now().toString(36); const randomPart = Math.random().toString(36).substring(2, 9); return `${prefix}-${timestamp}-${randomPart}`; }
