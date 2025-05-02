@@ -73,8 +73,8 @@
             getActiveTemplateId,
             setActiveTemplateId,
             setActiveTournamentId,
-            clearActiveTemplateId,
-            // clearActiveTournamentId, // Duplikat fjernet i forrige runde
+            clearActiveTemplateId,  // Riktig navn her
+            clearActiveTournamentId, // Riktig navn her
             deleteTemplate,
             deleteTournamentState,
             clearAllData
@@ -95,37 +95,33 @@
 
             // --- Display Templates ---
             async function displayTemplates() {
-                console.log("displayTemplates: Starting..."); // DEBUG
-                templateListUl.innerHTML = '<li>Laster maler...</li>'; // Vis laster-melding
+                console.log("displayTemplates: Starting...");
+                templateListUl.innerHTML = '<li>Laster maler...</li>';
                 try {
-                    // Kall funksjonen og logg resultatet umiddelbart
                     const templates = loadTemplateCollection();
-                    console.log("displayTemplates: loadTemplateCollection returned:", typeof templates, templates); // DEBUG
+                    console.log("displayTemplates: loadTemplateCollection returned:", typeof templates, templates);
 
-                    // Robust sjekk: Sørg for at det er et objekt (ikke null)
                     if (typeof templates !== 'object' || templates === null) {
                         console.error("displayTemplates: templates is not a valid object after load!", templates);
                         templateListUl.innerHTML = '<li>Feil: Kunne ikke laste mal-data korrekt.</li>';
-                        // Prøv å slette den potensielt korrupte nøkkelen manuelt hvis den finnes
                         if (localStorage.getItem('winjevollTemplateCollection_v1') !== null) {
                              console.warn("Attempting to remove potentially corrupt template collection from localStorage.");
                              localStorage.removeItem('winjevollTemplateCollection_v1');
                         }
-                        return; // Stopp videre kjøring for maler
+                        return;
                     }
 
-                    const templateIds = Object.keys(templates); // Prøv keys
+                    const templateIds = Object.keys(templates);
                     console.log(`displayTemplates: Found ${templateIds.length} templates.`);
 
                     if (templateIds.length === 0) { templateListUl.innerHTML = '<li>Ingen maler lagret.</li>'; return; }
 
-                    templateListUl.innerHTML = ''; // Tøm listen
+                    templateListUl.innerHTML = '';
                     templateIds.sort((a, b) => (templates[a]?.config?.name || '').localeCompare(templates[b]?.config?.name || '')).forEach(id => {
                         const config = templates[id]?.config; if (!config?.name) return;
                         const li = document.createElement('li');
                         li.innerHTML = `<span class="item-name">${config.name}</span><div class="list-actions"><button data-template-id="${id}" class="btn-start-from-template info-button small-button">Start fra Mal</button><button data-template-id="${id}" class="btn-delete-template danger-button small-button">Slett</button></div>`; templateListUl.appendChild(li);
                     });
-                    // Legg til listeners på nytt etter å ha populert listen
                     templateListUl.querySelectorAll('.btn-start-from-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; const templateName = templates[templateId]?.config?.name ?? templateId; if (confirm(`Starte ny turnering fra malen "${templateName}"?`)) { setActiveTemplateId(templateId); clearActiveTournamentId(); window.location.href = `setup.html`; } }; });
                     templateListUl.querySelectorAll('.btn-delete-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; const templateName = templates[templateId]?.config?.name ?? templateId; if (confirm(`Slette malen "${templateName}"?\nDette kan ikke angres.`)) { deleteTemplate(templateId); displayTemplates(); } }; });
                 } catch (error) {
@@ -136,11 +132,11 @@
 
             // --- Display Tournaments ---
              async function displayTournaments() {
-                 console.log("displayTournaments: Starting..."); // DEBUG
-                 tournamentListUl.innerHTML = '<li>Laster turneringer...</li>'; // Vis laster-melding
+                 console.log("displayTournaments: Starting...");
+                 tournamentListUl.innerHTML = '<li>Laster turneringer...</li>';
                  try {
                      const tournaments = loadTournamentCollection();
-                     console.log("displayTournaments: loadTournamentCollection returned:", typeof tournaments, tournaments); // DEBUG
+                     console.log("displayTournaments: loadTournamentCollection returned:", typeof tournaments, tournaments);
 
                      if (typeof tournaments !== 'object' || tournaments === null) {
                          console.error("displayTournaments: tournaments is not a valid object!", tournaments);
@@ -153,7 +149,7 @@
                      console.log(`displayTournaments: Found ${tournamentIds.length} tournaments.`);
                      if (tournamentIds.length === 0) { tournamentListUl.innerHTML = '<li>Ingen turneringer lagret.</li>'; return; }
 
-                     tournamentListUl.innerHTML = ''; // Tøm listen
+                     tournamentListUl.innerHTML = '';
                      tournamentIds.sort((a, b) => (tournaments[b]?.config?.date || '').localeCompare(tournaments[a]?.config?.date || '') || b.localeCompare(a)).forEach(id => {
                          const state = tournaments[id]; if (!state?.config || !state.live) { console.warn(`Skipping invalid tournament data for ID: ${id}`); return; }
                          const li = document.createElement('li'); const status = state.live.status || 'unknown'; let statusText = 'Ukjent'; let canContinue = false; let isFinished = false; const levelText = `Nivå ${state.live.currentLevelIndex + 1}`;
@@ -170,7 +166,12 @@
              }
 
             // --- Button Listeners ---
-            newTournamentButton.addEventListener('click', () => { clearActiveTournamentId(); clearActiveTemplateId(); window.location.href = 'setup.html'; });
+            newTournamentButton.addEventListener('click', () => {
+                 console.log("New Tournament button clicked."); // DEBUG
+                 clearActiveTournamentId(); // Denne skal nå være importert
+                 clearActiveTemplateId();   // Denne skal nå være importert
+                 window.location.href = 'setup.html';
+            });
             clearAllButton.addEventListener('click', async () => {
                  if (confirm("ADVARSEL!\n\nSlette ALLE lagrede turneringer OG maler?\n\nDette inkluderer også en eventuell egendefinert logo.\n\nDette kan IKKE angres!")) {
                      try { const success = await clearAllData(); if(success) { displayTemplates(); displayTournaments(); alert("All data slettet."); } else { alert("Kunne ikke slette all data."); } }
