@@ -1,12 +1,10 @@
 // === tournament-logic.js ===
 // Kalkuleringer og spill-logikk
 
-// Fjernet: import { getPlayerNameById } from './tournament-ui.js'; // Feil import
-
 // === Eksporterte funksjoner ===
 
 export function getPlayerNameById(playerId, state) { // NY DEFINISJON + EKSPORT
-    const targetId = Number(playerId); // Sikre at vi sammenligner tall
+    const targetId = Number(playerId);
     if (!state || !state.live) return 'Ukjent (feil)';
     const player = state.live.players.find(p => p.id === targetId) || state.live.eliminatedPlayers.find(p => p.id === targetId);
     return player ? player.name : 'Ukjent Spiller';
@@ -40,7 +38,6 @@ export function calculatePrizes(state) {
     }
     pPot = Math.max(0, pPot);
     if (pPot <= 0 || places <= 0 || dist.length !== places) return prizes;
-
     let sum = 0;
     for (let i = 0; i < places; i++) {
         const pct = dist[i] || 0;
@@ -78,7 +75,7 @@ export function findNextPauseInfo(state) {
 export function logActivity(logArray, message) {
     if (!logArray) {
         console.warn("logActivity called without a valid logArray!");
-        logArray = []; // Forsøk å initialisere, men dette bør skje i main state
+        logArray = [];
     }
     const timestamp = new Date().toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     logArray.unshift({ timestamp, message });
