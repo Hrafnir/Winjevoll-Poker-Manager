@@ -74,11 +74,11 @@
             setActiveTemplateId,
             setActiveTournamentId,
             clearActiveTemplateId,
-            clearActiveTournamentId, // Fjernet duplikat
+            // clearActiveTournamentId, // Duplikat fjernet
             deleteTemplate,
             deleteTournamentState,
             clearAllData
-            // loadTournamentState // Trengs ikke her, vi leser collection direkte
+            // loadTournamentState // Trengs ikke her
         } from './js/storage.js'; // Pass på riktig sti
 
         // === 05a: Start Page Logic START ===
@@ -95,13 +95,25 @@
             }
 
             // --- Display Templates ---
-            function displayTemplates() {
-                try { // Legg inn try/catch for robusthet
-                    templateListUl.innerHTML = '';
+            async function displayTemplates() {
+                console.log("displayTemplates: Starting..."); // DEBUG
+                templateListUl.innerHTML = '<li>Laster maler...</li>'; // Vis laster-melding
+                try {
                     const templates = loadTemplateCollection();
+                    console.log("displayTemplates: loadTemplateCollection returned:", typeof templates, templates); // DEBUG
+
+                    if (typeof templates !== 'object' || templates === null) {
+                        console.error("displayTemplates: templates is not a valid object after load!", templates);
+                        templateListUl.innerHTML = '<li>Feil: Kunne ikke laste mal-data.</li>';
+                        return;
+                    }
+
                     const templateIds = Object.keys(templates);
-                    console.log(`Found ${templateIds.length} templates.`); // DEBUG
+                    console.log(`displayTemplates: Found ${templateIds.length} templates.`);
+
                     if (templateIds.length === 0) { templateListUl.innerHTML = '<li>Ingen maler lagret.</li>'; return; }
+
+                    templateListUl.innerHTML = ''; // Tøm listen
                     templateIds.sort((a, b) => (templates[a]?.config?.name || '').localeCompare(templates[b]?.config?.name || '')).forEach(id => {
                         const config = templates[id]?.config; if (!config?.name) return;
                         const li = document.createElement('li');
@@ -116,14 +128,25 @@
             }
 
             // --- Display Tournaments ---
-             function displayTournaments() {
-                 try { // Legg inn try/catch
-                     tournamentListUl.innerHTML = '';
+             async function displayTournaments() {
+                 console.log("displayTournaments: Starting..."); // DEBUG
+                 tournamentListUl.innerHTML = '<li>Laster turneringer...</li>'; // Vis laster-melding
+                 try {
                      const tournaments = loadTournamentCollection();
+                     console.log("displayTournaments: loadTournamentCollection returned:", typeof tournaments, tournaments); // DEBUG
+
+                     if (typeof tournaments !== 'object' || tournaments === null) {
+                         console.error("displayTournaments: tournaments is not a valid object after load!", tournaments);
+                         tournamentListUl.innerHTML = '<li>Feil: Kunne ikke laste turneringsdata.</li>';
+                         return;
+                     }
+
                      const tournamentIds = Object.keys(tournaments);
                      const activeTournamentId = getActiveTournamentId();
-                     console.log(`Found ${tournamentIds.length} tournaments.`); // DEBUG
+                     console.log(`displayTournaments: Found ${tournamentIds.length} tournaments.`);
                      if (tournamentIds.length === 0) { tournamentListUl.innerHTML = '<li>Ingen turneringer lagret.</li>'; return; }
+
+                     tournamentListUl.innerHTML = ''; // Tøm listen
                      tournamentIds.sort((a, b) => (tournaments[b]?.config?.date || '').localeCompare(tournaments[a]?.config?.date || '') || b.localeCompare(a)).forEach(id => {
                          const state = tournaments[id]; if (!state?.config || !state.live) { console.warn(`Skipping invalid tournament data for ID: ${id}`); return; }
                          const li = document.createElement('li'); const status = state.live.status || 'unknown'; let statusText = 'Ukjent'; let canContinue = false; let isFinished = false; const levelText = `Nivå ${state.live.currentLevelIndex + 1}`;
@@ -142,20 +165,14 @@
             newTournamentButton.addEventListener('click', () => { clearActiveTournamentId(); clearActiveTemplateId(); window.location.href = 'setup.html'; });
             clearAllButton.addEventListener('click', async () => {
                  if (confirm("ADVARSEL!\n\nSlette ALLE lagrede turneringer OG maler?\n\nDette inkluderer også en eventuell egendefinert logo.\n\nDette kan IKKE angres!")) {
-                     try {
-                         const success = await clearAllData();
-                         if(success) { displayTemplates(); displayTournaments(); alert("All data slettet."); }
-                         else { alert("Kunne ikke slette all data. Sjekk konsollen."); }
-                     } catch (error) {
-                          console.error("Error during clearAllData execution:", error);
-                          alert("En feil oppstod under sletting av data.");
-                     }
+                     try { const success = await clearAllData(); if(success) { displayTemplates(); displayTournaments(); alert("All data slettet."); } else { alert("Kunne ikke slette all data."); } }
+                     catch (error) { console.error("Error clearAllData:", error); alert("En feil oppstod under sletting."); }
                  }
              });
 
             // --- Initial Display ---
              console.log("Initial display calls starting...");
-            displayTemplates();
+            displayTemplates(); // Kall funksjonene
             displayTournaments();
              console.log("Initial display calls finished.");
         });
