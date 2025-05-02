@@ -74,11 +74,10 @@
             setActiveTemplateId,
             setActiveTournamentId,
             clearActiveTemplateId,
-            // clearActiveTournamentId, // Duplikat fjernet
+            // clearActiveTournamentId, // Duplikat fjernet i forrige runde
             deleteTemplate,
             deleteTournamentState,
             clearAllData
-            // loadTournamentState // Trengs ikke her
         } from './js/storage.js'; // Pass på riktig sti
 
         // === 05a: Start Page Logic START ===
@@ -99,16 +98,23 @@
                 console.log("displayTemplates: Starting..."); // DEBUG
                 templateListUl.innerHTML = '<li>Laster maler...</li>'; // Vis laster-melding
                 try {
+                    // Kall funksjonen og logg resultatet umiddelbart
                     const templates = loadTemplateCollection();
                     console.log("displayTemplates: loadTemplateCollection returned:", typeof templates, templates); // DEBUG
 
+                    // Robust sjekk: Sørg for at det er et objekt (ikke null)
                     if (typeof templates !== 'object' || templates === null) {
                         console.error("displayTemplates: templates is not a valid object after load!", templates);
-                        templateListUl.innerHTML = '<li>Feil: Kunne ikke laste mal-data.</li>';
-                        return;
+                        templateListUl.innerHTML = '<li>Feil: Kunne ikke laste mal-data korrekt.</li>';
+                        // Prøv å slette den potensielt korrupte nøkkelen manuelt hvis den finnes
+                        if (localStorage.getItem('winjevollTemplateCollection_v1') !== null) {
+                             console.warn("Attempting to remove potentially corrupt template collection from localStorage.");
+                             localStorage.removeItem('winjevollTemplateCollection_v1');
+                        }
+                        return; // Stopp videre kjøring for maler
                     }
 
-                    const templateIds = Object.keys(templates);
+                    const templateIds = Object.keys(templates); // Prøv keys
                     console.log(`displayTemplates: Found ${templateIds.length} templates.`);
 
                     if (templateIds.length === 0) { templateListUl.innerHTML = '<li>Ingen maler lagret.</li>'; return; }
@@ -119,11 +125,12 @@
                         const li = document.createElement('li');
                         li.innerHTML = `<span class="item-name">${config.name}</span><div class="list-actions"><button data-template-id="${id}" class="btn-start-from-template info-button small-button">Start fra Mal</button><button data-template-id="${id}" class="btn-delete-template danger-button small-button">Slett</button></div>`; templateListUl.appendChild(li);
                     });
+                    // Legg til listeners på nytt etter å ha populert listen
                     templateListUl.querySelectorAll('.btn-start-from-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; const templateName = templates[templateId]?.config?.name ?? templateId; if (confirm(`Starte ny turnering fra malen "${templateName}"?`)) { setActiveTemplateId(templateId); clearActiveTournamentId(); window.location.href = `setup.html`; } }; });
                     templateListUl.querySelectorAll('.btn-delete-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; const templateName = templates[templateId]?.config?.name ?? templateId; if (confirm(`Slette malen "${templateName}"?\nDette kan ikke angres.`)) { deleteTemplate(templateId); displayTemplates(); } }; });
                 } catch (error) {
-                    console.error("Error displaying templates:", error);
-                    templateListUl.innerHTML = '<li>Feil ved lasting av maler.</li>';
+                    console.error("Error in displayTemplates function:", error);
+                    templateListUl.innerHTML = '<li>Feil ved visning av maler.</li>';
                 }
             }
 
@@ -136,8 +143,8 @@
                      console.log("displayTournaments: loadTournamentCollection returned:", typeof tournaments, tournaments); // DEBUG
 
                      if (typeof tournaments !== 'object' || tournaments === null) {
-                         console.error("displayTournaments: tournaments is not a valid object after load!", tournaments);
-                         tournamentListUl.innerHTML = '<li>Feil: Kunne ikke laste turneringsdata.</li>';
+                         console.error("displayTournaments: tournaments is not a valid object!", tournaments);
+                         tournamentListUl.innerHTML = '<li>Feil: Kunne ikke laste turneringsdata korrekt.</li>';
                          return;
                      }
 
@@ -153,6 +160,7 @@
                          if (status === 'paused' || status === 'running') { statusText = `Pågående (${levelText})`; canContinue = true; } else if (status === 'finished') { statusText = `Fullført (${state.live.eliminatedPlayers?.length ?? '?'} sp.)`; isFinished = true; } else { statusText = `Ukjent: ${status}`; }
                          li.innerHTML = `<span class="item-name">${state.config.name} <small>(${state.config.date})</small></span> <span class="item-status">${statusText} ${id === activeTournamentId ? '<span class="active-indicator">*Aktiv*</span>': ''}</span><div class="list-actions">${canContinue ? `<button data-tournament-id="${id}" class="btn-load-tournament success-button small-button">Fortsett</button>` : ''} <button data-tournament-id="${id}" class="btn-view-tournament info-button small-button">Vis${isFinished ? ' Resultat':''}</button> <button data-tournament-id="${id}" class="btn-delete-tournament danger-button small-button">Slett</button></div>`; tournamentListUl.appendChild(li);
                      });
+                     // Legg til listeners på nytt
                      tournamentListUl.querySelectorAll('.btn-load-tournament, .btn-view-tournament').forEach(btn => { btn.onclick = (e) => { const tournamentId = e.target.dataset.tournamentId; setActiveTournamentId(tournamentId); clearActiveTemplateId(); window.location.href = `tournament.html`; }; });
                      tournamentListUl.querySelectorAll('.btn-delete-tournament').forEach(btn => { btn.onclick = (e) => { const tournamentId = e.target.dataset.tournamentId; const tournamentName = tournaments[tournamentId]?.config?.name ?? tournamentId; if (confirm(`Slette turneringen "${tournamentName}"?\nDette kan ikke angres.`)) { deleteTournamentState(tournamentId); displayTournaments(); } }; });
                  } catch (error) {
