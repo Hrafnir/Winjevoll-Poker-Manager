@@ -57,13 +57,32 @@
 
     <!-- === 04: FOOTER SECTION START === -->
     <footer>
-        <p>&copy; 2024 Winjevoll Pokerklubb</p>
+        <p>© 2024 Winjevoll Pokerklubb</p>
     </footer>
     <!-- === 04: FOOTER SECTION END === -->
 
     <!-- === 05: SCRIPTS SECTION START === -->
-    <script src="js/storage.js"></script>
-    <script>
+    <!-- Storage må lastes som modul FØR inline scriptet som bruker funksjonene -->
+    <!-- ENDRET: Satt type="module" på storage.js -->
+    <script type="module" src="js/storage.js"></script>
+    <!-- ENDRET: Satt type="module" på inline script og lagt til imports -->
+    <script type="module">
+        // Importer nødvendige funksjoner fra storage.js
+        import {
+            loadTemplateCollection,
+            loadTournamentCollection,
+            getActiveTournamentId,
+            getActiveTemplateId,
+            setActiveTemplateId,
+            setActiveTournamentId,
+            clearActiveTemplateId,
+            clearActiveTournamentId,
+            deleteTemplate,
+            deleteTournamentState,
+            clearAllData,
+            loadTournamentState // Trengs for å sjekke status
+        } from './js/storage.js'; // Viktig med ./js/ sti
+
         // === 05a: Start Page Logic START ===
         document.addEventListener('DOMContentLoaded', () => {
             const templateListUl = document.querySelector('#template-list-start ul');
@@ -80,8 +99,8 @@
                     const li = document.createElement('li');
                     li.innerHTML = `<span class="item-name">${config.name}</span><div class="list-actions"><button data-template-id="${id}" class="btn-start-from-template info-button small-button">Start fra Mal</button><button data-template-id="${id}" class="btn-delete-template danger-button small-button">Slett</button></div>`; templateListUl.appendChild(li);
                 });
-                templateListUl.querySelectorAll('.btn-start-from-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; if (confirm(`Starte ny turnering fra malen "${templates[templateId]?.config?.name ?? templateId}"?`)) { setActiveTemplateId(templateId); clearActiveTournamentId(); window.location.href = `setup.html`; } }; });
-                templateListUl.querySelectorAll('.btn-delete-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; if (confirm(`Slette malen "${templates[templateId]?.config?.name ?? templateId}"?\nDette kan ikke angres.`)) { deleteTemplate(templateId); displayTemplates(); } }; });
+                templateListUl.querySelectorAll('.btn-start-from-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; const templateName = templates[templateId]?.config?.name ?? templateId; if (confirm(`Starte ny turnering fra malen "${templateName}"?`)) { setActiveTemplateId(templateId); clearActiveTournamentId(); window.location.href = `setup.html`; } }; });
+                templateListUl.querySelectorAll('.btn-delete-template').forEach(btn => { btn.onclick = (e) => { const templateId = e.target.dataset.templateId; const templateName = templates[templateId]?.config?.name ?? templateId; if (confirm(`Slette malen "${templateName}"?\nDette kan ikke angres.`)) { deleteTemplate(templateId); displayTemplates(); } }; });
             }
 
             // --- Display Tournaments ---
@@ -89,18 +108,25 @@
                  tournamentListUl.innerHTML = ''; const tournaments = loadTournamentCollection(); const tournamentIds = Object.keys(tournaments); const activeTournamentId = getActiveTournamentId();
                  if (tournamentIds.length === 0) { tournamentListUl.innerHTML = '<li>Ingen turneringer lagret.</li>'; return; }
                  tournamentIds.sort((a, b) => (tournaments[b]?.config?.date || '').localeCompare(tournaments[a]?.config?.date || '') || b.localeCompare(a)).forEach(id => {
-                     const state = tournaments[id]; if (!state?.config || !state.live) return;
+                     const state = tournaments[id]; // Bruk loadTournamentState for konsistens? Nei, collection er nok her.
+                     if (!state?.config || !state.live) { console.warn(`Skipping invalid tournament data for ID: ${id}`); return; } // Bedre sjekk
                      const li = document.createElement('li'); const status = state.live.status || 'unknown'; let statusText = 'Ukjent'; let canContinue = false; let isFinished = false; const levelText = `Nivå ${state.live.currentLevelIndex + 1}`;
-                     if (status === 'paused' || status === 'running') { statusText = `Pågående (${levelText})`; canContinue = true; } else if (status === 'finished') { statusText = `Fullført (${state.live.eliminatedPlayers?.length ?? '?'} spillere)`; isFinished = true; } else { statusText = `Ukjent: ${status}`; }
+                     if (status === 'paused' || status === 'running') { statusText = `Pågående (${levelText})`; canContinue = true; } else if (status === 'finished') { statusText = `Fullført (${state.live.eliminatedPlayers?.length ?? '?'} sp.)`; isFinished = true; } else { statusText = `Ukjent: ${status}`; }
                      li.innerHTML = `<span class="item-name">${state.config.name} <small>(${state.config.date})</small></span> <span class="item-status">${statusText} ${id === activeTournamentId ? '<span class="active-indicator">*Aktiv*</span>': ''}</span><div class="list-actions">${canContinue ? `<button data-tournament-id="${id}" class="btn-load-tournament success-button small-button">Fortsett</button>` : ''} <button data-tournament-id="${id}" class="btn-view-tournament info-button small-button">Vis${isFinished ? ' Resultat':''}</button> <button data-tournament-id="${id}" class="btn-delete-tournament danger-button small-button">Slett</button></div>`; tournamentListUl.appendChild(li);
                  });
                  tournamentListUl.querySelectorAll('.btn-load-tournament, .btn-view-tournament').forEach(btn => { btn.onclick = (e) => { const tournamentId = e.target.dataset.tournamentId; setActiveTournamentId(tournamentId); clearActiveTemplateId(); window.location.href = `tournament.html`; }; });
-                 tournamentListUl.querySelectorAll('.btn-delete-tournament').forEach(btn => { btn.onclick = (e) => { const tournamentId = e.target.dataset.tournamentId; if (confirm(`Slette turneringen "${tournaments[tournamentId]?.config?.name ?? tournamentId}"?\nDette kan ikke angres.`)) { deleteTournamentState(tournamentId); displayTournaments(); } }; });
+                 tournamentListUl.querySelectorAll('.btn-delete-tournament').forEach(btn => { btn.onclick = (e) => { const tournamentId = e.target.dataset.tournamentId; const tournamentName = tournaments[tournamentId]?.config?.name ?? tournamentId; if (confirm(`Slette turneringen "${tournamentName}"?\nDette kan ikke angres.`)) { deleteTournamentState(tournamentId); displayTournaments(); } }; });
              }
 
             // --- Button Listeners ---
             newTournamentButton.addEventListener('click', () => { clearActiveTournamentId(); clearActiveTemplateId(); window.location.href = 'setup.html'; });
-            clearAllButton.addEventListener('click', () => { if (confirm("ADVARSEL!\n\nSlette ALLE lagrede turneringer OG maler?\n\nDette kan IKKE angres!")) { clearAllData(); displayTemplates(); displayTournaments(); alert("All data slettet."); } });
+            clearAllButton.addEventListener('click', async () => {
+                 if (confirm("ADVARSEL!\n\nSlette ALLE lagrede turneringer OG maler?\n\nDette inkluderer også en eventuell egendefinert logo.\n\nDette kan IKKE angres!")) {
+                     const success = await clearAllData();
+                     if(success) { displayTemplates(); displayTournaments(); alert("All data slettet."); }
+                     else { alert("Kunne ikke slette all data. Sjekk konsollen."); }
+                 }
+             });
 
             // --- Initial Display ---
             displayTemplates(); displayTournaments();
