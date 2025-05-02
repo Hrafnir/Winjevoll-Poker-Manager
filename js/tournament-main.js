@@ -95,8 +95,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === 04b: INITIAL THEME, LAYOUT, LOGO APPLICATION ===
-    async function applyInitialThemeLayoutAndLogo() { console.log("applyInitialThemeLayoutAndLogo: Starting..."); const bgColor = loadThemeBgColor(); const textColor = loadThemeTextColor(); const elementLayouts = loadElementLayouts(); let logoDataBlob = null; try { logoDataBlob = await loadLogoBlob(); } catch (err) { console.error("Error loading logo blob:", err); } console.log("applyInitialThemeLayoutAndLogo: Data fetched. Logo Blob:", logoDataBlob); applyThemeAndLayout(bgColor, textColor, elementLayouts, draggableElements); currentLogoBlob = logoDataBlob; updateMainLogoImage(currentLogoBlob); console.log("applyInitialThemeLayoutAndLogo: Done."); }
-    try { await applyInitialThemeLayoutAndLogo(); } catch (err) { console.error("CRITICAL Error during initial setup:", err); /* Fallback? */ }
+    async function applyInitialThemeLayoutAndLogo() {
+        console.log("applyInitialThemeLayoutAndLogo: Starting...");
+        let bgColor, textColor, elementLayouts, logoDataBlob; // Definer variabler utenfor try
+
+        try {
+            console.log("applyInitialThemeLayoutAndLogo: Loading theme colors...");
+            bgColor = loadThemeBgColor();
+            textColor = loadThemeTextColor();
+            console.log("applyInitialThemeLayoutAndLogo: Loading element layouts...");
+            elementLayouts = loadElementLayouts();
+            console.log("applyInitialThemeLayoutAndLogo: Loading logo blob (awaiting)...");
+            logoDataBlob = await loadLogoBlob();
+            console.log("applyInitialThemeLayoutAndLogo: Logo blob fetched:", logoDataBlob);
+
+            console.log("applyInitialThemeLayoutAndLogo: Applying theme and layout...");
+            // Send inn draggableElements her, da applyThemeAndLayout trenger den
+            applyThemeAndLayout(bgColor, textColor, elementLayouts, draggableElements);
+            console.log("applyInitialThemeLayoutAndLogo: Theme and layout applied.");
+
+            console.log("applyInitialThemeLayoutAndLogo: Setting global logo state...");
+            currentLogoBlob = logoDataBlob; // Sett global state FØR oppdatering
+            updateMainLogoImage(currentLogoBlob); // Oppdater hoved-img
+            console.log("applyInitialThemeLayoutAndLogo: Global logo state set.");
+
+        } catch (err) {
+            console.error("CRITICAL Error during applyInitialThemeLayoutAndLogo:", err);
+            // Prøv å sette en fallback UI hvis noe feilet katastrofalt
+            try {
+                applyThemeAndLayout(DEFAULT_THEME_BG, DEFAULT_THEME_TEXT, DEFAULT_ELEMENT_LAYOUTS, draggableElements);
+                updateMainLogoImage(null); // Vis placeholder
+                console.log("Applied fallback UI due to error.");
+            } catch (fallbackErr) {
+                 console.error("CRITICAL Error applying fallback UI:", fallbackErr);
+                 alert("Alvorlig feil under initialisering av UI. Siden fungerer kanskje ikke.");
+            }
+            return; // Stopp videre kjøring hvis det var en feil
+        }
+
+        console.log("applyInitialThemeLayoutAndLogo: Successfully finished.");
+    }
+    // Kaller funksjonen (som før)
+    try { await applyInitialThemeLayoutAndLogo(); }
+    catch (err) { console.error("CRITICAL Error calling applyInitialThemeLayoutAndLogo:", err); /* Fallback? */ }
     // === 04b: INITIAL THEME, LAYOUT, LOGO APPLICATION END ===
 
 
