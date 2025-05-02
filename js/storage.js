@@ -8,7 +8,41 @@ const DEFAULT_ELEMENT_LAYOUTS = { canvas: { height: 65 }, title:  { x: 5,  y: 2,
 // === 02: UTILITY FUNCTIONS (Load/Save localStorage) START ===
 export function loadItem(key) { return localStorage.getItem(key); }
 export function saveItem(key, value) { try { localStorage.setItem(key, value); } catch(e){ console.error(`Error saving item ${key}:`, e); if (e.name === 'QuotaExceededError') alert(`Lagringsplass full (${key})! Kunne ikke lagre.`); throw e; } }
-export function loadObject(key, defaultValue = {}) { try { const json = localStorage.getItem(key); if (json) { const parsed = JSON.parse(json); return typeof parsed === 'object' && parsed !== null ? parsed : defaultValue; } return defaultValue; } catch (e) { console.error(`Error loading object ${key}:`, e); localStorage.removeItem(key); return defaultValue; } }
+
+// ENDRET: Lagt til detaljert logging
+export function loadObject(key, defaultValue = {}) {
+    console.log(`loadObject called for key: ${key}`); // DEBUG
+    try {
+        const json = localStorage.getItem(key);
+        console.log(` -> localStorage.getItem("${key}") returned:`, typeof json, json); // DEBUG
+        if (json !== null && json !== undefined && json !== '') { // Mer robust sjekk
+            console.log(` -> Attempting JSON.parse...`); // DEBUG
+            const parsed = JSON.parse(json);
+            console.log(` -> JSON.parse result:`, typeof parsed, parsed); // DEBUG
+            if (typeof parsed === 'object' && parsed !== null) {
+                console.log(` -> Returning parsed object.`); // DEBUG
+                return parsed;
+            } else {
+                console.warn(` -> Parsed value is not a valid object (or is null). Returning default value.`); // DEBUG
+                return defaultValue;
+            }
+        } else {
+            console.log(` -> JSON string is null, undefined or empty. Returning default value.`); // DEBUG
+            return defaultValue;
+        }
+    } catch (e) {
+        console.error(`Error loading/parsing object ${key}:`, e); // DEBUG
+        try { // Prøv å fjerne korrupt data
+             localStorage.removeItem(key);
+             console.log(` -> Removed potentially corrupted item for key: ${key}`);
+        } catch (removeError) {
+             console.error(` -> Failed to remove corrupted item for key: ${key}`, removeError);
+        }
+        console.log(` -> Returning default value after error.`); // DEBUG
+        return defaultValue;
+    }
+}
+
 export function saveObject(key, object) { try { if (typeof object !== 'object' || object === null) throw new Error("Not an object"); localStorage.setItem(key, JSON.stringify(object)); } catch (e) { console.error(`Error saving object ${key}:`, e); if (e.name === 'QuotaExceededError') alert(`Lagringsplass full (${key})! Kunne ikke lagre objektet.`); else alert(`Ukjent lagringsfeil (${key})!`); throw e; } }
 // === 02: UTILITY FUNCTIONS (Load/Save localStorage) END ===
 
