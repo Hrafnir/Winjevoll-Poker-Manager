@@ -6,7 +6,6 @@ import { applyThemeAndLayout, updateMainLogoImage, updateSoundToggleVisuals, upd
 import { logActivity, calculateAverageStack, calculatePrizes, findNextPauseInfo } from './tournament-logic.js';
 import { startMainTimer, stopMainTimer, startRealTimeClock, stopRealTimeClock } from './tournament-timer.js';
 import { handleRebuy, handleEliminate, handleRestore, handleLateRegClick } from './tournament-player-actions.js';
-// NYTT: Importer table-funksjoner
 import { assignTableSeat, reassignAllSeats, checkAndHandleTableBreak, balanceTables } from './tournament-tables.js';
 // TODO: Importer modaler, sound, dragdrop når de er laget
 // import { openTournamentModal, openUiModal, openAddonModal, openEditPlayerModal, handleEditPlayerClick } from './tournament-modals.js';
@@ -19,14 +18,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log("Tournament MAIN DOM loaded.");
 
     // === 02: STATE VARIABLES START ===
+    // Disse er tilgjengelige for alle funksjoner definert innenfor DOMContentLoaded
     const currentTournamentId = getActiveTournamentId();
     let state = null;
     let soundsEnabled = loadSoundPreference();
-    let currentLogoBlob = null; // Holder den globale logo-blobben
+    let currentLogoBlob = null;
     let isModalOpen = false;
     let currentOpenModal = null;
     let isDragging = false; let draggedElement = null; let offsetX = 0; let offsetY = 0;
-    // UI Modal spesifikk state (kun relevant når modal er åpen)
+    // UI Modal spesifikk state
     let originalThemeBg = '', originalThemeText = '', originalElementLayouts = {}, originalSoundVolume = 0.7;
     let logoBlobInModal = null;
     let previewLogoObjectUrl = null;
@@ -35,75 +35,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === 03: DOM REFERENCES START ===
-    const currentTimeDisplay = document.getElementById('current-time');
-    const btnToggleSound = document.getElementById('btn-toggle-sound');
-    const btnEditTournamentSettings = document.getElementById('btn-edit-tournament-settings');
-    const btnEditUiSettings = document.getElementById('btn-edit-ui-settings');
-    const btnBackToMainLive = document.getElementById('btn-back-to-main-live');
-    const prizeDisplayLive = document.getElementById('prize-display-live');
-    const totalPotPrizeSpan = document.getElementById('total-pot');
-    const startPauseButton = document.getElementById('btn-start-pause');
-    const prevLevelButton = document.getElementById('btn-prev-level');
-    const nextLevelButton = document.getElementById('btn-next-level');
-    const adjustTimeMinusButton = document.getElementById('btn-adjust-time-minus');
-    const adjustTimePlusButton = document.getElementById('btn-adjust-time-plus');
-    const lateRegButton = document.getElementById('btn-late-reg');
-    const playerListUl = document.getElementById('player-list');
-    const eliminatedPlayerListUl = document.getElementById('eliminated-player-list');
-    const activePlayerCountSpan = document.getElementById('active-player-count');
-    const eliminatedPlayerCountSpan = document.getElementById('eliminated-player-count');
-    const tableBalanceInfo = document.getElementById('table-balance-info');
-    const btnForceSave = document.getElementById('btn-force-save');
-    const endTournamentButton = document.getElementById('btn-end-tournament');
-    const activityLogUl = document.getElementById('activity-log-list');
-    const headerRightControls = document.querySelector('.header-right-controls');
-    const liveCanvas = document.getElementById('live-canvas');
-    const titleElement = document.getElementById('title-element');
-    const timerElement = document.getElementById('timer-element');
-    const blindsElement = document.getElementById('blinds-element');
-    const logoElement = document.getElementById('logo-element');
-    const infoElement = document.getElementById('info-element');
-    const draggableElements = [titleElement, timerElement, blindsElement, logoElement, infoElement];
-    const nameDisplay = document.getElementById('tournament-name-display');
-    const timerDisplay = document.getElementById('timer-display');
-    const breakInfo = document.getElementById('break-info');
-    const currentLevelDisplay = document.getElementById('current-level');
-    const blindsDisplay = document.getElementById('blinds-display');
-    const logoImg = logoElement?.querySelector('.logo');
-    const nextBlindsDisplay = document.getElementById('next-blinds');
-    const infoNextPauseParagraph = document.getElementById('info-next-pause');
-    const averageStackDisplay = document.getElementById('average-stack');
-    const playersRemainingDisplay = document.getElementById('players-remaining');
-    const totalEntriesDisplay = document.getElementById('total-entries');
-    const lateRegStatusDisplay = document.getElementById('late-reg-status');
-    const tournamentSettingsModal = document.getElementById('tournament-settings-modal');
-    const uiSettingsModal = document.getElementById('ui-settings-modal');
-    const addonModal = document.getElementById('addon-modal');
-    const editPlayerModal = document.getElementById('edit-player-modal');
+    const currentTimeDisplay = document.getElementById('current-time'); const btnToggleSound = document.getElementById('btn-toggle-sound'); const btnEditTournamentSettings = document.getElementById('btn-edit-tournament-settings'); const btnEditUiSettings = document.getElementById('btn-edit-ui-settings'); const btnBackToMainLive = document.getElementById('btn-back-to-main-live'); const prizeDisplayLive = document.getElementById('prize-display-live'); const totalPotPrizeSpan = document.getElementById('total-pot'); const startPauseButton = document.getElementById('btn-start-pause'); const prevLevelButton = document.getElementById('btn-prev-level'); const nextLevelButton = document.getElementById('btn-next-level'); const adjustTimeMinusButton = document.getElementById('btn-adjust-time-minus'); const adjustTimePlusButton = document.getElementById('btn-adjust-time-plus'); const lateRegButton = document.getElementById('btn-late-reg'); const playerListUl = document.getElementById('player-list'); const eliminatedPlayerListUl = document.getElementById('eliminated-player-list'); const activePlayerCountSpan = document.getElementById('active-player-count'); const eliminatedPlayerCountSpan = document.getElementById('eliminated-player-count'); const tableBalanceInfo = document.getElementById('table-balance-info'); const btnForceSave = document.getElementById('btn-force-save'); const endTournamentButton = document.getElementById('btn-end-tournament'); const activityLogUl = document.getElementById('activity-log-list'); const headerRightControls = document.querySelector('.header-right-controls'); const liveCanvas = document.getElementById('live-canvas'); const titleElement = document.getElementById('title-element'); const timerElement = document.getElementById('timer-element'); const blindsElement = document.getElementById('blinds-element'); const logoElement = document.getElementById('logo-element'); const infoElement = document.getElementById('info-element'); const draggableElements = [titleElement, timerElement, blindsElement, logoElement, infoElement]; const nameDisplay = document.getElementById('tournament-name-display'); const timerDisplay = document.getElementById('timer-display'); const breakInfo = document.getElementById('break-info'); const currentLevelDisplay = document.getElementById('current-level'); const blindsDisplay = document.getElementById('blinds-display'); const logoImg = logoElement?.querySelector('.logo'); const nextBlindsDisplay = document.getElementById('next-blinds'); const infoNextPauseParagraph = document.getElementById('info-next-pause'); const averageStackDisplay = document.getElementById('average-stack'); const playersRemainingDisplay = document.getElementById('players-remaining'); const totalEntriesDisplay = document.getElementById('total-entries'); const lateRegStatusDisplay = document.getElementById('late-reg-status');
+    const tournamentSettingsModal = document.getElementById('tournament-settings-modal'); const uiSettingsModal = document.getElementById('ui-settings-modal'); const addonModal = document.getElementById('addon-modal'); const editPlayerModal = document.getElementById('edit-player-modal');
     const btnManageAddons = document.getElementById('btn-manage-addons');
     // === 03: DOM REFERENCES END ===
 
 
     // === 04: INITIALIZATION & VALIDATION START ===
-    const currentTournamentId = getActiveTournamentId(); // Henter fra localStorage
     console.log("Tournament Main: Retrieved active tournament ID:", currentTournamentId); // DEBUG
-
-    if (!currentTournamentId) {
-        alert("Ingen aktiv turnering valgt.");
-        console.error("No active tournament ID found in localStorage. Redirecting to index."); // DEBUG
-        window.location.href = 'index.html';
-        return; // Viktig å stoppe videre kjøring
-    }
-
+    if (!currentTournamentId) { alert("Ingen aktiv turnering valgt."); console.error("No active tournament ID found. Redirecting."); window.location.href = 'index.html'; return; }
     state = loadTournamentState(currentTournamentId);
-    if (!state || !state.config || !state.live || !state.config.blindLevels || state.config.blindLevels.length === 0) {
-        alert(`Kunne ikke laste gyldig turneringsdata (ID: ${currentTournamentId}). Går tilbake til startside.`);
-        console.error("Invalid or incomplete tournament state loaded:", state);
-        clearActiveTournamentId(); // Fjern den ugyldige IDen
-        window.location.href = 'index.html';
-        return; // Stopp videre kjøring
-    }
-    // Default live state values
+    if (!state || !state.config || !state.live || !state.config.blindLevels || state.config.blindLevels.length === 0) { alert(`Kunne ikke laste gyldig data (ID: ${currentTournamentId}).`); console.error("Invalid state loaded:", state); clearActiveTournamentId(); window.location.href = 'index.html'; return; }
     state.live = state.live || {}; state.live.status = state.live.status || 'paused'; state.live.currentLevelIndex = state.live.currentLevelIndex ?? 0; state.live.timeRemainingInLevel = state.live.timeRemainingInLevel ?? (state.config.blindLevels[state.live.currentLevelIndex]?.duration * 60 || 1200); state.live.isOnBreak = state.live.isOnBreak ?? false; state.live.timeRemainingInBreak = state.live.timeRemainingInBreak ?? 0; state.live.players = state.live.players || []; state.live.eliminatedPlayers = state.live.eliminatedPlayers || []; state.live.knockoutLog = state.live.knockoutLog || []; state.live.activityLog = state.live.activityLog || []; state.live.totalPot = state.live.totalPot ?? 0; state.live.totalEntries = state.live.totalEntries ?? 0; state.live.totalRebuys = state.live.totalRebuys ?? 0; state.live.totalAddons = state.live.totalAddons ?? 0;
     state.live.nextPlayerId = state.live.nextPlayerId || (Math.max(0, ...state.live.players.map(p => p.id), ...state.live.eliminatedPlayers.map(p => p.id)) + 1);
     console.log(`Loaded Tournament: ${state.config.name} (ID: ${currentTournamentId})`, state);
@@ -111,94 +53,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === 04b: INITIAL THEME, LAYOUT, LOGO APPLICATION ===
-    async function applyInitialThemeLayoutAndLogo() {
-        console.log("applyInitialThemeLayoutAndLogo: Starting...");
-        let bgColor, textColor, elementLayouts, logoDataBlob; // Definer variabler utenfor try
-
-        try {
-            console.log("applyInitialThemeLayoutAndLogo: Loading theme colors...");
-            bgColor = loadThemeBgColor();
-            textColor = loadThemeTextColor();
-            console.log("applyInitialThemeLayoutAndLogo: Loading element layouts...");
-            elementLayouts = loadElementLayouts();
-            console.log("applyInitialThemeLayoutAndLogo: Loading logo blob (awaiting)...");
-            logoDataBlob = await loadLogoBlob();
-            console.log("applyInitialThemeLayoutAndLogo: Logo blob fetched:", logoDataBlob);
-
-            console.log("applyInitialThemeLayoutAndLogo: Applying theme and layout...");
-            // Send inn draggableElements her, da applyThemeAndLayout trenger den
-            applyThemeAndLayout(bgColor, textColor, elementLayouts, draggableElements);
-            console.log("applyInitialThemeLayoutAndLogo: Theme and layout applied.");
-
-            console.log("applyInitialThemeLayoutAndLogo: Setting global logo state...");
-            currentLogoBlob = logoDataBlob; // Sett global state FØR oppdatering
-            updateMainLogoImage(currentLogoBlob); // Oppdater hoved-img
-            console.log("applyInitialThemeLayoutAndLogo: Global logo state set.");
-
-        } catch (err) {
-            console.error("CRITICAL Error during applyInitialThemeLayoutAndLogo:", err);
-            // Prøv å sette en fallback UI hvis noe feilet katastrofalt
-            try {
-                applyThemeAndLayout(DEFAULT_THEME_BG, DEFAULT_THEME_TEXT, DEFAULT_ELEMENT_LAYOUTS, draggableElements);
-                updateMainLogoImage(null); // Vis placeholder
-                console.log("Applied fallback UI due to error.");
-            } catch (fallbackErr) {
-                 console.error("CRITICAL Error applying fallback UI:", fallbackErr);
-                 alert("Alvorlig feil under initialisering av UI. Siden fungerer kanskje ikke.");
-            }
-            return; // Stopp videre kjøring hvis det var en feil
-        }
-
-        console.log("applyInitialThemeLayoutAndLogo: Successfully finished.");
-    }
-    // Kaller funksjonen (som før)
-    try { await applyInitialThemeLayoutAndLogo(); }
-    catch (err) { console.error("CRITICAL Error calling applyInitialThemeLayoutAndLogo:", err); /* Fallback? */ }
+    async function applyInitialThemeLayoutAndLogo() { console.log("applyInitialThemeLayoutAndLogo: Starting..."); const bgColor = loadThemeBgColor(); const textColor = loadThemeTextColor(); const elementLayouts = loadElementLayouts(); let logoDataBlob = null; try { logoDataBlob = await loadLogoBlob(); } catch (err) { console.error("Error loading logo blob:", err); } console.log("applyInitialThemeLayoutAndLogo: Data fetched. Logo Blob:", logoDataBlob); applyThemeAndLayout(bgColor, textColor, elementLayouts, draggableElements); currentLogoBlob = logoDataBlob; updateMainLogoImage(currentLogoBlob); console.log("applyInitialThemeLayoutAndLogo: Done."); }
+    try { await applyInitialThemeLayoutAndLogo(); } catch (err) { console.error("CRITICAL Error during initial setup:", err); /* Fallback? */ }
     // === 04b: INITIAL THEME, LAYOUT, LOGO APPLICATION END ===
 
 
     // === Midlertidige Handlers / Funksjoner som ennå ikke er flyttet ===
     // TODO: Flytt disse til respektive moduler
-    function handleAdjustLevel(delta) {
-         console.log("TEMP handleAdjustLevel", delta);
-         if (state.live.status === 'finished') return;
-         const newIdx = state.live.currentLevelIndex + delta;
-         if (newIdx >= 0 && newIdx < state.config.blindLevels.length) {
-             const oldLvlNum = state.config.blindLevels[state.live.currentLevelIndex]?.level || '?';
-             const newLvl = state.config.blindLevels[newIdx];
-             if (!confirm(`Endre til Nivå ${newLvl.level} (${formatBlindsHTML(newLvl)})?\nKlokken nullstilles.`)) return;
-             state.live.currentLevelIndex = newIdx;
-             state.live.timeRemainingInLevel = newLvl.duration * 60;
-             state.live.isOnBreak = false;
-             state.live.timeRemainingInBreak = 0;
-             logActivity(state.live.activityLog, `Nivå manuelt endret: ${oldLvlNum} -> ${newLvl.level}.`);
-             // playSound('NEW_LEVEL'); // TODO: Kall via callback
-             updateUI(state);
-             saveTournamentState(currentTournamentId, state);
-         } else {
-             alert("Kan ikke gå til nivået.");
-         }
-     }
-    function handleAdjustTime(deltaSeconds) {
-         console.log("TEMP handleAdjustTime", deltaSeconds);
-         if (state.live.status === 'finished') return;
-         let key = state.live.isOnBreak ? 'timeRemainingInBreak' : 'timeRemainingInLevel';
-         let maxT = Infinity;
-         if (!state.live.isOnBreak) { const lvl = state.config.blindLevels[state.live.currentLevelIndex]; if (lvl) maxT = lvl.duration * 60; }
-         state.live[key] = Math.max(0, Math.min(state.live[key] + deltaSeconds, maxT));
-         logActivity(state.live.activityLog, `Tid justert ${deltaSeconds > 0 ? '+' : ''}${deltaSeconds / 60} min.`);
-         updateUI(state);
-         saveTournamentState(currentTournamentId, state);
+    function handleAdjustLevel(delta) { console.log("TEMP handleAdjustLevel", delta); if (state.live.status === 'finished') return; const newIdx = state.live.currentLevelIndex + delta; if (newIdx >= 0 && newIdx < state.config.blindLevels.length) { const oldLvlNum = state.config.blindLevels[state.live.currentLevelIndex]?.level || '?'; const newLvl = state.config.blindLevels[newIdx]; if (!confirm(`Endre til Nivå ${newLvl.level} (${formatBlindsHTML(newLvl)})?\nKlokken nullstilles.`)) return; state.live.currentLevelIndex = newIdx; state.live.timeRemainingInLevel = newLvl.duration * 60; state.live.isOnBreak = false; state.live.timeRemainingInBreak = 0; logActivity(state.live.activityLog, `Nivå manuelt endret: ${oldLvlNum} -> ${newLvl.level}.`); /* playSound('NEW_LEVEL'); */ updateUI(state); saveTournamentState(currentTournamentId, state); } else { alert("Kan ikke gå til nivået."); } }
+    function handleAdjustTime(deltaSeconds) { console.log("TEMP handleAdjustTime", deltaSeconds); if (state.live.status === 'finished') return; let key = state.live.isOnBreak ? 'timeRemainingInBreak' : 'timeRemainingInLevel'; let maxT = Infinity; if (!state.live.isOnBreak) { const lvl = state.config.blindLevels[state.live.currentLevelIndex]; if (lvl) maxT = lvl.duration * 60; } state.live[key] = Math.max(0, Math.min(state.live[key] + deltaSeconds, maxT)); logActivity(state.live.activityLog, `Tid justert ${deltaSeconds > 0 ? '+' : ''}${deltaSeconds / 60} min.`); updateUI(state); saveTournamentState(currentTournamentId, state); }
+    // ENDRET: Fjernet _state og _tournamentId argumenter
+    async function finishTournament() {
+        if (state.live.status === 'finished') return; // Bruker global state
+        console.log("Finishing T...");
+        logActivity(state.live.activityLog,"Turnering fullføres.");
+        // playSound('TOURNAMENT_END'); // TODO
+        stopMainTimer();
+        stopRealTimeClock(); // TODO: Importer/definer
+        state.live.status='finished'; state.live.isOnBreak=false; state.live.timeRemainingInLevel=0; state.live.timeRemainingInBreak=0;
+        if(state.live.players.length===1){const w=state.live.players[0];w.place=1;state.live.eliminatedPlayers.push(w);state.live.players.splice(0,1);logActivity(state.live.activityLog,`Vinner: ${w.name}!`);}
+        else if(state.live.players.length>1){logActivity(state.live.activityLog,`Fullført med ${state.live.players.length} spillere igjen.`); state.live.players.forEach(p=>{p.eliminated=true;p.place=null;state.live.eliminatedPlayers.push(p);}); state.live.players=[];}
+        else{logActivity(state.live.activityLog,`Fullført uten aktive spillere.`);}
+        state.live.eliminatedPlayers.sort((a,b)=>(a.place??Infinity)-(b.place??Infinity));
+        updateUI(state);
+        saveTournamentState(currentTournamentId, state); // Bruker global currentTournamentId
+        alert("Turneringen er fullført!");
     }
-    async function finishTournament(_state = state, _tournamentId = currentTournamentId) { if (_state.live.status === 'finished') return; console.log("Finishing T..."); logActivity(_state.live.activityLog,"Turnering fullføres."); /* playSound('TOURNAMENT_END'); */ stopMainTimer(); stopRealTimeClock(); _state.live.status='finished'; _state.live.isOnBreak=false; _state.live.timeRemainingInLevel=0; _state.live.timeRemainingInBreak=0; if(_state.live.players.length===1){const w=_state.live.players[0];w.place=1;_state.live.eliminatedPlayers.push(w);_state.live.players.splice(0,1);logActivity(_state.live.activityLog,`Vinner: ${w.name}!`);} else if(_state.live.players.length>1){logActivity(_state.live.activityLog,`Fullført med ${_state.live.players.length} spillere igjen.`); _state.live.players.forEach(p=>{p.eliminated=true;p.place=null;_state.live.eliminatedPlayers.push(p);}); _state.live.players=[];} else{logActivity(_state.live.activityLog,`Fullført uten aktive spillere.`);} _state.live.eliminatedPlayers.sort((a,b)=>(a.place??Infinity)-(b.place??Infinity)); updateUI(_state); saveTournamentState(_tournamentId,_state); alert("Turneringen er fullført!"); }
-    function handleEndTournament() { console.log("handleEndTournament called."); finishTournament(state, currentTournamentId); }
+    function handleEndTournament() { console.log("handleEndTournament called."); finishTournament(); } // Kaller uten args
     function handleForceSave() { console.log("handleForceSave"); saveTournamentState(currentTournamentId, state); }
     function handleBackToMain() { console.log("handleBackToMain"); if (state && state.live.status !== 'finished') {saveTournamentState(currentTournamentId, state);} window.location.href = 'index.html';}
     function openTournamentModal() { console.log("TEMP openTournamentModal"); /* ... logikk ... */ }
     function openUiModal() { console.log("TEMP openUiModal"); /* ... logikk ... */ }
     function openAddonModal() { console.log("TEMP openAddonModal"); /* ... logikk ... */ }
     function handleEditPlayerClick(event) { const pId = Number(event?.target?.dataset?.playerId); console.log("TEMP handleEditPlayerClick", pId); /* ... logikk for å åpne edit modal ... */ }
-    function startDrag(event, element) { console.log("TEMP startDrag"); /* Drag logic - skal flyttes */ }
+    function startDrag(event, element) { console.log("TEMP startDrag"); /* ... logikk ... */ }
     // === Slutt Midlertidige Handlers ===
 
 
@@ -207,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateUI: () => updateUI(state),
         saveState: () => saveTournamentState(currentTournamentId, state),
         playSound: null, // TODO: playSound,
-        finishTournament: () => finishTournament(state, currentTournamentId),
+        finishTournament: finishTournament, // Send inn referanse til lokal finishTournament
         logActivity: (msg) => logActivity(state.live.activityLog, msg),
         checkAndHandleTableBreak: () => checkAndHandleTableBreak(state, currentTournamentId, mainCallbacks),
         assignTableSeat: (player, excludeTableNum) => assignTableSeat(player, state, excludeTableNum)
@@ -217,14 +105,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // === EVENT LISTENER ATTACHMENT (General) ===
     startPauseButton?.addEventListener('click', () => { console.log("Start/Pause Button Clicked. Current Status:", state.live.status); if (state.live.status === 'paused') { state.live.status = 'running'; startMainTimer(state, currentTournamentId, mainCallbacks); logActivity(state.live.activityLog, "Klokke startet."); updateUI(state); } else if (state.live.status === 'running') { state.live.status = 'paused'; stopMainTimer(); logActivity(state.live.activityLog, "Klokke pauset."); saveTournamentState(currentTournamentId, state); updateUI(state); } });
-    prevLevelButton?.addEventListener('click', () => handleAdjustLevel(-1)); // Bruker TEMP
-    nextLevelButton?.addEventListener('click', () => handleAdjustLevel(1)); // Bruker TEMP
-    adjustTimeMinusButton?.addEventListener('click', () => handleAdjustTime(-60)); // Bruker TEMP
-    adjustTimePlusButton?.addEventListener('click', () => handleAdjustTime(60)); // Bruker TEMP
-    lateRegButton?.addEventListener('click', () => handleLateRegClick(state, currentTournamentId)); // Bruker importert
-    endTournamentButton?.addEventListener('click', handleEndTournament); // Bruker lokal
-    btnForceSave?.addEventListener('click', handleForceSave); // Bruker lokal
-    btnBackToMainLive?.addEventListener('click', handleBackToMain); // Bruker lokal
+    prevLevelButton?.addEventListener('click', () => handleAdjustLevel(-1));
+    nextLevelButton?.addEventListener('click', () => handleAdjustLevel(1));
+    adjustTimeMinusButton?.addEventListener('click', () => handleAdjustTime(-60));
+    adjustTimePlusButton?.addEventListener('click', () => handleAdjustTime(60));
+    lateRegButton?.addEventListener('click', () => handleLateRegClick(state, currentTournamentId, mainCallbacks)); // Send callbacks
+    endTournamentButton?.addEventListener('click', handleEndTournament);
+    btnForceSave?.addEventListener('click', handleForceSave);
+    btnBackToMainLive?.addEventListener('click', handleBackToMain);
     btnToggleSound?.addEventListener('click', () => { console.log("btnToggleSound clicked."); soundsEnabled = !soundsEnabled; saveSoundPreference(soundsEnabled); updateSoundToggleVisuals(soundsEnabled); logActivity(state.live.activityLog, `Lyd ${soundsEnabled ? 'PÅ' : 'AV'}.`); });
     btnEditTournamentSettings?.addEventListener('click', openTournamentModal); // Bruker TEMP
     btnEditUiSettings?.addEventListener('click', openUiModal); // Bruker TEMP
@@ -239,12 +127,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const action = Array.from(button.classList).find(cls => cls.startsWith('btn-')); if (!action) return;
             const playerId = Number(button.dataset.playerId); if (!playerId || isNaN(playerId)) { console.warn("Could not get valid player ID", button); return; }
             console.log(`Delegated action: ${action} for player ID: ${playerId}`);
-            // Send med callbacks til action handlers
+            // Send med mainCallbacks til alle actions
             switch (action) {
-                case 'btn-edit-player': handleEditPlayerClick(event); break; // Bruker TEMP
-                case 'btn-rebuy': handleRebuy(event, state, currentTournamentId, mainCallbacks); break; // Bruker importert
-                case 'btn-eliminate': handleEliminate(event, state, currentTournamentId, mainCallbacks); break; // Bruker importert
-                case 'btn-restore': handleRestore(event, state, currentTournamentId, mainCallbacks); break; // Bruker importert
+                case 'btn-edit-player': handleEditPlayerClick(event); break;
+                case 'btn-rebuy': handleRebuy(event, state, currentTournamentId, mainCallbacks); break;
+                case 'btn-eliminate': handleEliminate(event, state, currentTournamentId, mainCallbacks); break;
+                case 'btn-restore': handleRestore(event, state, currentTournamentId, mainCallbacks); break;
             }
         };
         playerListUl?.addEventListener('click', handleActions);
