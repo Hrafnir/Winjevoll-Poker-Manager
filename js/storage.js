@@ -113,7 +113,15 @@ export function saveSoundVolume(volume) { /* ... */ } export function loadSoundV
 // === 06g: SOUND VOLUME FUNCTIONS END ===
 
 // === 07: UNIQUE ID GENERATOR SECTION START ===
-export function generateUniqueId(prefix = 'id') { /* ... */ }
+// ENDRET: Mer robust ID-generering
+export function generateUniqueId(prefix = 'id') {
+    const timestamp = Date.now(); // Bruk timestamp som tall
+    // Generer en lengre tilfeldig streng for å redusere kollisjonsfare
+    const randomPart = Math.random().toString().substring(2, 15); // Ta en lengre del
+    const newId = `${prefix}-${timestamp}-${randomPart}`;
+    console.log("Generated ID:", newId); // DEBUG: Logg alltid IDen som genereres
+    return newId;
+}
 // === 07: UNIQUE ID GENERATOR SECTION END ===
 
 // === FINAL SCRIPT PARSE CHECK START ===
