@@ -8,7 +8,8 @@ import {
     saveTemplate,
     generateUniqueId,
     saveTournamentState,
-    setActiveTournamentId
+    setActiveTournamentId,
+    getActiveTournamentId // FIKS: Lagt til denne
 } from './storage.js';
 
 // NYTT: Importer logActivity
