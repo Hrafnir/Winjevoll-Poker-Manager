@@ -85,9 +85,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === 04: INITIALIZATION & VALIDATION START ===
-    if (!currentTournamentId) { alert("Ingen aktiv turnering valgt."); window.location.href = 'index.html'; return; }
+    const currentTournamentId = getActiveTournamentId(); // Henter fra localStorage
+    console.log("Tournament Main: Retrieved active tournament ID:", currentTournamentId); // DEBUG
+
+    if (!currentTournamentId) {
+        alert("Ingen aktiv turnering valgt.");
+        console.error("No active tournament ID found in localStorage. Redirecting to index."); // DEBUG
+        window.location.href = 'index.html';
+        return; // Viktig å stoppe videre kjøring
+    }
+
     state = loadTournamentState(currentTournamentId);
-    if (!state || !state.config || !state.live || !state.config.blindLevels || state.config.blindLevels.length === 0) { alert(`Kunne ikke laste gyldig turneringsdata (ID: ${currentTournamentId}).`); console.error("Invalid tournament state loaded:", state); clearActiveTournamentId(); window.location.href = 'index.html'; return; }
+    if (!state || !state.config || !state.live || !state.config.blindLevels || state.config.blindLevels.length === 0) {
+        alert(`Kunne ikke laste gyldig turneringsdata (ID: ${currentTournamentId}). Går tilbake til startside.`);
+        console.error("Invalid or incomplete tournament state loaded:", state);
+        clearActiveTournamentId(); // Fjern den ugyldige IDen
+        window.location.href = 'index.html';
+        return; // Stopp videre kjøring
+    }
+    // Default live state values
     state.live = state.live || {}; state.live.status = state.live.status || 'paused'; state.live.currentLevelIndex = state.live.currentLevelIndex ?? 0; state.live.timeRemainingInLevel = state.live.timeRemainingInLevel ?? (state.config.blindLevels[state.live.currentLevelIndex]?.duration * 60 || 1200); state.live.isOnBreak = state.live.isOnBreak ?? false; state.live.timeRemainingInBreak = state.live.timeRemainingInBreak ?? 0; state.live.players = state.live.players || []; state.live.eliminatedPlayers = state.live.eliminatedPlayers || []; state.live.knockoutLog = state.live.knockoutLog || []; state.live.activityLog = state.live.activityLog || []; state.live.totalPot = state.live.totalPot ?? 0; state.live.totalEntries = state.live.totalEntries ?? 0; state.live.totalRebuys = state.live.totalRebuys ?? 0; state.live.totalAddons = state.live.totalAddons ?? 0;
     state.live.nextPlayerId = state.live.nextPlayerId || (Math.max(0, ...state.live.players.map(p => p.id), ...state.live.eliminatedPlayers.map(p => p.id)) + 1);
     console.log(`Loaded Tournament: ${state.config.name} (ID: ${currentTournamentId})`, state);
