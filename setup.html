@@ -74,7 +74,8 @@
             <!-- === 03g: PLAYER INPUT SECTION START === -->
             <h2>Spillere (Valgfritt nå)</h2>
             <label for="player-names">Registrer Spillere (ett navn per linje):</label>
-            <textarea id="player-names" rows="8" placeholder="Ola Nordmann&#10;Kari Nordmann"></textarea><small>Kan også legges til live.</small>
+            <textarea id="player-names" rows="8" placeholder="Ola Nordmann
+Kari Nordmann"></textarea><small>Kan også legges til live.</small>
             <!-- === 03g: PLAYER INPUT SECTION END === -->
 
             <!-- === 03h: ACTION BUTTONS SECTION START === -->
@@ -85,11 +86,13 @@
     <!-- === 03: MAIN CONTENT SECTION END === -->
 
     <!-- === 04: FOOTER SECTION START === -->
-    <footer><p>&copy; 2024 Winjevoll Pokerklubb</p></footer>
+    <footer><p>© 2024 Winjevoll Pokerklubb</p></footer>
     <!-- === 04: FOOTER SECTION END === -->
 
     <!-- === 05: SCRIPTS SECTION START === -->
-    <script src="js/storage.js"></script><script src="js/setup.js"></script>
+    <!-- ENDRET: Lagt til type="module" -->
+    <script type="module" src="js/storage.js"></script>
+    <script type="module" src="js/setup.js"></script>
     <!-- === 05: SCRIPTS SECTION END === -->
 </body>
 </html>
