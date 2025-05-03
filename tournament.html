@@ -81,352 +81,125 @@
     </footer>
     <!-- === 04: FOOTER SECTION END === -->
 
-    <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS START === -->
+    <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS START (Blinds/Premier) === -->
     <div id="tournament-settings-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button" id="close-tournament-settings-modal-button" title="Lukk">×</span>
             <h2>Rediger Turneringsregler</h2>
-            <p>Denne funksjonaliteten er ikke implementert ennå.</p>
-             <!-- TODO: Innhold for redigering av blinds, premier etc. -->
+            <p><small>Endringer i premier og fremtidige blindnivåer er mulig.</small></p>
+            <hr>
+            <!-- === Premie Seksjon === -->
+            <div id="edit-prizes-section">
+                <h3>Premier</h3>
+                <div id="edit-prize-validation-error" class="warning hidden"></div>
+                <label for="edit-paid-places">Antall Betalte Plasseringer:</label>
+                <input type="number" id="edit-paid-places" value="1" min="1" required style="max-width: 100px;">
+                <label for="edit-prize-distribution">Premiefordeling (% per plass, topp først, komma-separert):</label>
+                <textarea id="edit-prize-distribution" placeholder="Eks: 50, 30, 20" rows="2"></textarea>
+                <button type="button" id="btn-generate-payout-modal">Generer Standard Fordeling</button>
+                <small>Antall % må matche Antall Betalte. Sum = 100%.</small>
+            </div>
+            <hr>
+            <!-- === Blindstruktur Seksjon === -->
+            <div id="edit-blinds-section">
+                <h3>Blindstruktur</h3>
+                <div id="edit-blinds-validation-error" class="warning hidden"></div>
+                <small>Merk: Nivåer som allerede er spilt (markert med <small>(Spilt)</small>) kan ikke endres.</small>
+                <div class="blind-table-container" style="max-height: 40vh;">
+                    <table id="edit-blind-structure-table">
+                        <thead>
+                            <tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet (min)</th><th>Pause Etter (min)</th><th></th></tr>
+                        </thead>
+                        <tbody id="edit-blind-structure-body"></tbody>
+                    </table>
+                </div>
+                <button type="button" id="btn-add-level-modal">Legg til Nivå</button>
+                <button type="button" id="btn-clear-blinds-modal" class="warning-button small-button">Tøm Struktur (kun fremtidige)</button>
+            </div>
+            <!-- === Modal Handlinger === -->
             <div class="modal-actions">
-                <button id="btn-save-tournament-settings" class="success-button" disabled>Lagre Regler</button>
+                <button id="btn-save-tournament-settings" class="success-button">Lagre Regelendringer</button>
                 <button id="btn-cancel-tournament-settings" type="button">Avbryt</button>
             </div>
         </div>
     </div>
     <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS END === -->
 
-    <!-- === 05b: MODAL FOR UI SETTINGS START (MED NYE KONTROLLER) === -->
+    <!-- === 05b: MODAL FOR UI SETTINGS START === -->
     <div id="ui-settings-modal" class="modal hidden">
-        <div class="modal-content">
+         <div class="modal-content">
             <span class="close-button" id="close-ui-settings-modal-button" title="Lukk">×</span>
             <h2>Rediger Utseende</h2>
-
-            <!-- === Tema Seksjon (Oppdatert) === -->
             <div id="edit-theme-section">
                 <h3>Fargetema</h3>
-
-                <!-- Color Presets -->
                 <div style="margin-bottom: 20px;">
                     <label for="theme-preset-select">Forhåndsvalg:</label>
-                    <select id="theme-preset-select" style="max-width: 250px;">
-                        <option value="">-- Velg forhåndsvalg --</option>
-                        <!-- Options added by JS -->
-                    </select>
+                    <select id="theme-preset-select" style="max-width: 250px;"><option value="">-- Velg forhåndsvalg --</option></select>
                 </div>
-
                 <div class="theme-editor-row">
                     <div class="theme-editor-color">
                         <h5>Bakgrunnsfarge</h5>
-                        <!-- HSL Controls -->
-                        <div class="control-group">
-                            <label for="bg-color-hue">H</label>
-                            <input type="range" id="bg-color-hue" min="0" max="360" step="1" class="hue-slider">
-                            <input type="number" id="bg-color-hue-value" min="0" max="360" step="1" class="color-value-input">°
-                        </div>
-                        <div class="control-group">
-                            <label for="bg-color-saturation">S</label>
-                            <input type="range" id="bg-color-saturation" min="0" max="100" step="1">
-                            <input type="number" id="bg-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%
-                        </div>
-                         <div class="control-group">
-                            <label for="bg-color-lightness">L</label>
-                            <input type="range" id="bg-color-lightness" min="0" max="100" step="1">
-                            <input type="number" id="bg-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%
-                        </div>
-                         <hr style="margin: 8px 0;">
-                         <!-- RGB Controls -->
-                        <small style="margin-bottom: 5px; display:inline-block;">RGB:</small>
-                        <div class="control-group">
-                            <label for="bg-color-red">R</label>
-                            <input type="range" id="bg-color-red" min="0" max="255" step="1">
-                            <input type="number" id="bg-color-red-value" min="0" max="255" step="1" class="color-value-input">
-                        </div>
-                        <div class="control-group">
-                            <label for="bg-color-green">G</label>
-                            <input type="range" id="bg-color-green" min="0" max="255" step="1">
-                            <input type="number" id="bg-color-green-value" min="0" max="255" step="1" class="color-value-input">
-                        </div>
-                        <div class="control-group">
-                            <label for="bg-color-blue">B</label>
-                            <input type="range" id="bg-color-blue" min="0" max="255" step="1">
-                            <input type="number" id="bg-color-blue-value" min="0" max="255" step="1" class="color-value-input">
-                        </div>
+                        <div class="control-group"><label for="bg-color-hue">H</label><input type="range" id="bg-color-hue" min="0" max="360" step="1" class="hue-slider"><input type="number" id="bg-color-hue-value" min="0" max="360" step="1" class="color-value-input">°</div>
+                        <div class="control-group"><label for="bg-color-saturation">S</label><input type="range" id="bg-color-saturation" min="0" max="100" step="1"><input type="number" id="bg-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%</div>
+                        <div class="control-group"><label for="bg-color-lightness">L</label><input type="range" id="bg-color-lightness" min="0" max="100" step="1"><input type="number" id="bg-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%</div>
+                        <hr style="margin: 8px 0;"><small style="margin-bottom: 5px; display:inline-block;">RGB:</small>
+                        <div class="control-group"><label for="bg-color-red">R</label><input type="range" id="bg-color-red" min="0" max="255" step="1"><input type="number" id="bg-color-red-value" min="0" max="255" step="1" class="color-value-input"></div>
+                        <div class="control-group"><label for="bg-color-green">G</label><input type="range" id="bg-color-green" min="0" max="255" step="1"><input type="number" id="bg-color-green-value" min="0" max="255" step="1" class="color-value-input"></div>
+                        <div class="control-group"><label for="bg-color-blue">B</label><input type="range" id="bg-color-blue" min="0" max="255" step="1"><input type="number" id="bg-color-blue-value" min="0" max="255" step="1" class="color-value-input"></div>
                     </div>
-                    <div class="theme-editor-preview">
-                        <div id="bg-color-preview" class="color-preview-box">BG</div>
-                    </div>
+                    <div class="theme-editor-preview"><div id="bg-color-preview" class="color-preview-box">BG</div></div>
                 </div>
                 <hr style="border-style: solid; margin: 10px 0;">
                 <div class="theme-editor-row">
                     <div class="theme-editor-color">
                         <h5>Tekstfarge</h5>
-                         <!-- HSL Controls -->
-                         <div class="control-group">
-                             <label for="text-color-hue">H</label>
-                             <input type="range" id="text-color-hue" min="0" max="360" step="1" class="hue-slider">
-                             <input type="number" id="text-color-hue-value" min="0" max="360" step="1" class="color-value-input">°
-                         </div>
-                         <div class="control-group">
-                             <label for="text-color-saturation">S</label>
-                             <input type="range" id="text-color-saturation" min="0" max="100" step="1">
-                             <input type="number" id="text-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%
-                         </div>
-                          <div class="control-group">
-                             <label for="text-color-lightness">L</label>
-                             <input type="range" id="text-color-lightness" min="0" max="100" step="1">
-                             <input type="number" id="text-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%
-                         </div>
-                          <hr style="margin: 8px 0;">
-                          <!-- RGB Controls -->
-                         <small style="margin-bottom: 5px; display:inline-block;">RGB:</small>
-                        <div class="control-group">
-                            <label for="text-color-red">R</label>
-                            <input type="range" id="text-color-red" min="0" max="255" step="1">
-                            <input type="number" id="text-color-red-value" min="0" max="255" step="1" class="color-value-input">
-                        </div>
-                         <div class="control-group">
-                            <label for="text-color-green">G</label>
-                            <input type="range" id="text-color-green" min="0" max="255" step="1">
-                            <input type="number" id="text-color-green-value" min="0" max="255" step="1" class="color-value-input">
-                        </div>
-                         <div class="control-group">
-                            <label for="text-color-blue">B</label>
-                            <input type="range" id="text-color-blue" min="0" max="255" step="1">
-                            <input type="number" id="text-color-blue-value" min="0" max="255" step="1" class="color-value-input">
-                        </div>
+                        <div class="control-group"><label for="text-color-hue">H</label><input type="range" id="text-color-hue" min="0" max="360" step="1" class="hue-slider"><input type="number" id="text-color-hue-value" min="0" max="360" step="1" class="color-value-input">°</div>
+                        <div class="control-group"><label for="text-color-saturation">S</label><input type="range" id="text-color-saturation" min="0" max="100" step="1"><input type="number" id="text-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%</div>
+                        <div class="control-group"><label for="text-color-lightness">L</label><input type="range" id="text-color-lightness" min="0" max="100" step="1"><input type="number" id="text-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%</div>
+                        <hr style="margin: 8px 0;"><small style="margin-bottom: 5px; display:inline-block;">RGB:</small>
+                        <div class="control-group"><label for="text-color-red">R</label><input type="range" id="text-color-red" min="0" max="255" step="1"><input type="number" id="text-color-red-value" min="0" max="255" step="1" class="color-value-input"></div>
+                        <div class="control-group"><label for="text-color-green">G</label><input type="range" id="text-color-green" min="0" max="255" step="1"><input type="number" id="text-color-green-value" min="0" max="255" step="1" class="color-value-input"></div>
+                        <div class="control-group"><label for="text-color-blue">B</label><input type="range" id="text-color-blue" min="0" max="255" step="1"><input type="number" id="text-color-blue-value" min="0" max="255" step="1" class="color-value-input"></div>
                     </div>
-                    <div class="theme-editor-preview">
-                        <div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div>
-                    </div>
+                    <div class="theme-editor-preview"><div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div></div>
                 </div>
-            </div>
-            <!-- === Slutt Tema Seksjon === -->
-
-            <hr>
-
-            <!-- === Layout Seksjon === -->
-            <div id="edit-layout-section">
-                <h3>Layout</h3>
-                <div class="layout-control" style="margin-bottom: 20px;">
-                    <label for="canvas-height-slider">Canvas Høyde (% av viewport)</label>
-                    <input type="range" id="canvas-height-slider" min="30" max="100" step="1">
-                    <span id="canvas-height-value">--</span>%
-                </div>
-
-                <div id="element-layout-grid">
-                    <!-- Title Controls -->
-                    <div class="element-layout-controls" id="title-layout-controls">
-                        <h5>Tittel (<label><input type="checkbox" id="title-visible-toggle"> Synlig</label>)</h5>
-                        <div class="layout-control">
-                            <label for="title-x-slider">X Pos (%)</label>
-                            <input type="range" id="title-x-slider" min="0" max="100" step="0.1">
-                            <span id="title-x-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="title-y-slider">Y Pos (%)</label>
-                            <input type="range" id="title-y-slider" min="0" max="100" step="0.1">
-                            <span id="title-y-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="title-width-slider">Bredde (%)</label>
-                            <input type="range" id="title-width-slider" min="10" max="100" step="1">
-                            <span id="title-width-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="title-fontsize-slider">Font (em)</label>
-                            <input type="range" id="title-fontsize-slider" min="1" max="10" step="0.1">
-                            <span id="title-fontsize-value">--</span>em
-                        </div>
-                    </div>
-
-                    <!-- Timer Controls -->
-                    <div class="element-layout-controls" id="timer-layout-controls">
-                        <h5>Timer (<label><input type="checkbox" id="timer-visible-toggle"> Synlig</label>)</h5>
-                        <div class="layout-control">
-                            <label for="timer-x-slider">X Pos (%)</label>
-                            <input type="range" id="timer-x-slider" min="0" max="100" step="0.1">
-                            <span id="timer-x-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="timer-y-slider">Y Pos (%)</label>
-                            <input type="range" id="timer-y-slider" min="0" max="100" step="0.1">
-                            <span id="timer-y-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="timer-width-slider">Bredde (%)</label>
-                            <input type="range" id="timer-width-slider" min="10" max="100" step="1">
-                            <span id="timer-width-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="timer-fontsize-slider">Font (em)</label>
-                            <input type="range" id="timer-fontsize-slider" min="5" max="25" step="0.5">
-                            <span id="timer-fontsize-value">--</span>em
-                        </div>
-                    </div>
-
-                    <!-- Blinds Controls -->
-                    <div class="element-layout-controls" id="blinds-layout-controls">
-                        <h5>Blinds (<label><input type="checkbox" id="blinds-visible-toggle"> Synlig</label>)</h5>
-                        <div class="layout-control">
-                            <label for="blinds-x-slider">X Pos (%)</label>
-                            <input type="range" id="blinds-x-slider" min="0" max="100" step="0.1">
-                            <span id="blinds-x-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="blinds-y-slider">Y Pos (%)</label>
-                            <input type="range" id="blinds-y-slider" min="0" max="100" step="0.1">
-                            <span id="blinds-y-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="blinds-width-slider">Bredde (%)</label>
-                            <input type="range" id="blinds-width-slider" min="10" max="100" step="1">
-                            <span id="blinds-width-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="blinds-fontsize-slider">Font (em)</label>
-                            <input type="range" id="blinds-fontsize-slider" min="2" max="15" step="0.1">
-                            <span id="blinds-fontsize-value">--</span>em
-                        </div>
-                    </div>
-
-                     <!-- Logo Controls -->
-                    <div class="element-layout-controls" id="logo-layout-controls">
-                        <h5>Logo (<label><input type="checkbox" id="logo-visible-toggle"> Synlig</label>)</h5>
-                        <div class="layout-control">
-                            <label for="logo-x-slider">X Pos (%)</label>
-                            <input type="range" id="logo-x-slider" min="0" max="100" step="0.1">
-                            <span id="logo-x-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="logo-y-slider">Y Pos (%)</label>
-                            <input type="range" id="logo-y-slider" min="0" max="100" step="0.1">
-                            <span id="logo-y-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="logo-width-slider">Bredde (%)</label>
-                            <input type="range" id="logo-width-slider" min="5" max="80" step="1">
-                            <span id="logo-width-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="logo-height-slider">Høyde (%)</label>
-                            <input type="range" id="logo-height-slider" min="5" max="80" step="1">
-                            <span id="logo-height-value">--</span>%
-                        </div>
-                         <!-- Ingen Font Size for Logo -->
-                    </div>
-
-                     <!-- Info Box Controls -->
-                    <div class="element-layout-controls" id="info-layout-controls">
-                        <h5>Info Boks (<label><input type="checkbox" id="info-visible-toggle"> Synlig</label>)</h5>
-                        <div class="layout-control">
-                            <label for="info-x-slider">X Pos (%)</label>
-                            <input type="range" id="info-x-slider" min="0" max="100" step="0.1">
-                            <span id="info-x-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="info-y-slider">Y Pos (%)</label>
-                            <input type="range" id="info-y-slider" min="0" max="100" step="0.1">
-                            <span id="info-y-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="info-width-slider">Bredde (%)</label>
-                            <input type="range" id="info-width-slider" min="10" max="100" step="1">
-                            <span id="info-width-value">--</span>%
-                        </div>
-                        <div class="layout-control">
-                            <label for="info-fontsize-slider">Font (em)</label>
-                            <input type="range" id="info-fontsize-slider" min="0.5" max="3" step="0.1">
-                            <span id="info-fontsize-value">--</span>em
-                        </div>
-                        <div class="info-toggles">
-                            <h5>Vis Info:</h5>
-                            <label><input type="checkbox" id="info-toggle-nextblinds"> Neste Blinds</label>
-                            <label><input type="checkbox" id="info-toggle-avgstack"> Avg Stack</label>
-                            <label><input type="checkbox" id="info-toggle-players"> Spillere</label>
-                            <label><input type="checkbox" id="info-toggle-latereg"> Late Reg</label>
-                            <label><input type="checkbox" id="info-toggle-nextpause"> Neste Pause</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <hr>
-
-            <!-- === Logo Seksjon === -->
-            <div id="edit-logo-section">
-                <h3>Logo</h3>
-                 <label for="logo-upload">Last opp ny logo (PNG, JPG, GIF):</label>
-                 <input type="file" id="logo-upload" accept="image/*">
-                 <div style="margin-top: 10px;">
-                     <p>Nåværende logo:</p>
-                     <img id="current-logo-preview" src="#" alt="Logo Preview" style="max-height: 80px; max-width: 200px; border: 1px solid #ccc; display: none; margin-bottom: 10px;">
-                     <button id="btn-clear-logo" class="danger-button small-button" disabled>Fjern Egendefinert Logo</button>
-                 </div>
-            </div>
-
-            <hr>
-
-             <!-- === Lyd Seksjon === -->
-             <div id="edit-sound-section">
-                 <h3>Lyd</h3>
-                 <div class="layout-control">
-                     <label for="sound-volume-slider">Volum (%)</label>
-                     <input type="range" id="sound-volume-slider" min="0" max="1" step="0.01">
-                     <span id="sound-volume-value">--</span>%
-                 </div>
-                 <!-- TODO: Kanskje mulighet for å teste lyder her? -->
-             </div>
-
-            <!-- === Modal Handlinger === -->
-            <div class="modal-actions">
-                <button id="btn-reset-ui-defaults" type="button" class="warning-button">Tilbakestill Alt</button>
-                <button id="btn-save-ui-settings" class="success-button">Lagre Utseende</button>
-                <button id="btn-cancel-ui-settings" type="button">Avbryt</button>
-            </div>
+            </div><hr>
+            <div id="edit-layout-section"><h3>Layout</h3><div class="layout-control" style="margin-bottom: 20px;"><label for="canvas-height-slider">Canvas Høyde (% av viewport)</label><input type="range" id="canvas-height-slider" min="30" max="100" step="1"><span id="canvas-height-value">--</span>%</div><div id="element-layout-grid"><div class="element-layout-controls" id="title-layout-controls"><h5>Tittel (<label><input type="checkbox" id="title-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="title-x-slider">X Pos (%)</label><input type="range" id="title-x-slider" min="0" max="100" step="0.1"><span id="title-x-value">--</span>%</div><div class="layout-control"><label for="title-y-slider">Y Pos (%)</label><input type="range" id="title-y-slider" min="0" max="100" step="0.1"><span id="title-y-value">--</span>%</div><div class="layout-control"><label for="title-width-slider">Bredde (%)</label><input type="range" id="title-width-slider" min="10" max="100" step="1"><span id="title-width-value">--</span>%</div><div class="layout-control"><label for="title-fontsize-slider">Font (em)</label><input type="range" id="title-fontsize-slider" min="1" max="10" step="0.1"><span id="title-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="timer-layout-controls"><h5>Timer (<label><input type="checkbox" id="timer-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="timer-x-slider">X Pos (%)</label><input type="range" id="timer-x-slider" min="0" max="100" step="0.1"><span id="timer-x-value">--</span>%</div><div class="layout-control"><label for="timer-y-slider">Y Pos (%)</label><input type="range" id="timer-y-slider" min="0" max="100" step="0.1"><span id="timer-y-value">--</span>%</div><div class="layout-control"><label for="timer-width-slider">Bredde (%)</label><input type="range" id="timer-width-slider" min="10" max="100" step="1"><span id="timer-width-value">--</span>%</div><div class="layout-control"><label for="timer-fontsize-slider">Font (em)</label><input type="range" id="timer-fontsize-slider" min="5" max="25" step="0.5"><span id="timer-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="blinds-layout-controls"><h5>Blinds (<label><input type="checkbox" id="blinds-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="blinds-x-slider">X Pos (%)</label><input type="range" id="blinds-x-slider" min="0" max="100" step="0.1"><span id="blinds-x-value">--</span>%</div><div class="layout-control"><label for="blinds-y-slider">Y Pos (%)</label><input type="range" id="blinds-y-slider" min="0" max="100" step="0.1"><span id="blinds-y-value">--</span>%</div><div class="layout-control"><label for="blinds-width-slider">Bredde (%)</label><input type="range" id="blinds-width-slider" min="10" max="100" step="1"><span id="blinds-width-value">--</span>%</div><div class="layout-control"><label for="blinds-fontsize-slider">Font (em)</label><input type="range" id="blinds-fontsize-slider" min="2" max="15" step="0.1"><span id="blinds-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="logo-layout-controls"><h5>Logo (<label><input type="checkbox" id="logo-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="logo-x-slider">X Pos (%)</label><input type="range" id="logo-x-slider" min="0" max="100" step="0.1"><span id="logo-x-value">--</span>%</div><div class="layout-control"><label for="logo-y-slider">Y Pos (%)</label><input type="range" id="logo-y-slider" min="0" max="100" step="0.1"><span id="logo-y-value">--</span>%</div><div class="layout-control"><label for="logo-width-slider">Bredde (%)</label><input type="range" id="logo-width-slider" min="5" max="80" step="1"><span id="logo-width-value">--</span>%</div><div class="layout-control" style="display: none;"><label for="logo-height-slider">Høyde (%)</label><input type="range" id="logo-height-slider" min="5" max="80" step="1"><span id="logo-height-value">--</span>%</div><div class="layout-control" style="display: none;"><label for="logo-fontsize-slider">Font (em)</label><input type="range" id="logo-fontsize-slider" min="1" max="1" step="0.1"><span id="logo-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="info-layout-controls"><h5>Info Boks (<label><input type="checkbox" id="info-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="info-x-slider">X Pos (%)</label><input type="range" id="info-x-slider" min="0" max="100" step="0.1"><span id="info-x-value">--</span>%</div><div class="layout-control"><label for="info-y-slider">Y Pos (%)</label><input type="range" id="info-y-slider" min="0" max="100" step="0.1"><span id="info-y-value">--</span>%</div><div class="layout-control"><label for="info-width-slider">Bredde (%)</label><input type="range" id="info-width-slider" min="10" max="100" step="1"><span id="info-width-value">--</span>%</div><div class="layout-control"><label for="info-fontsize-slider">Font (em)</label><input type="range" id="info-fontsize-slider" min="0.5" max="3" step="0.1"><span id="info-fontsize-value">--</span>em</div><div class="info-toggles"><h5>Vis Info:</h5><label><input type="checkbox" id="info-toggle-nextblinds"> Neste Blinds</label><label><input type="checkbox" id="info-toggle-avgstack"> Avg Stack</label><label><input type="checkbox" id="info-toggle-players"> Spillere</label><label><input type="checkbox" id="info-toggle-latereg"> Late Reg</label><label><input type="checkbox" id="info-toggle-nextpause"> Neste Pause</label></div></div></div></div><hr><div id="edit-logo-section"><h3>Logo</h3><label for="logo-upload">Last opp ny logo (PNG, JPG, GIF):</label><input type="file" id="logo-upload" accept="image/*"><div style="margin-top: 10px;"><p>Nåværende logo:</p><img id="current-logo-preview" src="#" alt="Logo Preview" style="max-height: 80px; max-width: 200px; border: 1px solid #ccc; display: none; margin-bottom: 10px;"><button id="btn-clear-logo" class="danger-button small-button" disabled>Fjern Egendefinert Logo</button></div></div><hr><div id="edit-sound-section"><h3>Lyd</h3><div class="layout-control"><label for="sound-volume-slider">Volum (%)</label><input type="range" id="sound-volume-slider" min="0" max="1" step="0.01"><span id="sound-volume-value">--</span>%</div></div>
+            <div class="modal-actions"><button id="btn-reset-ui-defaults" type="button" class="warning-button">Tilbakestill Alt</button><button id="btn-save-ui-settings" class="success-button">Lagre Utseende</button><button id="btn-cancel-ui-settings" type="button">Avbryt</button></div>
         </div>
     </div>
     <!-- === 05b: MODAL FOR UI SETTINGS END === -->
 
-    <!-- === 05c: NY MODAL FOR ADD-ONS START === -->
+    <!-- === 05c: MODAL FOR ADD-ONS START === -->
     <div id="addon-modal" class="modal hidden">
         <div class="modal-content" style="max-width: 500px;">
             <span class="close-button" id="close-addon-modal-button" title="Lukk">×</span>
             <h2>Administrer Add-ons</h2>
             <p>Denne funksjonaliteten er ikke implementert ennå.</p>
-            <!-- TODO: Add-on liste og logikk -->
             <div id="addon-player-list-container" style="max-height: 60vh; overflow-y: auto; border: 1px solid #eee; margin-bottom: 15px; padding: 10px;">
-                 <ul id="addon-player-list" class="item-list" style="max-height: none; border-top: none; margin: 0;">
-                     <li>Laster spillere...</li>
-                 </ul>
+                 <ul id="addon-player-list" class="item-list" style="max-height: none; border-top: none; margin: 0;"><li>Laster spillere...</li></ul>
             </div>
-            <div class="modal-actions">
-                <button id="btn-confirm-addons" class="success-button" disabled>Bekreft Add-ons</button>
-                <button id="btn-cancel-addons" type="button">Avbryt</button>
-            </div>
+            <div class="modal-actions"><button id="btn-confirm-addons" class="success-button" disabled>Bekreft Add-ons</button><button id="btn-cancel-addons" type="button">Avbryt</button></div>
         </div>
     </div>
-    <!-- === 05c: NY MODAL FOR ADD-ONS END === -->
+    <!-- === 05c: MODAL FOR ADD-ONS END === -->
 
-    <!-- === 05d: NY MODAL FOR EDIT PLAYER START === -->
+    <!-- === 05d: MODAL FOR EDIT PLAYER START === -->
     <div id="edit-player-modal" class="modal hidden">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close-button" id="close-edit-player-modal-button" title="Lukk">×</span>
             <h2>Rediger Spillerdetaljer</h2>
-            <input type="hidden" id="edit-player-id-input"> <!-- For å lagre ID -->
+            <input type="hidden" id="edit-player-id-input">
             <div id="edit-player-details-section">
                 <p><strong>Spiller:</strong> <span id="edit-player-name-display"></span></p>
                 <p><small>(Navn, Rebuys og Add-on kan justeres nedenfor)</small></p>
                 <hr>
                  <label for="edit-player-name-input">Navn:</label>
                  <input type="text" id="edit-player-name-input" required style="max-width: 300px;">
-
                  <label for="edit-player-rebuys-input">Antall Rebuys:</label>
                  <input type="number" id="edit-player-rebuys-input" min="0" step="1" style="max-width: 100px;">
-
                  <label style="display: inline-block; margin-right: 10px; margin-top: 10px;">
-                     <input type="checkbox" id="edit-player-addon-checkbox">
-                     Har Add-on
+                     <input type="checkbox" id="edit-player-addon-checkbox"> Har Add-on
                  </label>
                  <p style="margin-top: 15px;"><small>Advarsel: Manuell endring av rebuys/add-on vil justere total pott og tellere.</small></p>
             </div>
@@ -436,10 +209,9 @@
             </div>
         </div>
     </div>
-    <!-- === 05d: NY MODAL FOR EDIT PLAYER END === -->
+    <!-- === 05d: MODAL FOR EDIT PLAYER END === -->
 
    <!-- === 06: SCRIPTS SECTION START === -->
-    <!-- BEGGE må være type="module" hvis de bruker import/export -->
     <script type="module" src="js/storage.js"></script>
     <script type="module" src="js/tournament-main.js"></script>
     <!-- === 06: SCRIPTS SECTION END === -->
