@@ -1,3 +1,5 @@
+/* === style.css === */
+
 /* === 01: GENERAL BODY & LAYOUT SECTION START === */
 :root {
     /* Standard Colors */
@@ -10,7 +12,12 @@
 
     /* Canvas Height Variable */
     --canvas-height: 65vh;
-    /* Note: Element X/Y/Width/Height/FontSize are set via inline styles by JS */
+
+    /* NYTT: Table Colors */
+    --table-felt-color: #0f5132; /* Dark green */
+    --table-rail-color: #543b2a; /* Wood color */
+    --seat-bg-color: rgba(0, 0, 0, 0.3);
+    --seat-border-color: rgba(255, 255, 255, 0.2);
 }
 
 body {
@@ -26,11 +33,11 @@ body {
 }
 
 main {
-    padding: 0; /* No padding on main for live view */
+    padding: 0; /* Fjernet padding for full bredde */
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    position: relative; /* Needed for absolute positioning inside */
+    position: relative; /* For absolutt posisjonering av kontroller */
 }
 
 /* Headings */
@@ -43,30 +50,11 @@ h1 { font-size: 1.8em; }
 h2 { font-size: 1.5em; }
 h3 { font-size: 1.2em; }
 h4 { font-size: 1.05em; margin-bottom: 8px;}
-h5 { font-size: 1em; margin: 0 0 10px 0; color: #555; } /* Sub-headers in modal */
+h5 { font-size: 1em; margin: 0 0 10px 0; color: #555; }
 
 /* Buttons */
-button {
-    padding: 8px 15px;
-    font-size: 0.95em;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    background-color: #e9e9e9;
-    color: #333; /* Default button text color */
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease, box-shadow 0.1s ease; /* Added transitions */
-    margin: 2px;
-    vertical-align: middle;
-    line-height: 1.4;
-    text-align: center;
-    white-space: nowrap;
-}
-button:hover:not(:disabled) {
-    background-color: #dcdcdc;
-    border-color: #bbb;
-    transform: translateY(-1px);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
+button { padding: 8px 15px; font-size: 0.95em; border-radius: 4px; border: 1px solid #ccc; background-color: #e9e9e9; color: #333; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease, box-shadow 0.1s ease; margin: 2px; vertical-align: middle; line-height: 1.4; text-align: center; white-space: nowrap; }
+button:hover:not(:disabled) { background-color: #dcdcdc; border-color: #bbb; transform: translateY(-1px); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 button:disabled { cursor: not-allowed; opacity: 0.6; }
 button.primary-button { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
 button.primary-button:hover:not(:disabled) { background-color: #0056b3; border-color: #0056b3; }
@@ -81,21 +69,9 @@ button.warning-button:hover:not(:disabled) { background-color: #e0a800; border-c
 button.small-button { padding: 4px 8px; font-size: 0.85em; }
 
 /* Forms */
-input[type="text"],
-input[type="number"],
-select,
-textarea {
-    padding: 8px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    margin-bottom: 10px;
-    font-size: 1em;
-    width: 100%;
-    max-width: 450px; /* Limit width for specific inputs */
-    box-sizing: border-box;
-}
-input[type="number"] { max-width: 120px; } /* Smaller default for numbers */
-#tournament-name, #prize-distribution, #player-names, #newThemeFavoriteName { max-width: 450px; }
+input[type="text"], input[type="number"], select, textarea { padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px; font-size: 1em; width: 100%; max-width: 450px; box-sizing: border-box; }
+input[type="number"] { max-width: 120px; }
+#tournament-name, #prize-distribution, #player-names, #newThemeFavoriteName, #edit-tournament-name, #edit-prize-distribution { max-width: 450px; } /* Utvidet */
 textarea { min-height: 60px; vertical-align: top; }
 label { display: block; margin-bottom: 4px; font-weight: 500; }
 small { display: block; font-size: 0.85em; color: #555; margin-top: -5px; margin-bottom: 10px; }
@@ -110,11 +86,73 @@ hr { border: none; border-top: 1px dashed #ccc; margin: 15px 0;}
 
 
 /* === 02: HEADER & FOOTER SECTION START === */
-/* Header is not used on tournament page, keep for other pages */
-header { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; }
-header .logo { height: 40px; margin-right: 15px; content: url('../placeholder-logo.png'); background-color: #555; object-fit: contain; }
-header h1 { color: white; margin: 0; font-size: 1.5em; }
-/* Footer */
+/* --- NY HEADER FOR LIVE TURNERING MED TABS --- */
+header.main-header {
+    background-color: var(--dark-color);
+    color: var(--light-color);
+    padding: 0 15px; /* Padding for innhold, men ikke top/bottom */
+    display: flex;
+    align-items: center; /* Sentrer faner vertikalt */
+    position: relative; /* For høyre-kontroller */
+    flex-shrink: 0;
+    border-bottom: 1px solid #555;
+    min-height: 50px; /* Sørg for litt høyde */
+}
+
+.tabs {
+    display: flex;
+    gap: 5px;
+    flex-grow: 1; /* Ta opp plassen mot høyre */
+}
+
+.tab-button {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: 500;
+    border: none;
+    border-bottom: 3px solid transparent; /* Plassholder for aktiv fane */
+    background-color: transparent;
+    color: var(--secondary-color); /* Grålig inaktiv farge */
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    border-radius: 0; /* Fjerne avrunding for faner */
+    margin: 0; /* Fjerne margin */
+}
+
+.tab-button:hover {
+    color: var(--light-color); /* Lysere ved hover */
+    background: none; /* Ingen bakgrunnsendring */
+    transform: none; /* Ingen transformasjon */
+    box-shadow: none; /* Ingen skygge */
+}
+
+.tab-button.active {
+    color: var(--light-color); /* Aktiv farge */
+    border-bottom-color: var(--primary-color); /* Aktiv indikator */
+    font-weight: 600;
+}
+
+/* Flyttet kontroller til høyre inne i headeren */
+.main-header .header-right-controls {
+    position: absolute; /* Plasser absolutt */
+    top: 50%; /* Sentrer vertikalt */
+    transform: translateY(-50%);
+    right: 15px;
+    background: none; /* Ingen bakgrunn */
+    border: none; /* Ingen border */
+    padding: 0; /* Ingen padding */
+}
+.main-header .header-right-controls p { color: var(--secondary-color); }
+.main-header .header-right-controls button { background-color: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: var(--light-color); }
+.main-header .header-right-controls button:hover:not(:disabled) { background-color: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.3); }
+
+
+/* --- Gammel Header (for start/setup) --- */
+header:not(.main-header) { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 10; }
+header:not(.main-header) .logo { height: 40px; margin-right: 15px; content: url('../placeholder-logo.png'); background-color: #555; object-fit: contain; }
+header:not(.main-header) h1 { color: white; margin: 0; font-size: 1.5em; }
+
+/* --- Footer --- */
 footer { background-color: var(--dark-color); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; margin-top: auto; font-size: 0.9em; z-index: 10; }
 footer p { margin: 0; }
 footer div { display: flex; gap: 10px;}
@@ -122,8 +160,7 @@ footer div { display: flex; gap: 10px;}
 
 
 /* === 03: START PAGE SECTION START === */
-main.start-page { padding: 15px; }
-.start-page { max-width: 900px; margin: 15px auto; }
+main.start-page { padding: 15px; max-width: 900px; margin: 15px auto; }
 .start-section { background-color: #fff; border: 1px solid var(--border-color); border-radius: 5px; padding: 15px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 .start-section h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;}
 #btn-new-tournament-setup { padding: 12px 25px; font-size: 1.1em; margin-bottom: 15px; }
@@ -138,8 +175,7 @@ main.start-page { padding: 15px; }
 
 
 /* === 04: SETUP PAGE SECTION START === */
-main.setup-page { padding: 15px; }
-.setup-page { max-width: 800px; margin: 15px auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
+main.setup-page { padding: 15px; max-width: 800px; margin: 15px auto; background-color: #fff; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
 .setup-page form h2, .setup-page form h3 { margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
 .setup-page form h2:first-of-type { margin-top: 0; }
 .config-section { border-left: 3px solid var(--primary-color); padding-left: 15px; margin: 15px 0; }
@@ -162,156 +198,235 @@ main.setup-page { padding: 15px; }
 /* === 04: SETUP PAGE SECTION END === */
 
 
-/* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION START === */
+/* === 05: TOURNAMENT LIVE PAGE - GENERAL & TABS SECTION START === */
 main.tournament-live {
-    background-color: var(--live-page-bg); /* Use theme variable */
-    color: var(--live-page-text); /* Use theme variable */
+    background-color: var(--live-page-bg); /* Bruk theme variable */
+    color: var(--live-page-text); /* Bruk theme variable */
 }
-/* Styling for the controls moved below the canvas */
-.sub-canvas-controls.header-right-controls {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Align items to the right */
-    gap: 10px;
-    padding: 8px 15px; /* Add some padding */
-    background-color: rgba(0,0,0, 0.1); /* Slight background */
-    border-bottom: 1px solid var(--live-ui-border); /* Separator line */
-    flex-shrink: 0; /* Prevent shrinking */
+
+/* Faneinnhold */
+.tab-content {
+    display: none; /* Skjul innhold som standard */
+    flex-grow: 1; /* Ta opp plassen under fanene */
+    overflow-y: auto; /* Scroll hvis innholdet er for høyt */
 }
-.sub-canvas-controls p { margin: 0; white-space: nowrap; opacity: 0.8; font-size: 0.9em;}
-.sub-canvas-controls button { background-color: rgba(128, 128, 128, 0.5); border-color: rgba(128, 128, 128, 0.7); color: inherit; opacity: 0.8; }
-.sub-canvas-controls button:hover:not(:disabled) { background-color: rgba(160, 160, 160, 0.6); border-color: rgba(160, 160, 160, 0.8); opacity: 1; }
-/* Styling for mute button */
-.sub-canvas-controls button#btn-toggle-sound {
-    min-width: 80px; /* Give some fixed width */
-    text-align: center;
+.tab-content.active {
+    display: flex; /* Vis aktivt innhold som flex container */
+    flex-direction: column; /* Standard stabling av innhold */
 }
-/* === 05: TOURNAMENT LIVE PAGE - GENERAL SECTION END === */
+
+/* Spesifikk styling for Klokke-fane */
+#view-clock {
+    /* Denne styrer nå høyden på canvas + kontroller etc. */
+}
+
+/* Spesifikk styling for Bord-fane */
+#view-tables {
+    background-color: var(--background-color); /* Bruk standard lys bakgrunn her? */
+    color: var(--text-color); /* Standard tekstfarge */
+}
+#view-tables h2 { color: var(--dark-color); } /* Mørk overskrift */
+/* === 05: TOURNAMENT LIVE PAGE - GENERAL & TABS SECTION END === */
 
 
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT START === */
-#live-canvas {
-    flex-grow: 1;
+/* Gjelder kun for #view-clock fanen */
+#view-clock #live-canvas {
+    flex-grow: 1; /* Ta opp plassen som er tilgjengelig */
     position: relative;
-    overflow: hidden; /* Behold denne på selve canvaset */
-    background-color: inherit;
-    color: inherit;
-    height: var(--canvas-height);
+    overflow: hidden;
+    background-color: inherit; /* Arve fra main.tournament-live */
+    color: inherit; /* Arve fra main.tournament-live */
+    height: var(--canvas-height); /* Høyde satt av JS/CSS var */
     width: 100%;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Ikke krymp canvas */
 }
 
-.draggable-element {
-    position: absolute;
-    box-sizing: border-box;
-    padding: 5px; /* Gir litt luft rundt innholdet */
-    background-color: transparent;
-    border: none;
-    color: inherit;
-    height: auto;
-    cursor: grab;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    /* overflow: hidden; */ /* FJERNET: La innholdet vises utenfor boksen */
-    /* Vurder en subtil border KUN under redigering for å se grensene? */
-    /* border: 1px dashed rgba(255, 255, 255, 0.2); */ /* Eksempel */
-}
-
-/* Style when element is actively being dragged */
-.draggable-element.dragging {
-    cursor: grabbing;
-    opacity: 0.8;
-    z-index: 100;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    border: 1px dashed rgba(255, 255, 255, 0.5) !important; /* Forsterket border under drag */
-}
-
-/* Class added by JS to hide elements based on toggle */
+.draggable-element { position: absolute; box-sizing: border-box; padding: 5px; background-color: transparent; border: none; color: inherit; height: auto; cursor: grab; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
+.draggable-element.dragging { cursor: grabbing; opacity: 0.8; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px dashed rgba(255, 255, 255, 0.5) !important; }
 .element-hidden { display: none !important; }
 
-/* --- Styling for individual canvas elements --- */
-
-/* Title Element */
+/* Styling for individuelle canvas elementer... */
 #title-element { text-align: center; padding: 0; line-height: 1.1; z-index: 5; }
-#title-element h1#tournament-name-display { font-size: 1em; margin: 0; padding: 5px 0; color: inherit; background-color: transparent; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* Klipp lang tittel med ... */ }
-
-/* Timer Element */
-#timer-element { text-align: center; } /* Padding satt i .draggable-element */
+#title-element h1#tournament-name-display { font-size: 1em; margin: 0; padding: 5px 0; color: inherit; background-color: transparent; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#timer-element { text-align: center; }
 #timer-element .timer-section h2 { font-size: 0.1em; margin: 0 0 0.05em 0; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit; }
-#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); white-space: nowrap; /* Forhindre linjeskift */ }
+#timer-display { font-family: 'Orbitron', monospace, sans-serif; font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); white-space: nowrap; }
 #break-info { font-size: 0.4em; color: var(--warning-color); font-weight: bold; margin-top: 0.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-
-/* Blinds Element */
-#blinds-element { text-align: center; } /* Padding satt i .draggable-element */
+#blinds-element { text-align: center; }
 #blinds-element .blinds-section h3 { font-size: 0.2em; margin: 0 0 0.1em 0; opacity: 0.8; text-transform: uppercase; font-weight: normal; color: inherit;}
-#blinds-display { font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; /* Forhindre linjeskift */ }
+#blinds-display { font-size: 1em; font-weight: bold; line-height: 1.0; color: inherit; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); white-space: nowrap; }
 #blinds-display .value { margin: 0 0.1em; }
 #blinds-display .label { font-size: 0.3em; margin: 0 0.1em; opacity: 0.7; font-weight: normal; vertical-align: middle; }
-
-/* Logo Element */
 #logo-element { padding: 0; display: flex; justify-content: center; align-items: center; }
 #logo-element .logo { display: block; width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; object-position: center center; }
-
-/* Info Element */
 #info-element { background-color: rgba(0, 0, 0, 0.1); color: inherit; opacity: 0.9; padding: 10px; border-radius: 4px; border: 1px solid var(--live-ui-border); }
 #info-element p { margin: 3px 0; white-space: nowrap; font-size: 1em; line-height: 1.4; }
 #info-element p.hidden { display: none; }
-
-/* Hide old structure */
-.live-split-container, .live-left-column, .live-right-column, .right-col-logo-area, .right-col-blinds-area, .right-col-info-area { display: none; }
 /* === 06: TOURNAMENT LIVE PAGE - CANVAS LAYOUT END === */
 
 
 /* === 07: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION START === */
-.live-info-prizes { padding: 15px 20px; background-color: rgba(0,0,0, 0.05); color: inherit; border: 1px solid var(--live-ui-border); border-radius: 4px; margin: 15px; flex-shrink: 0; }
-.live-info-prizes h3 { margin-top: 0; margin-bottom: 8px; font-size: 1.1em; color: inherit; opacity: 0.9; border-bottom: 1px solid var(--live-ui-border); padding-bottom: 5px; }
-.live-info-prizes ol { margin: 5px 0 0 0; padding-left: 25px; } .live-info-prizes li { margin-bottom: 4px; font-size: 0.95em; } .live-info-prizes p { font-style: italic; color: inherit; opacity: 0.7; margin: 5px 0; }
+/* Gjelder kun for #view-clock fanen */
+#view-clock .live-info-prizes { padding: 15px 20px; background-color: rgba(0,0,0, 0.05); color: inherit; border: 1px solid var(--live-ui-border); border-radius: 4px; margin: 15px; flex-shrink: 0; }
+#view-clock .live-info-prizes h3 { margin-top: 0; margin-bottom: 8px; font-size: 1.1em; color: inherit; opacity: 0.9; border-bottom: 1px solid var(--live-ui-border); padding-bottom: 5px; }
+#view-clock .live-info-prizes ol { margin: 5px 0 0 0; padding-left: 25px; } #view-clock .live-info-prizes li { margin-bottom: 4px; font-size: 0.95em; } #view-clock .live-info-prizes p { font-style: italic; color: inherit; opacity: 0.7; margin: 5px 0; }
 /* === 07: TOURNAMENT LIVE PAGE - PRIZE DISPLAY SECTION END === */
 
 
 /* === 08: TOURNAMENT LIVE PAGE - CONTROLS SECTION START === */
-.controls { text-align: center; margin-bottom: 15px; padding: 10px 15px; border-top: 1px solid var(--live-ui-border); border-bottom: 1px solid var(--live-ui-border); flex-shrink: 0; background-color: rgba(0,0,0,0.1); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-.controls button { margin: 5px 8px; background-color: #d0d0d0; color: #222; border-color: #bbb; }
-.controls button:hover:not(:disabled) { background-color: #c0c0c0; border-color: #aaa; }
-.controls button:disabled { background-color: #e0e0e0; border-color: #ccc; color: #777; }
+/* Gjelder kun for #view-clock fanen */
+#view-clock .controls { text-align: center; margin-bottom: 15px; padding: 10px 15px; border-top: 1px solid var(--live-ui-border); border-bottom: 1px solid var(--live-ui-border); flex-shrink: 0; background-color: rgba(0,0,0,0.1); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+#view-clock .controls button { margin: 5px 8px; background-color: #d0d0d0; color: #222; border-color: #bbb; }
+#view-clock .controls button:hover:not(:disabled) { background-color: #c0c0c0; border-color: #aaa; }
+#view-clock .controls button:disabled { background-color: #e0e0e0; border-color: #ccc; color: #777; }
 /* === 08: TOURNAMENT LIVE PAGE - CONTROLS SECTION END === */
 
 
 /* === 09: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION START === */
-.player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; padding: 0 15px 15px 15px; min-height: 30vh; }
-.player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 1px solid var(--live-ui-border); border-radius: 4px; background-color: rgba(0,0,0, 0.03); }
-.player-column h2 { position: sticky; top: 0; background-color: rgba(0,0,0,0.2); padding: 10px 15px; margin: 0; border-bottom: 1px solid var(--live-ui-border); z-index: 1; font-size: 1.2em; color: inherit; opacity: 0.9; }
-.player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
-.player-list-live li { border-bottom: 1px solid var(--live-ui-border); padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; }
-.player-list-live li:last-child { border-bottom: none; }
-.player-actions { white-space: nowrap; flex-shrink: 0; margin-left: 10px; display: flex; gap: 4px; }
-.player-actions button { margin-left: 0; cursor: pointer; padding: 3px 8px; font-size: 0.9em; border-radius: 3px; }
-.btn-edit-player { background-color: #e2e3e5; border-color: #d6d8db;} .btn-edit-player:hover { background-color: #d6d8db;}
-.btn-rebuy { background-color: #cfe2ff; border-color: #b6d4fe;} .btn-rebuy:hover { background-color: #b6d4fe;}
-.btn-addon { background-color: #d1e7dd; border-color: #badbcc;} .btn-addon:hover { background-color: #badbcc;}
-.btn-eliminate { background-color: #f8d7da; border-color: #f5c2c7;} .btn-eliminate:hover { background-color: #f5c2c7;}
-.btn-restore { background-color: #fff3cd; border-color: #ffeeba;} .btn-restore:hover { background-color: #ffeeba;}
-.player-details { font-size: 0.85em; color: inherit; opacity: 0.7; margin-left: 8px; }
-#table-balance-info { margin: 5px 15px; padding: 5px 10px; }
+/* Denne gjelder nå KUN for #view-tables fanen */
+#view-tables .player-management { display: flex; flex-direction: row; gap: 20px; flex-grow: 1; overflow: hidden; padding: 0; /* Fjerner padding her */ min-height: 30vh; }
+#view-tables .player-column { flex-basis: 50%; display: flex; flex-direction: column; overflow: hidden; padding: 0; border: 1px solid var(--border-color); /* Lysere border */ border-radius: 4px; background-color: #fff; /* Hvit bakgrunn */}
+#view-tables .player-column h2 { position: sticky; top: 0; background-color: #e9ecef; /* Lysere bakgrunn */ color: var(--dark-color); /* Mørk tekst */ padding: 10px 15px; margin: 0; border-bottom: 1px solid var(--border-color); z-index: 1; font-size: 1.2em; opacity: 1; }
+#view-tables .player-list-live { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+#view-tables .player-list-live li { border-bottom: 1px solid #eee; /* Lysere border */ padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95em; }
+#view-tables .player-list-live li:last-child { border-bottom: none; }
+#view-tables .player-actions { white-space: nowrap; flex-shrink: 0; margin-left: 10px; display: flex; gap: 4px; }
+#view-tables .player-actions button { margin-left: 0; cursor: pointer; padding: 3px 8px; font-size: 0.9em; border-radius: 3px; }
+/* Knapper som før */
+#view-tables .btn-edit-player { background-color: #e2e3e5; border-color: #d6d8db;} .btn-edit-player:hover { background-color: #d6d8db;}
+#view-tables .btn-rebuy { background-color: #cfe2ff; border-color: #b6d4fe;} .btn-rebuy:hover { background-color: #b6d4fe;}
+#view-tables .btn-addon { background-color: #d1e7dd; border-color: #badbcc;} .btn-addon:hover { background-color: #badbcc;}
+#view-tables .btn-eliminate { background-color: #f8d7da; border-color: #f5c2c7;} .btn-eliminate:hover { background-color: #f5c2c7;}
+#view-tables .btn-restore { background-color: #fff3cd; border-color: #ffeeba;} .btn-restore:hover { background-color: #ffeeba;}
+#view-tables .player-details { font-size: 0.85em; color: var(--secondary-color); /* Mørkere detaljer */ opacity: 1; margin-left: 8px; }
+#view-tables #table-balance-info { margin: 5px 15px; padding: 5px 10px; }
 /* === 09: TOURNAMENT LIVE PAGE - PLAYER MANAGEMENT SECTION END === */
 
 
 /* === 10: ACTIVITY LOG SECTION START === */
-#activity-log-container { margin: 0 15px 15px 15px; padding: 15px; background-color: rgba(0,0,0, 0.03); border: 1px solid var(--live-ui-border); border-radius: 4px; flex-shrink: 0; }
-#activity-log-container h3 { margin-top: 0; font-size: 1.1em; border-bottom: 1px solid var(--live-ui-border); padding-bottom: 5px; margin-bottom: 10px; color: inherit; opacity: 0.9; }
-#activity-log-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; font-size: 0.9em; color: inherit; opacity: 0.85; }
-#activity-log-list li { padding: 4px 0; border-bottom: 1px dotted rgba(255,255,255,0.1); } #activity-log-list li:last-child { border-bottom: none; }
-#activity-log-list .log-time { color: inherit; opacity: 0.6; margin-right: 8px; font-size: 0.9em; white-space: nowrap; }
+/* Gjelder kun for #view-clock fanen */
+#view-clock #activity-log-container { margin: 0 15px 15px 15px; padding: 15px; background-color: rgba(0,0,0, 0.03); border: 1px solid var(--live-ui-border); border-radius: 4px; flex-shrink: 0; }
+#view-clock #activity-log-container h3 { margin-top: 0; font-size: 1.1em; border-bottom: 1px solid var(--live-ui-border); padding-bottom: 5px; margin-bottom: 10px; color: inherit; opacity: 0.9; }
+#view-clock #activity-log-list { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow-y: auto; font-size: 0.9em; color: inherit; opacity: 0.85; }
+#view-clock #activity-log-list li { padding: 4px 0; border-bottom: 1px dotted rgba(255,255,255,0.1); } #activity-log-list li:last-child { border-bottom: none; }
+#view-clock #activity-log-list .log-time { color: inherit; opacity: 0.6; margin-right: 8px; font-size: 0.9em; white-space: nowrap; }
 /* === 10: ACTIVITY LOG SECTION END === */
 
 
-/* === 11: MODAL STYLES SECTION START === */
+/* === 11: POKER TABLE VISUALIZATION STYLES START === */
+.table-visualization-container {
+    display: flex;
+    flex-wrap: wrap; /* La bordene wrappe */
+    gap: 30px; /* Mellomrom mellom bord */
+    justify-content: center; /* Sentrer bordene hvis de ikke fyller bredden */
+    margin-bottom: 20px;
+    padding: 10px 0;
+}
+
+.poker-table {
+    --table-width: 380px; /* Bredde på bordet */
+    --table-height: 200px; /* Høyde på bordet */
+    --rail-thickness: 15px; /* Tykkelse på rail */
+    width: var(--table-width);
+    height: var(--table-height);
+    background-color: var(--table-felt-color);
+    border: var(--rail-thickness) solid var(--table-rail-color);
+    border-radius: calc(var(--table-height) / 2); /* Full oval */
+    position: relative; /* For posisjonering av seter */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    margin: 10px; /* Litt luft rundt */
+    flex-shrink: 0; /* Ikke la bordet krympe for mye */
+}
+
+.table-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1.8em;
+    font-weight: bold;
+    text-align: center;
+    z-index: 1;
+    user-select: none;
+}
+
+.player-seat {
+    position: absolute;
+    width: 65px; /* Bredde på seteområdet */
+    height: 55px; /* Høyde på seteområdet */
+    background-color: var(--seat-bg-color);
+    border: 1px solid var(--seat-border-color);
+    border-radius: 5px;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+    padding: 4px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 0.75em; /* Mindre font i setene */
+    color: var(--live-page-text); /* Bruk lys tekst på mørk bakgrunn */
+    z-index: 2;
+    overflow: hidden; /* Klipp innhold som går utenfor */
+}
+.player-seat.empty {
+    background-color: rgba(0, 0, 0, 0.1); /* Litt annerledes for tomme seter */
+    border-style: dashed;
+}
+
+.player-seat .seat-number {
+    font-size: 0.8em;
+    opacity: 0.5;
+    position: absolute;
+    top: 2px;
+    left: 3px;
+}
+.player-seat .player-name-table {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%; /* Sørg for at ellipsis fungerer */
+    margin-bottom: 2px;
+}
+.player-seat .player-stack-table {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+/* Posisjonering av seter (Eksempel for 9 seter) */
+/* Juster disse verdiene nøye for perfekt plassering */
+.player-seat[data-seat="1"] { top: 50%; left: calc(0% - var(--rail-thickness) / 2); transform: translate(-50%, -50%); }
+.player-seat[data-seat="2"] { top: 12%; left: 15%; transform: translate(-50%, -50%); }
+.player-seat[data-seat="3"] { top: 0%; left: 50%; transform: translate(-50%, -50%); }
+.player-seat[data-seat="4"] { top: 12%; right: 15%; transform: translate(50%, -50%); }
+.player-seat[data-seat="5"] { top: 50%; right: calc(0% - var(--rail-thickness) / 2); transform: translate(50%, -50%); }
+.player-seat[data-seat="6"] { bottom: 12%; right: 15%; transform: translate(50%, 50%); }
+.player-seat[data-seat="7"] { bottom: 0%; left: 50%; transform: translate(-50%, 50%); }
+.player-seat[data-seat="8"] { bottom: 12%; left: 15%; transform: translate(-50%, 50%); }
+/* Juster for 9-seter */
+.player-seat[data-seat="9"] { /* F.eks. venstre midt */ top: 50%; left: calc(0% - var(--rail-thickness) / 2); transform: translate(-50%, -50%); }
+/* Posisjonene over må justeres basert på hvordan du vil ha 9 seter. Eksempel */
+.player-seat[data-seat="1"] { top: 0%; left: 30%; transform: translate(-50%, -50%); }
+.player-seat[data-seat="2"] { top: 0%; right: 30%; transform: translate(50%, -50%); }
+.player-seat[data-seat="3"] { top: 35%; right: 0%; transform: translate(50%, -50%); }
+.player-seat[data-seat="4"] { bottom: 10%; right: 15%; transform: translate(50%, 50%); }
+.player-seat[data-seat="5"] { bottom: 0%; left: 50%; transform: translate(-50%, 50%); }
+.player-seat[data-seat="6"] { bottom: 10%; left: 15%; transform: translate(-50%, 50%); }
+.player-seat[data-seat="7"] { top: 35%; left: 0%; transform: translate(-50%, -50%); }
+.player-seat[data-seat="8"] { top: 12%; left: 15%; transform: translate(-50%, -50%); } /* Overlapper kanskje */
+.player-seat[data-seat="9"] { top: 12%; right: 15%; transform: translate(50%, -50%);} /* Overlapper kanskje */
+/* === 11: POKER TABLE VISUALIZATION STYLES END === */
+
+
+/* === 12: MODAL STYLES SECTION START === */
 .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
 .modal-content { background-color: #fefefe; color: var(--text-color); margin: auto; padding: 25px; border: 1px solid #888; border-radius: 5px; width: 100%; max-width: 900px; position: relative; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0,0,0,0.3); overflow-y: auto; }
 .modal-content h2 { margin-top: 0; color: var(--dark-color); border-bottom: 1px solid #eee; padding-bottom: 10px;}
 .modal-content h3 { color: var(--dark-color); border-bottom: 1px dashed #eee; padding-bottom: 5px; margin-top: 20px;}
+.modal-content h4 { color: var(--dark-color); margin-top: 15px; margin-bottom: 5px;}
 .modal-content div[id^="edit-"] { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
 .modal-content div[id^="edit-"]:last-of-type { border-bottom: none; padding-bottom: 0; margin-bottom: 0;}
 .modal-content #edit-blinds-section .blind-table-container { max-height: 250px; }
@@ -332,13 +447,11 @@ main.tournament-live {
 .layout-control label { flex-basis: 80px; flex-shrink: 0; text-align: right; margin-bottom: 0; font-size: 0.9em;}
 .layout-control input[type="range"] { flex-grow: 1; min-width: 80px; height: 6px;}
 .layout-control input[type="number"] { width: 65px; margin-left: 0; padding: 4px; font-size: 0.9em;}
-.layout-control span { width: 20px; text-align: left; font-size: 0.9em; }
+.layout-control span { width: 20px; text-align: left; font-size: 0.9em; } /* For %/em ved siden av range */
 .info-toggles { margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;}
+.info-toggles h5 { margin-top: 0; margin-bottom: 8px;}
 .info-toggles label { display: inline-block; margin-right: 15px; font-weight: normal; font-size: 0.95em;}
 .info-toggles input[type="checkbox"] { margin-right: 5px; vertical-align: middle;}
-
-/* Theme Editor */
-#edit-theme-section h4 { margin-top: 15px; margin-bottom: 10px; font-size: 1.1em;}
 .theme-favorites-section { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;}
 .theme-favorites-section select { max-width: 180px; flex-grow: 1;}
 .theme-favorites-section input[type="text"] { max-width: 160px; flex-grow: 1;}
@@ -349,54 +462,71 @@ main.tournament-live {
 .theme-editor-color .control-group { display: flex; align-items: center; margin-bottom: 8px; gap: 5px;}
 .theme-editor-color label { flex-basis: 20px; margin-bottom: 0; text-align: right; font-size: 0.9em;}
 .theme-editor-color input[type="range"] { flex-grow: 1; height: 6px;}
-.theme-editor-color input[type="number"] { width: 60px; margin-left: 5px; padding: 4px; font-size: 0.9em; }
-.theme-editor-color input[type="number"] + span { font-size: 0.9em; width: 15px; display: inline-block; }
+.theme-editor-color input[type="number"].color-value-input { width: 60px; margin-left: 5px; padding: 4px; font-size: 0.9em; text-align: right;} /* Egen klasse for farge-inputs */
+.theme-editor-color input[type="number"].color-value-input + span { font-size: 0.9em; width: 15px; display: inline-block; } /* Grad/prosent-symbol */
 .color-preview-box { width: 100%; height: 50px; border: 1px solid #ccc; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
-#text-color-preview span { padding: 5px; background-color: rgba(255,255,255,0.7); border-radius: 3px; color: initial; }
+#text-color-preview span { padding: 5px; background-color: rgba(255,255,255,0.7); border-radius: 3px; color: initial; } /* Initial farge for preview-tekst */
 .hue-slider { background: linear-gradient(to right, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%)); border-radius: 3px; appearance: none; -webkit-appearance: none; height: 6px; }
-/* === 11: MODAL STYLES SECTION END === */
+/* === 12: MODAL STYLES SECTION END === */
 
 
-/* === 12: UTILITY & RESPONSIVE SECTION START === */
+/* === 13: UTILITY & RESPONSIVE SECTION START === */
 @media (max-width: 992px) {
     .element-layout-grid { grid-template-columns: 1fr; }
-    .player-management { flex-direction: column; overflow: visible; padding: 10px; min-height: auto; }
-    .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;}
-    .player-column .player-list-live { overflow-y: auto; }
+    /* Juster player management for tables view på mindre skjermer */
+    #view-tables .player-management { flex-direction: column; overflow: visible; padding: 10px; min-height: auto; }
+    #view-tables .player-column { flex-basis: auto; max-height: 45vh; overflow-y: hidden;}
+    #view-tables .player-column .player-list-live { overflow-y: auto; }
     .modal-content { max-width: 700px; }
+    .table-visualization-container { justify-content: center; } /* Sørg for sentrering */
 }
+
 @media (max-width: 768px) {
-    #live-canvas { display: flex; flex-direction: column; height: auto !important; min-height: 0; position: static; overflow: visible; }
-    .draggable-element { position: static !important; width: auto !important; margin: 10px 15px; padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 5px; font-size: inherit !important; height: auto !important; left: auto !important; top: auto !important; transform: none !important; cursor: default !important; } /* Disable dragging styles on mobile */
-    .draggable-element.dragging { cursor: default !important; opacity: 1; box-shadow: none; border: none; } /* Disable dragging appearance */
-    #title-element { order: 1; font-size: 2.2em !important; }
-    #timer-element { order: 2; font-size: 12em !important; }
-    #blinds-element { order: 3; font-size: 6em !important; }
-    #info-element { order: 4; }
-    #logo-element { order: 5; height: 15vh !important; max-height: 100px; }
-    .sub-canvas-controls.header-right-controls { justify-content: center; padding: 8px 10px; border-bottom: none; border-top: 1px solid var(--live-ui-border); margin-top: 10px; order: 9; }
-    .controls { margin-bottom: 10px; padding: 8px 10px;}
-    .controls button { font-size: 0.9em; padding: 6px 10px; margin: 3px 5px;}
-    .player-column { max-height: none; }
-    .player-management { padding: 10px; gap: 10px; }
-    #activity-log-container { margin: 10px;}
+    /* Mobil: Skjul canvas, stable elementer */
+    #view-clock #live-canvas { display: none; } /* Skjul hele canvas */
+    /* Gjenbruk stiler for kontroller etc. under #view-clock */
+    #view-clock .live-info-prizes { margin: 10px; }
+    #view-clock .controls { margin-bottom: 10px; }
+    #view-clock #activity-log-container { margin: 10px; }
+
+    /* Vis bordvisning som hovedinnhold */
+    .table-visualization-container {
+        flex-direction: column; /* Stable bord under hverandre */
+        align-items: center; /* Sentrer bordene */
+        gap: 15px;
+    }
+    .poker-table { /* Mindre bord på mobil */
+        --table-width: 320px;
+        --table-height: 170px;
+        --rail-thickness: 10px;
+    }
+     .player-seat { font-size: 0.7em; width: 55px; height: 45px;}
+
+    .main-header .header-right-controls { position: static; transform: none; justify-content: center; padding: 8px 10px; margin-top: 5px; }
+    .main-header .header-right-controls p { display: none; } /* Skjul sanntidsklokke her */
+    .tabs { justify-content: center; } /* Sentrer faner */
+
     .modal-content { width: 95%; max-height: 85vh; padding: 15px; }
     .theme-editor-row { flex-direction: column; }
     .theme-favorites-section { flex-direction: column; align-items: stretch;}
     .theme-favorites-section > * {width: 100%; max-width: none; margin: 5px 0 !important;}
     .layout-control { flex-wrap: wrap; }
     .layout-control label { flex-basis: 100px; }
-    .element-visibility-toggles { gap: 5px 10px; } /* Tettere toggles på mobil */
+    .element-visibility-toggles { gap: 5px 10px; }
 }
 @media (max-width: 480px) {
     body { font-size: 14px; }
-    #title-element h1#tournament-name-display { font-size: 1.8em !important; }
-    #timer-display { font-size: 8em !important; }
-    #blinds-display { font-size: 4em !important; }
-    #blinds-display .value { margin: 0 5px; }
-    .player-list-live li { flex-direction: column; align-items: flex-start; padding: 10px; }
-    .player-actions { margin-left: 0; margin-top: 8px; }
-    .player-actions button { margin-left: 0; margin-right: 4px; }
+     /* Mindre font i spillerlister på mobil */
+    #view-tables .player-list-live li { flex-direction: column; align-items: flex-start; padding: 10px; }
+    #view-tables .player-actions { margin-left: 0; margin-top: 8px; }
+    #view-tables .player-actions button { margin-left: 0; margin-right: 4px; }
+
+    .poker-table {
+        --table-width: 280px;
+        --table-height: 150px;
+    }
+    .player-seat { width: 50px; height: 40px; font-size: 0.65em;}
+
     .modal-content { width: 98%; padding: 10px; }
     .layout-control { flex-direction: column; align-items: stretch;}
     .layout-control label {text-align: left; margin-bottom: 3px;}
@@ -405,4 +535,4 @@ main.tournament-live {
     #blind-structure-table th, #blind-structure-table td, #edit-blind-structure-table th, #edit-blind-structure-table td { padding: 4px; font-size: 0.9em;}
     #blind-structure-table input[type="number"], #edit-blind-structure-table input[type="number"] { width: 60px; }
 }
-/* === 12: UTILITY & RESPONSIVE SECTION END === */
+/* === 13: UTILITY & RESPONSIVE SECTION END === */
