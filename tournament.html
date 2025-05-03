@@ -11,6 +11,7 @@
 <body>
         <!-- === 03: MAIN CONTENT SECTION START === -->
     <main class="tournament-live">
+        <!-- Canvas for Draggable Elements -->
         <div id="live-canvas">
             <div id="title-element" class="draggable-element" data-element-id="title"> <h1 id="tournament-name-display" class="main-tournament-title">Laster...</h1> </div>
             <div id="timer-element" class="draggable-element" data-element-id="timer"> <div class="timer-section"> <h2>Tid Igjen</h2> <div id="timer-display">--:--</div> <div id="break-info" class="hidden">PAUSE</div> </div> </div>
@@ -18,8 +19,23 @@
             <div id="logo-element" class="draggable-element" data-element-id="logo"> <div class="logo-area"> <img src="placeholder-logo.png" alt="Turnering Logo" class="logo"> </div> </div>
             <div id="info-element" class="draggable-element info-box" data-element-id="info"> <p id="info-next-blinds">Neste: <span id="next-blinds">--</span></p> <p id="info-next-pause" class="hidden">Neste Pause: <span id="next-pause-time">--</span></p> <p id="info-avg-stack">Average Stack: <span id="average-stack">--</span></p> <p id="info-players">Spillere: <span id="players-remaining">--</span> (<span id="total-entries">--</span>)</p> <p id="info-late-reg">Late Reg: <span id="late-reg-status">--</span></p> </div>
         </div>
-        <div class="sub-canvas-controls header-right-controls"> <p>Klokke: <span id="current-time">--:--:--</span></p> <button id="btn-toggle-sound" title="Slå lyd av/på" class="small-button">🔊 Lyd På</button> <button id="btn-edit-tournament-settings" title="Rediger Turneringsregler (Blinds, Premier)" class="small-button">📜 Regler</button> <button id="btn-edit-ui-settings" title="Rediger Utseende (Layout, Farger, Logo, Lyd)" class="small-button">🎨 Utseende</button> <button id="btn-back-to-main-live" title="Tilbake til Start" class="small-button"> Hjem</button> </div>
-        <div id="prize-display-live" class="live-info-prizes hidden"> <h3>Premiefordeling (Totalpott: <span id="total-pot">--</span> kr)</h3> <p>Laster...</p> </div>
+
+        <!-- Controls under canvas -->
+        <div class="sub-canvas-controls header-right-controls">
+            <p>Klokke: <span id="current-time">--:--:--</span></p>
+            <button id="btn-toggle-sound" title="Slå lyd av/på" class="small-button">🔊 Lyd På</button>
+            <button id="btn-edit-tournament-settings" title="Rediger Turneringsregler (Blinds, Premier)" class="small-button">📜 Regler</button>
+            <button id="btn-edit-ui-settings" title="Rediger Utseende (Layout, Farger, Logo, Lyd)" class="small-button">🎨 Utseende</button>
+            <button id="btn-back-to-main-live" title="Tilbake til Start" class="small-button"> Hjem</button>
+        </div>
+
+        <!-- Prize Display -->
+        <div id="prize-display-live" class="live-info-prizes hidden">
+            <h3>Premiefordeling (Totalpott: <span id="total-pot">--</span> kr)</h3>
+            <p>Laster...</p>
+        </div>
+
+        <!-- Main Controls -->
         <div class="controls">
              <button id="btn-start-pause">Start Klokke</button>
              <button id="btn-prev-level"><< Nivå</button>
@@ -27,40 +43,319 @@
              <button id="btn-adjust-time-minus">-1 min</button>
              <button id="btn-adjust-time-plus">+1 min</button>
              <button id="btn-late-reg" disabled>Late Reg</button>
-             <!-- NY KNAPP for Add-on -->
              <button id="btn-manage-addons" class="info-button hidden">Administrer Add-ons</button>
         </div>
-        <div class="player-management"> <div class="player-column"> <h2>Aktive (<span id="active-player-count">--</span>)</h2> <p id="table-balance-info" class="warning hidden">Ubalanserte bord!</p> <ul id="player-list" class="item-list player-list-live"><li>Laster...</li></ul> </div> <div class="player-column"> <h2>Eliminerte (<span id="eliminated-player-count">--</span>)</h2> <ul id="eliminated-player-list" class="item-list player-list-live"></ul> </div> </div>
-        <div id="activity-log-container"> <h3>Aktivitetslogg</h3> <ul id="activity-log-list"><li>Loggen starter...</li></ul> </div>
+
+        <!-- Player Management -->
+        <div class="player-management">
+            <div class="player-column">
+                <h2>Aktive (<span id="active-player-count">--</span>)</h2>
+                <p id="table-balance-info" class="warning hidden">Ubalanserte bord!</p>
+                <ul id="player-list" class="item-list player-list-live"><li>Laster...</li></ul>
+            </div>
+            <div class="player-column">
+                <h2>Eliminerte (<span id="eliminated-player-count">--</span>)</h2>
+                <ul id="eliminated-player-list" class="item-list player-list-live"></ul>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div id="activity-log-container">
+            <h3>Aktivitetslogg</h3>
+            <ul id="activity-log-list"><li>Loggen starter...</li></ul>
+        </div>
+
+         <!-- UI Error Message Area -->
+         <div id="ui-error-message" class="warning hidden" style="margin: 15px;"></div>
+
     </main>
     <!-- === 03: MAIN CONTENT SECTION END === -->
 
     <!-- === 04: FOOTER SECTION START === -->
-    <footer> <p>© 2024 Winjevoll Pokerklubb</p> <div> <button id="btn-force-save" class="small-button">Lagre Nå</button> <button id="btn-end-tournament" class="danger-button">Fullfør Turnering</button> </div> </footer>
+    <footer>
+        <p>© 2024 Winjevoll Pokerklubb</p>
+        <div>
+            <button id="btn-force-save" class="small-button">Lagre Nå</button>
+            <button id="btn-end-tournament" class="danger-button">Fullfør Turnering</button>
+        </div>
+    </footer>
     <!-- === 04: FOOTER SECTION END === -->
 
     <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS START === -->
-    <div id="tournament-settings-modal" class="modal hidden"> <!-- ... (som før) ... --> </div>
+    <div id="tournament-settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="close-tournament-settings-modal-button" title="Lukk">×</span>
+            <h2>Rediger Turneringsregler</h2>
+            <p>Denne funksjonaliteten er ikke implementert ennå.</p>
+             <!-- TODO: Innhold for redigering av blinds, premier etc. -->
+            <div class="modal-actions">
+                <button id="btn-save-tournament-settings" class="success-button" disabled>Lagre Regler</button>
+                <button id="btn-cancel-tournament-settings" type="button">Avbryt</button>
+            </div>
+        </div>
+    </div>
     <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS END === -->
 
-    <!-- === 05b: MODAL FOR UI SETTINGS START === -->
-    <div id="ui-settings-modal" class="modal hidden"> <!-- ... (som før, inkludert logo-opplasting) ... --> </div>
+    <!-- === 05b: MODAL FOR UI SETTINGS START (MED KORREKTE ID-er) === -->
+    <div id="ui-settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="close-ui-settings-modal-button" title="Lukk">×</span>
+            <h2>Rediger Utseende</h2>
+
+            <!-- === Tema Seksjon === -->
+            <div id="edit-theme-section">
+                <h3>Fargetema</h3>
+                <!-- TODO: Theme Favorites Section -->
+                 <!-- <div class="theme-favorites-section"> ... </div> -->
+                <div class="theme-editor-row">
+                    <div class="theme-editor-color">
+                        <h5>Bakgrunnsfarge</h5>
+                        <div class="control-group">
+                            <label for="bg-color-red">R</label>
+                            <input type="range" id="bg-color-red" min="0" max="255" step="1">
+                            <input type="number" id="bg-color-red-value" min="0" max="255" step="1" class="color-value-input">
+                        </div>
+                        <div class="control-group">
+                            <label for="bg-color-green">G</label>
+                            <input type="range" id="bg-color-green" min="0" max="255" step="1">
+                            <input type="number" id="bg-color-green-value" min="0" max="255" step="1" class="color-value-input">
+                        </div>
+                        <div class="control-group">
+                            <label for="bg-color-blue">B</label>
+                            <input type="range" id="bg-color-blue" min="0" max="255" step="1">
+                            <input type="number" id="bg-color-blue-value" min="0" max="255" step="1" class="color-value-input">
+                        </div>
+                    </div>
+                    <div class="theme-editor-preview">
+                        <div id="bg-color-preview" class="color-preview-box">BG</div>
+                    </div>
+                </div>
+                <hr style="border-style: solid; margin: 10px 0;">
+                <div class="theme-editor-row">
+                    <div class="theme-editor-color">
+                        <h5>Tekstfarge</h5>
+                        <div class="control-group">
+                            <label for="text-color-red">R</label>
+                            <input type="range" id="text-color-red" min="0" max="255" step="1">
+                            <input type="number" id="text-color-red-value" min="0" max="255" step="1" class="color-value-input">
+                        </div>
+                         <div class="control-group">
+                            <label for="text-color-green">G</label>
+                            <input type="range" id="text-color-green" min="0" max="255" step="1">
+                            <input type="number" id="text-color-green-value" min="0" max="255" step="1" class="color-value-input">
+                        </div>
+                         <div class="control-group">
+                            <label for="text-color-blue">B</label>
+                            <input type="range" id="text-color-blue" min="0" max="255" step="1">
+                            <input type="number" id="text-color-blue-value" min="0" max="255" step="1" class="color-value-input">
+                        </div>
+                    </div>
+                    <div class="theme-editor-preview">
+                        <div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div>
+                    </div>
+                </div>
+                 <!-- TODO: HSL Sliders? -->
+            </div>
+
+            <hr>
+
+            <!-- === Layout Seksjon === -->
+            <div id="edit-layout-section">
+                <h3>Layout</h3>
+                <div class="layout-control" style="margin-bottom: 20px;">
+                    <label for="canvas-height-slider">Canvas Høyde (% av viewport)</label>
+                    <input type="range" id="canvas-height-slider" min="30" max="100" step="1">
+                    <span id="canvas-height-value">--</span>%
+                </div>
+
+                <div id="element-layout-grid">
+                    <!-- Title Controls -->
+                    <div class="element-layout-controls" id="title-layout-controls">
+                        <h5>Tittel (<label><input type="checkbox" id="title-visible-toggle"> Synlig</label>)</h5>
+                        <div class="layout-control">
+                            <label for="title-x-slider">X Pos (%)</label>
+                            <input type="range" id="title-x-slider" min="0" max="100" step="0.1">
+                            <span id="title-x-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="title-y-slider">Y Pos (%)</label>
+                            <input type="range" id="title-y-slider" min="0" max="100" step="0.1">
+                            <span id="title-y-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="title-width-slider">Bredde (%)</label>
+                            <input type="range" id="title-width-slider" min="10" max="100" step="1">
+                            <span id="title-width-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="title-fontsize-slider">Font (em)</label>
+                            <input type="range" id="title-fontsize-slider" min="1" max="10" step="0.1">
+                            <span id="title-fontsize-value">--</span>em
+                        </div>
+                    </div>
+
+                    <!-- Timer Controls -->
+                    <div class="element-layout-controls" id="timer-layout-controls">
+                        <h5>Timer (<label><input type="checkbox" id="timer-visible-toggle"> Synlig</label>)</h5>
+                        <div class="layout-control">
+                            <label for="timer-x-slider">X Pos (%)</label>
+                            <input type="range" id="timer-x-slider" min="0" max="100" step="0.1">
+                            <span id="timer-x-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="timer-y-slider">Y Pos (%)</label>
+                            <input type="range" id="timer-y-slider" min="0" max="100" step="0.1">
+                            <span id="timer-y-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="timer-width-slider">Bredde (%)</label>
+                            <input type="range" id="timer-width-slider" min="10" max="100" step="1">
+                            <span id="timer-width-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="timer-fontsize-slider">Font (em)</label>
+                            <input type="range" id="timer-fontsize-slider" min="5" max="25" step="0.5">
+                            <span id="timer-fontsize-value">--</span>em
+                        </div>
+                    </div>
+
+                    <!-- Blinds Controls -->
+                    <div class="element-layout-controls" id="blinds-layout-controls">
+                        <h5>Blinds (<label><input type="checkbox" id="blinds-visible-toggle"> Synlig</label>)</h5>
+                        <div class="layout-control">
+                            <label for="blinds-x-slider">X Pos (%)</label>
+                            <input type="range" id="blinds-x-slider" min="0" max="100" step="0.1">
+                            <span id="blinds-x-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="blinds-y-slider">Y Pos (%)</label>
+                            <input type="range" id="blinds-y-slider" min="0" max="100" step="0.1">
+                            <span id="blinds-y-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="blinds-width-slider">Bredde (%)</label>
+                            <input type="range" id="blinds-width-slider" min="10" max="100" step="1">
+                            <span id="blinds-width-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="blinds-fontsize-slider">Font (em)</label>
+                            <input type="range" id="blinds-fontsize-slider" min="2" max="15" step="0.1">
+                            <span id="blinds-fontsize-value">--</span>em
+                        </div>
+                    </div>
+
+                     <!-- Logo Controls -->
+                    <div class="element-layout-controls" id="logo-layout-controls">
+                        <h5>Logo (<label><input type="checkbox" id="logo-visible-toggle"> Synlig</label>)</h5>
+                        <div class="layout-control">
+                            <label for="logo-x-slider">X Pos (%)</label>
+                            <input type="range" id="logo-x-slider" min="0" max="100" step="0.1">
+                            <span id="logo-x-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="logo-y-slider">Y Pos (%)</label>
+                            <input type="range" id="logo-y-slider" min="0" max="100" step="0.1">
+                            <span id="logo-y-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="logo-width-slider">Bredde (%)</label>
+                            <input type="range" id="logo-width-slider" min="5" max="80" step="1">
+                            <span id="logo-width-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="logo-height-slider">Høyde (%)</label>
+                            <input type="range" id="logo-height-slider" min="5" max="80" step="1">
+                            <span id="logo-height-value">--</span>%
+                        </div>
+                         <!-- Ingen Font Size for Logo -->
+                    </div>
+
+                     <!-- Info Box Controls -->
+                    <div class="element-layout-controls" id="info-layout-controls">
+                        <h5>Info Boks (<label><input type="checkbox" id="info-visible-toggle"> Synlig</label>)</h5>
+                        <div class="layout-control">
+                            <label for="info-x-slider">X Pos (%)</label>
+                            <input type="range" id="info-x-slider" min="0" max="100" step="0.1">
+                            <span id="info-x-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="info-y-slider">Y Pos (%)</label>
+                            <input type="range" id="info-y-slider" min="0" max="100" step="0.1">
+                            <span id="info-y-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="info-width-slider">Bredde (%)</label>
+                            <input type="range" id="info-width-slider" min="10" max="100" step="1">
+                            <span id="info-width-value">--</span>%
+                        </div>
+                        <div class="layout-control">
+                            <label for="info-fontsize-slider">Font (em)</label>
+                            <input type="range" id="info-fontsize-slider" min="0.5" max="3" step="0.1">
+                            <span id="info-fontsize-value">--</span>em
+                        </div>
+                        <div class="info-toggles">
+                            <h5>Vis Info:</h5>
+                            <label><input type="checkbox" id="info-toggle-nextblinds"> Neste Blinds</label>
+                            <label><input type="checkbox" id="info-toggle-avgstack"> Avg Stack</label>
+                            <label><input type="checkbox" id="info-toggle-players"> Spillere</label>
+                            <label><input type="checkbox" id="info-toggle-latereg"> Late Reg</label>
+                            <label><input type="checkbox" id="info-toggle-nextpause"> Neste Pause</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- === Logo Seksjon === -->
+            <div id="edit-logo-section">
+                <h3>Logo</h3>
+                 <label for="logo-upload">Last opp ny logo (PNG, JPG, GIF):</label>
+                 <input type="file" id="logo-upload" accept="image/*">
+                 <div style="margin-top: 10px;">
+                     <p>Nåværende logo:</p>
+                     <img id="current-logo-preview" src="#" alt="Logo Preview" style="max-height: 80px; max-width: 200px; border: 1px solid #ccc; display: none; margin-bottom: 10px;">
+                     <button id="btn-clear-logo" class="danger-button small-button" disabled>Fjern Egendefinert Logo</button>
+                 </div>
+            </div>
+
+            <hr>
+
+             <!-- === Lyd Seksjon === -->
+             <div id="edit-sound-section">
+                 <h3>Lyd</h3>
+                 <div class="layout-control">
+                     <label for="sound-volume-slider">Volum (%)</label>
+                     <input type="range" id="sound-volume-slider" min="0" max="1" step="0.01">
+                     <span id="sound-volume-value">--</span>%
+                 </div>
+                 <!-- TODO: Kanskje mulighet for å teste lyder her? -->
+             </div>
+
+            <!-- === Modal Handlinger === -->
+            <div class="modal-actions">
+                <button id="btn-reset-ui-defaults" type="button" class="warning-button">Tilbakestill Alt</button>
+                <button id="btn-save-ui-settings" class="success-button">Lagre Utseende</button>
+                <button id="btn-cancel-ui-settings" type="button">Avbryt</button>
+            </div>
+        </div>
+    </div>
     <!-- === 05b: MODAL FOR UI SETTINGS END === -->
 
     <!-- === 05c: NY MODAL FOR ADD-ONS START === -->
     <div id="addon-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 500px;"> <!-- Litt smalere modal -->
+        <div class="modal-content" style="max-width: 500px;">
             <span class="close-button" id="close-addon-modal-button" title="Lukk">×</span>
             <h2>Administrer Add-ons</h2>
-            <p>Velg spillere som skal ha Add-on. Kun spillere uten add-on kan velges.</p>
+            <p>Denne funksjonaliteten er ikke implementert ennå.</p>
+            <!-- TODO: Add-on liste og logikk -->
             <div id="addon-player-list-container" style="max-height: 60vh; overflow-y: auto; border: 1px solid #eee; margin-bottom: 15px; padding: 10px;">
                  <ul id="addon-player-list" class="item-list" style="max-height: none; border-top: none; margin: 0;">
-                     <!-- Spillerliste genereres av JS -->
                      <li>Laster spillere...</li>
                  </ul>
             </div>
             <div class="modal-actions">
-                <button id="btn-confirm-addons" class="success-button">Bekreft Add-ons</button>
+                <button id="btn-confirm-addons" class="success-button" disabled>Bekreft Add-ons</button>
                 <button id="btn-cancel-addons" type="button">Avbryt</button>
             </div>
         </div>
@@ -78,16 +373,16 @@
                 <p><small>(Navn, Rebuys og Add-on kan justeres nedenfor)</small></p>
                 <hr>
                  <label for="edit-player-name-input">Navn:</label>
-                 <input type="text" id="edit-player-name-input" required>
+                 <input type="text" id="edit-player-name-input" required style="max-width: 300px;">
 
                  <label for="edit-player-rebuys-input">Antall Rebuys:</label>
                  <input type="number" id="edit-player-rebuys-input" min="0" step="1" style="max-width: 100px;">
 
-                 <label style="display: inline-block; margin-right: 10px;">
+                 <label style="display: inline-block; margin-right: 10px; margin-top: 10px;">
                      <input type="checkbox" id="edit-player-addon-checkbox">
                      Har Add-on
                  </label>
-                 <p><small>Advarsel: Manuell endring av rebuys/add-on vil justere total pott og tellere.</small></p>
+                 <p style="margin-top: 15px;"><small>Advarsel: Manuell endring av rebuys/add-on vil justere total pott og tellere.</small></p>
             </div>
             <div class="modal-actions">
                 <button id="btn-save-player-changes" class="success-button">Lagre Endringer</button>
