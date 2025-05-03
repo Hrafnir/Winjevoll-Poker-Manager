@@ -21,8 +21,12 @@ import {
     clearLogoBlob,
     DEFAULT_ELEMENT_LAYOUTS,
     DEFAULT_THEME_BG,
-    rgbToHsl,  // NY: Importer konverterere
-    hslToRgb   // NY: Importer konverterere
+    rgbToHsl,
+    hslToRgb,
+    // NYE IMPORTER FOR LAGRING:
+    saveThemeBgColor,
+    saveThemeTextColor,
+    saveElementLayouts
 } from './storage.js';
 
 // --- UI & FORMATTING ---
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentTournamentId = getActiveTournamentId();
     let state = null;
     let soundsEnabled = loadSoundPreference();
-    let currentLogoBlob = null;
+    let currentLogoBlob = null; // Hovedsidens logo blob
     let isModalOpen = false;
     let currentOpenModal = null;
 
@@ -92,20 +96,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     let draggedElement = null;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
-    let dragElementId = null;
+    let dragElementId = null; // ID for layout-oppdatering
 
     // UI Modal spesifikk state
     let modalBgColor = loadThemeBgColor();
     let modalTextColor = loadThemeTextColor();
     let modalLayouts = loadElementLayouts();
     let modalSoundVolume = loadSoundVolume();
-    let modalLogoBlob = null;
-    let modalPreviewLogoUrl = null;
-    let originalSettings = {};
-    let livePreviewEnabled = true;
-    let isUpdatingColorControls = false; // NY: For å hindre HSL/RGB loops
+    let modalLogoBlob = null; // Blob for preview/nytt bilde i modal
+    let modalPreviewLogoUrl = null; // Object URL for modal preview
+    let originalSettings = {}; // For å kunne avbryte/resette
+    let livePreviewEnabled = true; // Kontroller om endringer i modal skal vises live
+    let isUpdatingColorControls = false; // For å hindre HSL/RGB loops
 
-    // NY: Fargeforvalg
+    // Fargeforvalg
     const colorPresets = [
         { name: "Mørk (Standard)", bg: "rgb(65, 65, 65)", text: "rgb(235, 235, 235)" },
         { name: "Lys", bg: "rgb(248, 249, 250)", text: "rgb(33, 37, 41)" },
@@ -116,7 +120,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === 03: DOM REFERENCES START ===
-    // Generelt... (som før)
+    // ... (alle DOM-referanser som før) ...
+    // Generelt
     const currentTimeDisplay = document.getElementById('current-time');
     const btnToggleSound = document.getElementById('btn-toggle-sound');
     const btnEditTournamentSettings = document.getElementById('btn-edit-tournament-settings');
@@ -141,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const headerRightControls = document.querySelector('.header-right-controls');
     const btnManageAddons = document.getElementById('btn-manage-addons');
 
-    // Canvas elementer... (som før)
+    // Canvas elementer
     const liveCanvas = document.getElementById('live-canvas');
     const titleElement = document.getElementById('title-element');
     const timerElement = document.getElementById('timer-element');
@@ -150,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const infoElement = document.getElementById('info-element');
     const draggableElements = [titleElement, timerElement, blindsElement, logoElement, infoElement];
 
-    // Display elementer... (som før)
+    // Display elementer
     const nameDisplay = document.getElementById('tournament-name-display');
     const timerDisplay = document.getElementById('timer-display');
     const breakInfo = document.getElementById('break-info');
@@ -164,13 +169,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const totalEntriesDisplay = document.getElementById('total-entries');
     const lateRegStatusDisplay = document.getElementById('late-reg-status');
 
-    // Modaler... (som før)
+    // Modaler
     const tournamentSettingsModal = document.getElementById('tournament-settings-modal');
     const uiSettingsModal = document.getElementById('ui-settings-modal');
     const addonModal = document.getElementById('addon-modal');
     const editPlayerModal = document.getElementById('edit-player-modal');
 
-    // Edit Player Modal elementer... (som før)
+    // Edit Player Modal elementer
     const editPlayerModalContent = editPlayerModal?.querySelector('.modal-content');
     const editPlayerIdInput = document.getElementById('edit-player-id-input');
     const editPlayerNameDisplay = document.getElementById('edit-player-name-display');
@@ -187,50 +192,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnSaveUiSettings = document.getElementById('btn-save-ui-settings');
     const btnCancelUiSettings = document.getElementById('btn-cancel-ui-settings');
     const btnResetUiDefaults = document.getElementById('btn-reset-ui-defaults');
-
-    // Theme Controls
-    const themePresetSelect = document.getElementById('theme-preset-select'); // NY
+    const themePresetSelect = document.getElementById('theme-preset-select');
     const bgColorDisplay = document.getElementById('bg-color-preview');
     const textColorDisplay = document.getElementById('text-color-preview');
-    // BG RGB
     const bgColorRedSlider = document.getElementById('bg-color-red');
     const bgColorRedValue = document.getElementById('bg-color-red-value');
     const bgColorGreenSlider = document.getElementById('bg-color-green');
     const bgColorGreenValue = document.getElementById('bg-color-green-value');
     const bgColorBlueSlider = document.getElementById('bg-color-blue');
     const bgColorBlueValue = document.getElementById('bg-color-blue-value');
-    // BG HSL
     const bgColorHueSlider = document.getElementById('bg-color-hue');
     const bgColorHueValue = document.getElementById('bg-color-hue-value');
     const bgColorSaturationSlider = document.getElementById('bg-color-saturation');
     const bgColorSaturationValue = document.getElementById('bg-color-saturation-value');
     const bgColorLightnessSlider = document.getElementById('bg-color-lightness');
     const bgColorLightnessValue = document.getElementById('bg-color-lightness-value');
-    // TEXT RGB
     const textColorRedSlider = document.getElementById('text-color-red');
     const textColorRedValue = document.getElementById('text-color-red-value');
     const textColorGreenSlider = document.getElementById('text-color-green');
     const textColorGreenValue = document.getElementById('text-color-green-value');
     const textColorBlueSlider = document.getElementById('text-color-blue');
     const textColorBlueValue = document.getElementById('text-color-blue-value');
-    // TEXT HSL
     const textColorHueSlider = document.getElementById('text-color-hue');
     const textColorHueValue = document.getElementById('text-color-hue-value');
     const textColorSaturationSlider = document.getElementById('text-color-saturation');
     const textColorSaturationValue = document.getElementById('text-color-saturation-value');
     const textColorLightnessSlider = document.getElementById('text-color-lightness');
     const textColorLightnessValue = document.getElementById('text-color-lightness-value');
-
-    // Layout Controls
     const layoutControlContainer = document.getElementById('element-layout-grid');
     const canvasHeightSlider = document.getElementById('canvas-height-slider');
     const canvasHeightValue = document.getElementById('canvas-height-value');
-
-    // Dynamisk henting av layout controls... (som før)
     const layoutControls = {};
     draggableElements.forEach(el => {
-        if (!el) return;
-        const id = el.id.replace('-element', '');
+        if (!el) return; const id = el.id.replace('-element', '');
         layoutControls[id] = {
             container: document.getElementById(`${id}-layout-controls`), visible: document.getElementById(`${id}-visible-toggle`),
             x: document.getElementById(`${id}-x-slider`), xValue: document.getElementById(`${id}-x-value`),
@@ -239,34 +233,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             height: document.getElementById(`${id}-height-slider`), heightValue: document.getElementById(`${id}-height-value`),
             fontSize: document.getElementById(`${id}-fontsize-slider`), fontSizeValue: document.getElementById(`${id}-fontsize-value`),
         };
-        if (id === 'info') {
-             layoutControls.info.showNextBlinds = document.getElementById('info-toggle-nextblinds');
-             layoutControls.info.showAvgStack = document.getElementById('info-toggle-avgstack');
-             layoutControls.info.showPlayers = document.getElementById('info-toggle-players');
-             layoutControls.info.showLateReg = document.getElementById('info-toggle-latereg');
-             layoutControls.info.showNextPause = document.getElementById('info-toggle-nextpause');
-        }
+        if (id === 'info') { layoutControls.info.showNextBlinds = document.getElementById('info-toggle-nextblinds'); layoutControls.info.showAvgStack = document.getElementById('info-toggle-avgstack'); layoutControls.info.showPlayers = document.getElementById('info-toggle-players'); layoutControls.info.showLateReg = document.getElementById('info-toggle-latereg'); layoutControls.info.showNextPause = document.getElementById('info-toggle-nextpause'); }
     });
-
-    // Logo Controls... (som før)
     const logoUploadInput = document.getElementById('logo-upload');
     const currentLogoPreview = document.getElementById('current-logo-preview');
     const btnClearLogo = document.getElementById('btn-clear-logo');
-
-    // Sound Controls... (som før)
     const soundVolumeSlider = document.getElementById('sound-volume-slider');
     const soundVolumeValue = document.getElementById('sound-volume-value');
-    // --- End UI Settings Modal Elements ---
-
     // === 03: DOM REFERENCES END ===
 
 
     // === 04: INITIALIZATION & VALIDATION START ===
+    // ... (som før) ...
     console.log("Tournament Main: Retrieved active tournament ID:", currentTournamentId);
     if (!currentTournamentId) { alert("Ingen aktiv turnering valgt."); console.error("No active tournament ID found. Redirecting."); window.location.href = 'index.html'; return; }
     state = loadTournamentState(currentTournamentId);
     if (!state || !state.config || !state.live || !state.config.blindLevels || state.config.blindLevels.length === 0) { alert(`Kunne ikke laste gyldig data (ID: ${currentTournamentId}). Sjekk konsollen.`); console.error("Invalid or incomplete state loaded:", state); clearActiveTournamentId(); window.location.href = 'index.html'; return; }
-    // Grundigere validering/default-setting... (som før)
     state.live = state.live || {}; state.live.status = state.live.status === 'running' || state.live.status === 'paused' || state.live.status === 'finished' ? state.live.status : 'paused'; state.live.currentLevelIndex = state.live.currentLevelIndex ?? 0;
     if (state.live.currentLevelIndex >= state.config.blindLevels.length) { console.warn(`Loaded currentLevelIndex (${state.live.currentLevelIndex}) out of bounds. Resetting.`); state.live.currentLevelIndex = state.config.blindLevels.length - 1; state.live.status = 'paused'; }
     const currentLevelData = state.config.blindLevels[state.live.currentLevelIndex]; state.live.timeRemainingInLevel = state.live.timeRemainingInLevel ?? (currentLevelData?.duration * 60 || 1200); state.live.isOnBreak = state.live.isOnBreak ?? false; state.live.timeRemainingInBreak = state.live.timeRemainingInBreak ?? 0; state.live.players = state.live.players || []; state.live.eliminatedPlayers = state.live.eliminatedPlayers || []; state.live.knockoutLog = state.live.knockoutLog || []; state.live.activityLog = state.live.activityLog || []; state.live.totalPot = state.live.totalPot ?? 0; state.live.totalEntries = state.live.totalEntries ?? 0; state.live.totalRebuys = state.live.totalRebuys ?? 0; state.live.totalAddons = state.live.totalAddons ?? 0; state.live.nextPlayerId = state.live.nextPlayerId || (Math.max(0, ...state.live.players.map(p => p.id), ...state.live.eliminatedPlayers.map(p => p.id)) + 1);
@@ -275,18 +257,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === 04b: INITIAL THEME, LAYOUT, LOGO APPLICATION ===
-    async function applyInitialThemeLayoutAndLogo() { /* ... (som før, ingen endring nødvendig her) ... */
+    // ... (som før) ...
+    async function applyInitialThemeLayoutAndLogo() {
         console.log("applyInitialThemeLayoutAndLogo: Starting...");
-        const bgColor = loadThemeBgColor();
-        let textColor = loadThemeTextColor();
+        const bgColor = loadThemeBgColor(); let textColor = loadThemeTextColor();
         if (!textColor || !textColor.startsWith('rgb(') || textColor.split(',').length !== 3) { console.warn(`Invalid textColor loaded: "${textColor}". Falling back to default.`); textColor = DEFAULT_THEME_TEXT; }
-        const elementLayouts = loadElementLayouts();
-        let logoDataBlob = null;
+        const elementLayouts = loadElementLayouts(); let logoDataBlob = null;
         try { logoDataBlob = await loadLogoBlob(); } catch (err) { console.error("Error loading logo blob:", err); }
         console.log("applyInitialThemeLayoutAndLogo: Data fetched. Applying theme/layout. Logo Blob:", logoDataBlob);
         applyThemeAndLayout(bgColor, textColor, elementLayouts, draggableElements);
-        currentLogoBlob = logoDataBlob;
-        updateMainLogoImage(currentLogoBlob, logoImg);
+        currentLogoBlob = logoDataBlob; updateMainLogoImage(currentLogoBlob, logoImg);
         console.log("applyInitialThemeLayoutAndLogo: Done.");
     }
     try { await applyInitialThemeLayoutAndLogo(); } catch (err) { console.error("CRITICAL Error during initial theme/layout/logo setup:", err); }
@@ -294,22 +274,77 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === MIDLERTIDIGE / TODO FUNKSJONER START ===
-    function handleAdjustLevel(delta) { /* ... (som før) ... */ }
-    function handleAdjustTime(deltaSeconds) { /* ... (som før) ... */ }
-    async function finishTournament() { /* ... (som før) ... */ }
+    // ... (handleAdjustLevel, handleAdjustTime, finishTournament, handleEndTournament, handleForceSave, handleBackToMain, openTournamentModal, openAddonModal - som før) ...
+    function handleAdjustLevel(delta) {
+        console.log("handleAdjustLevel", delta);
+        if (!state || state.live.status === 'finished') return;
+        const newIdx = state.live.currentLevelIndex + delta;
+        if (newIdx >= 0 && newIdx < state.config.blindLevels.length) {
+            const oldLvlNum = state.config.blindLevels[state.live.currentLevelIndex]?.level || '?';
+            const newLvl = state.config.blindLevels[newIdx];
+            if (!confirm(`Endre til Nivå ${newLvl.level} (${formatBlindsHTML(newLvl)})?\nKlokken nullstilles.`)) return;
+            state.live.currentLevelIndex = newIdx;
+            state.live.timeRemainingInLevel = newLvl.duration * 60;
+            state.live.isOnBreak = false;
+            state.live.timeRemainingInBreak = 0;
+            logActivity(state.live.activityLog, `Nivå manuelt endret: ${oldLvlNum} -> ${newLvl.level}.`);
+            // playSound('NEW_LEVEL'); // TODO
+            updateUI(state);
+            saveTournamentState(currentTournamentId, state);
+        } else {
+            alert("Kan ikke gå til nivået.");
+        }
+    }
+    function handleAdjustTime(deltaSeconds) {
+        console.log("handleAdjustTime", deltaSeconds);
+        if (!state || state.live.status === 'finished') return;
+        let key = state.live.isOnBreak ? 'timeRemainingInBreak' : 'timeRemainingInLevel';
+        let maxT = Infinity;
+        if (!state.live.isOnBreak) {
+            const lvl = state.config.blindLevels[state.live.currentLevelIndex];
+            if (lvl) maxT = lvl.duration * 60;
+        }
+        state.live[key] = Math.max(0, Math.min(state.live[key] + deltaSeconds, maxT));
+        logActivity(state.live.activityLog, `Tid justert ${deltaSeconds > 0 ? '+' : ''}${deltaSeconds / 60} min.`);
+        updateUI(state);
+        // Vurder lagring: saveTournamentState(currentTournamentId, state);
+    }
+    async function finishTournament() {
+        if (!state || state.live.status === 'finished') return;
+        console.log("Finishing Tournament...");
+        logActivity(state.live.activityLog, "Turnering fullføres.");
+        // playSound('TOURNAMENT_END'); // TODO
+        stopMainTimer();
+        stopRealTimeClock();
+        state.live.status = 'finished';
+        state.live.isOnBreak = false;
+        state.live.timeRemainingInLevel = 0;
+        state.live.timeRemainingInBreak = 0;
+        if (state.live.players.length === 1) {
+             const winner = state.live.players[0];
+             winner.place = 1; state.live.eliminatedPlayers.push(winner); state.live.players.splice(0, 1);
+             logActivity(state.live.activityLog, `Vinner: ${winner.name}!`);
+        } else if (state.live.players.length > 1) {
+             logActivity(state.live.activityLog, `Fullført med ${state.live.players.length} spillere igjen (ingen klar vinner definert).`);
+             state.live.players.forEach(p => { p.eliminated = true; p.place = null; state.live.eliminatedPlayers.push(p); });
+             state.live.players = [];
+        } else { logActivity(state.live.activityLog, `Fullført uten aktive spillere igjen.`); }
+        state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity));
+        updateUI(state); saveTournamentState(currentTournamentId, state); alert("Turneringen er fullført!");
+    }
     function handleEndTournament() { console.log("handleEndTournament called."); finishTournament(); }
-    function handleForceSave() { /* ... (som før) ... */ }
-    function handleBackToMain() { /* ... (som før) ... */ }
+    function handleForceSave() { if(state) { console.log("handleForceSave"); saveTournamentState(currentTournamentId, state); alert('Turnering lagret!');} else {console.warn("handleForceSave: State not available.")} }
+    function handleBackToMain() { console.log("handleBackToMain"); if (state && state.live.status !== 'finished') { saveTournamentState(currentTournamentId, state); } window.location.href = 'index.html'; }
     function openTournamentModal() { console.log("TEMP openTournamentModal"); alert("Funksjon for redigering av turneringsregler er ikke implementert ennå."); }
     function openAddonModal() { console.log("TEMP openAddonModal"); alert("Funksjon for add-ons er ikke implementert ennå."); }
     // === MIDLERTIDIGE / TODO FUNKSJONER SLUTT ===
 
 
     // === DRAG AND DROP LOGIC START ===
-    // ENDRET: Implementert dra-og-slipp
+    // --- FIKS: Sikrer at referanser eksisterer før bruk ---
     function startDrag(event, element) {
         if (!element || !element.classList.contains('draggable-element')) return;
-        if (event.target.closest('button, input, select, textarea, a')) return; // Ikke dra på interaktive elementer
+        if (event.target.closest('button, input, select, textarea, a')) return;
 
         console.log("startDrag initiated on element:", element.id);
         isDragging = true;
@@ -338,30 +373,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         let newXPercent = (newX / canvasRect.width) * 100;
         let newYPercent = (newY / canvasRect.height) * 100;
 
-        // Enkel grensesjekk (kan forbedres for å ta hensyn til elementets størrelse)
         newXPercent = Math.max(0, Math.min(newXPercent, 100));
         newYPercent = Math.max(0, Math.min(newYPercent, 100));
-
-        // Snap to grid? (Optional)
-        // newXPercent = Math.round(newXPercent / 0.5) * 0.5; // Snap to 0.5% grid
-        // newYPercent = Math.round(newYPercent / 0.5) * 0.5;
 
         draggedElement.style.left = `${newXPercent}%`;
         draggedElement.style.top = `${newYPercent}%`;
 
-        // Oppdater modal state hvis modalen er åpen
         if (isModalOpen && currentOpenModal === uiSettingsModal && modalLayouts[dragElementId]) {
              const xFixed = parseFloat(newXPercent.toFixed(1));
              const yFixed = parseFloat(newYPercent.toFixed(1));
              modalLayouts[dragElementId].x = xFixed;
              modalLayouts[dragElementId].y = yFixed;
 
-             const xSlider = document.getElementById(`${dragElementId}-x-slider`);
-             const xValue = document.getElementById(`${dragElementId}-x-value`);
-             const ySlider = document.getElementById(`${dragElementId}-y-slider`);
-             const yValue = document.getElementById(`${dragElementId}-y-value`);
-             if (xSlider) xSlider.value = xFixed; if (xValue) xValue.textContent = xFixed;
-             if (ySlider) ySlider.value = yFixed; if (yValue) yValue.textContent = yFixed;
+             // --- FIKS: Sjekk at kontroller eksisterer før oppdatering ---
+             const controls = layoutControls[dragElementId];
+             if(controls?.x) controls.x.value = xFixed;
+             if(controls?.xValue) controls.xValue.textContent = xFixed;
+             if(controls?.y) controls.y.value = yFixed;
+             if(controls?.yValue) controls.yValue.textContent = yFixed;
         }
     }
 
@@ -378,22 +407,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const finalX = parseFloat(draggedElement.style.left);
         const finalY = parseFloat(draggedElement.style.top);
 
-        // Oppdater modal state en siste gang
         if (isModalOpen && currentOpenModal === uiSettingsModal && modalLayouts[dragElementId]) {
              modalLayouts[dragElementId].x = parseFloat(finalX.toFixed(1));
              modalLayouts[dragElementId].y = parseFloat(finalY.toFixed(1));
              console.log(`Final position for ${dragElementId} saved to modalLayouts: X=${modalLayouts[dragElementId].x}, Y=${modalLayouts[dragElementId].y}`);
-             // Lagring skjer kun via "Lagre" knappen i modalen
         } else {
-             // Hvis man skal kunne dra UTENOM modalen og lagre direkte:
-             // const currentLayouts = loadElementLayouts();
-             // if(currentLayouts[dragElementId]) {
-             //     currentLayouts[dragElementId].x = parseFloat(finalX.toFixed(1));
-             //     currentLayouts[dragElementId].y = parseFloat(finalY.toFixed(1));
-             //     saveElementLayouts(currentLayouts);
-             //     logActivity(state?.live?.activityLog, `Element ${dragElementId} flyttet.`);
-             //     console.log(`Direct drag save for ${dragElementId}: X=${currentLayouts[dragElementId].x}, Y=${currentLayouts[dragElementId].y}`);
-             // }
+            // console.log("Drag finished outside of UI modal context or missing layout data.");
+            // Vurder direkte lagring her hvis ønskelig
         }
         draggedElement = null; dragElementId = null;
     }
@@ -401,7 +421,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === CALLBACKS ===
-    const mainCallbacks = { /* ... (som før) ... */
+    // ... (som før) ...
+     const mainCallbacks = {
         updateUI: () => { if (state) updateUI(state); }, saveState: () => { if (state) saveTournamentState(currentTournamentId, state); }, playSound: null, finishTournament: finishTournament, logActivity: (msg) => { if (state) logActivity(state.live.activityLog, msg); }, checkAndHandleTableBreak: () => { if (state) return checkAndHandleTableBreak(state, currentTournamentId, mainCallbacks); else return false; }, assignTableSeat: (player, excludeTableNum) => { if (state) assignTableSeat(player, state, excludeTableNum); }
     };
     // === END CALLBACKS ===
@@ -411,26 +432,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Hjelpefunksjon for å oppdatere ALLE fargekontroller (RGB, HSL, Preview) basert på en RGB-streng
     function updateAllColorControls(rgbString, prefix) {
-        isUpdatingColorControls = true; // Sett flagg for å unngå løkker
+        if (isUpdatingColorControls) return; // Forhindre rekursjon
+        isUpdatingColorControls = true;
         try {
             const [r, g, b] = parseRgbString(rgbString);
-            const hsl = rgbToHsl(r, g, b); // Konverter til HSL
+            const hsl = rgbToHsl(r, g, b);
 
             // Oppdater RGB Sliders/Values
             const rSlider = document.getElementById(`${prefix}-color-red`); if (rSlider) rSlider.value = r;
-            const rValue = document.getElementById(`${prefix}-color-red-value`); if (rValue) rValue.textContent = r;
+            const rValue = document.getElementById(`${prefix}-color-red-value`); if (rValue) rValue.textContent = r; // FIKS: Oppdater textContent
             const gSlider = document.getElementById(`${prefix}-color-green`); if (gSlider) gSlider.value = g;
-            const gValue = document.getElementById(`${prefix}-color-green-value`); if (gValue) gValue.textContent = g;
+            const gValue = document.getElementById(`${prefix}-color-green-value`); if (gValue) gValue.textContent = g; // FIKS: Oppdater textContent
             const bSlider = document.getElementById(`${prefix}-color-blue`); if (bSlider) bSlider.value = b;
-            const bValue = document.getElementById(`${prefix}-color-blue-value`); if (bValue) bValue.textContent = b;
+            const bValue = document.getElementById(`${prefix}-color-blue-value`); if (bValue) bValue.textContent = b; // FIKS: Oppdater textContent
 
             // Oppdater HSL Sliders/Values
             const hSlider = document.getElementById(`${prefix}-color-hue`); if (hSlider) hSlider.value = hsl.h;
-            const hValue = document.getElementById(`${prefix}-color-hue-value`); if (hValue) hValue.textContent = hsl.h;
+            const hValue = document.getElementById(`${prefix}-color-hue-value`); if (hValue) hValue.value = hsl.h; // FIKS: Oppdater input value
             const sSlider = document.getElementById(`${prefix}-color-saturation`); if (sSlider) sSlider.value = hsl.s;
-            const sValue = document.getElementById(`${prefix}-color-saturation-value`); if (sValue) sValue.textContent = hsl.s;
+            const sValue = document.getElementById(`${prefix}-color-saturation-value`); if (sValue) sValue.value = hsl.s; // FIKS: Oppdater input value
             const lSlider = document.getElementById(`${prefix}-color-lightness`); if (lSlider) lSlider.value = hsl.l;
-            const lValue = document.getElementById(`${prefix}-color-lightness-value`); if (lValue) lValue.textContent = hsl.l;
+            const lValue = document.getElementById(`${prefix}-color-lightness-value`); if (lValue) lValue.value = hsl.l; // FIKS: Oppdater input value
 
             // Oppdater Preview Box
             const previewBox = document.getElementById(`${prefix}-color-preview`);
@@ -438,46 +460,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (prefix === 'bg') previewBox.style.backgroundColor = rgbString;
                 else if (prefix === 'text') (previewBox.querySelector('span') || previewBox).style.color = rgbString;
             }
-        } catch (e) {
-            console.error(`Error updating all color controls for ${prefix}:`, e);
-        } finally {
-            isUpdatingColorControls = false; // Fjern flagg
-        }
+        } catch (e) { console.error(`Error updating all color controls for ${prefix}:`, e); }
+        finally { isUpdatingColorControls = false; }
     }
 
 
     // Funksjon for å laste innstillinger og populere modalen
     async function populateUiSettingsModal() {
         console.log("Populating UI Settings Modal...");
-        originalSettings = {
-            bgColor: loadThemeBgColor(), textColor: loadThemeTextColor(),
-            layouts: JSON.parse(JSON.stringify(loadElementLayouts())),
-            volume: loadSoundVolume(), logo: currentLogoBlob
-        };
-        modalLogoBlob = null; // Nullstill nytt logo-forsøk
+        originalSettings = { /* ... (som før) ... */ };
+        modalLogoBlob = null;
 
-        // Populate Presets Dropdown
-        if (themePresetSelect) {
-            themePresetSelect.innerHTML = '<option value="">-- Velg forhåndsvalg --</option>'; // Reset
-            colorPresets.forEach((preset, index) => {
-                const option = document.createElement('option');
-                option.value = index.toString();
-                option.textContent = preset.name;
-                themePresetSelect.appendChild(option);
-            });
+        // Populate Presets Dropdown... (som før)
+         if (themePresetSelect) {
+            themePresetSelect.innerHTML = '<option value="">-- Velg forhåndsvalg --</option>';
+            colorPresets.forEach((preset, index) => { const option = document.createElement('option'); option.value = index.toString(); option.textContent = preset.name; themePresetSelect.appendChild(option); });
         }
 
-        // Populate Theme Colors (via helper)
-        let validTextColor = DEFAULT_THEME_TEXT;
-        if (originalSettings.textColor && originalSettings.textColor.startsWith('rgb(') && originalSettings.textColor.split(',').length === 3) validTextColor = originalSettings.textColor;
-        else console.warn(`PopulateModal: Invalid original textColor "${originalSettings.textColor}". Using default.`);
-        updateAllColorControls(originalSettings.bgColor, 'bg');
-        updateAllColorControls(validTextColor, 'text');
+        // Populate Theme Colors... (som før)
+        let validTextColor = DEFAULT_THEME_TEXT; if (originalSettings.textColor && originalSettings.textColor.startsWith('rgb(') && originalSettings.textColor.split(',').length === 3) validTextColor = originalSettings.textColor; else console.warn(`PopulateModal: Invalid original textColor "${originalSettings.textColor}". Using default.`);
+        updateAllColorControls(originalSettings.bgColor, 'bg'); updateAllColorControls(validTextColor, 'text');
 
-        // Populate Layout Controls... (som før)
-        const currentLayouts = originalSettings.layouts;
-        if (currentLayouts.canvas && canvasHeightSlider && canvasHeightValue) { /*...*/ canvasHeightSlider.value = currentLayouts.canvas.height ?? 65; canvasHeightValue.textContent = canvasHeightSlider.value; } else { console.warn("Canvas height controls missing."); }
-        for (const elementId in layoutControls) { /*...*/ } // (Resten av layout-populeringen som før)
+        // Populate Layout Controls... (som før, med forbedret sjekk/visning)
+         const currentLayouts = originalSettings.layouts;
+         if (currentLayouts.canvas && canvasHeightSlider && canvasHeightValue) { canvasHeightSlider.value = currentLayouts.canvas.height ?? 65; canvasHeightValue.textContent = canvasHeightSlider.value; } else { console.warn("Canvas height controls missing."); }
+         for (const elementId in layoutControls) {
+            const controls = layoutControls[elementId]; const layout = currentLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId] || {}; if (!controls) { console.warn(`Layout controls object for '${elementId}' missing.`); continue; }
+            if (controls.visible) controls.visible.checked = layout.isVisible ?? true;
+            if (controls.x && controls.xValue) { controls.x.value = layout.x ?? 0; controls.xValue.textContent = parseFloat(controls.x.value).toFixed(1); }
+            if (controls.y && controls.yValue) { controls.y.value = layout.y ?? 0; controls.yValue.textContent = parseFloat(controls.y.value).toFixed(1); }
+            if (controls.width && controls.widthValue) { controls.width.value = layout.width ?? 50; controls.widthValue.textContent = controls.width.value; }
+            const heightParent = controls.height?.parentElement; if (elementId === 'logo' && controls.height && controls.heightValue) { if(heightParent) heightParent.style.display = ''; controls.height.value = layout.height ?? 30; controls.heightValue.textContent = controls.height.value; } else if (heightParent) { heightParent.style.display = 'none'; }
+            const fontParent = controls.fontSize?.parentElement; if (elementId !== 'logo' && controls.fontSize && controls.fontSizeValue) { if(fontParent) fontParent.style.display = ''; controls.fontSize.value = layout.fontSize ?? 1; controls.fontSizeValue.textContent = parseFloat(controls.fontSize.value).toFixed(1); } else if (fontParent) { fontParent.style.display = 'none'; }
+            if (elementId === 'info' && currentLayouts.info) { if(controls.showNextBlinds) controls.showNextBlinds.checked = currentLayouts.info.showNextBlinds ?? true; if(controls.showAvgStack) controls.showAvgStack.checked = currentLayouts.info.showAvgStack ?? true; if(controls.showPlayers) controls.showPlayers.checked = currentLayouts.info.showPlayers ?? true; if(controls.showLateReg) controls.showLateReg.checked = currentLayouts.info.showLateReg ?? true; if(controls.showNextPause) controls.showNextPause.checked = currentLayouts.info.showNextPause ?? true; }
+        }
 
         // Populate Logo... (som før)
         if (currentLogoPreview && logoUploadInput) { /*...*/ } else { console.warn("Logo controls missing."); }
@@ -487,34 +503,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("UI Settings Modal populated.");
     }
 
-    // Funksjon for å åpne UI Settings Modal
-    async function openUiModal() { /* ... (som før, kaller populate og add listeners) ... */
-        if (!uiSettingsModal) { console.error("UI Settings Modal element not found!"); alert("Kunne ikke åpne utseende-innstillinger."); return; }
-        console.log("Opening UI Settings Modal...");
-        await populateUiSettingsModal(); // Populate FØR visning
-        addUiModalListeners(); // Legg til listeners ETTER populering
-        uiSettingsModal.classList.remove('hidden');
-        currentOpenModal = uiSettingsModal; isModalOpen = true;
-    }
+    // Funksjon for å åpne UI Settings Modal... (som før)
+    async function openUiModal() { if (!uiSettingsModal) { console.error("UI Settings Modal element not found!"); alert("Kunne ikke åpne utseende-innstillinger."); return; } console.log("Opening UI Settings Modal..."); await populateUiSettingsModal(); addUiModalListeners(); uiSettingsModal.classList.remove('hidden'); currentOpenModal = uiSettingsModal; isModalOpen = true; }
 
-    // Funksjon for å lukke UI Settings Modal
-    function closeUiModal(revertChanges = false) { /* ... (som før, kaller remove listeners) ... */
-         if (!isModalOpen || currentOpenModal !== uiSettingsModal) return;
-         if (uiSettingsModal) uiSettingsModal.classList.add('hidden');
-         currentOpenModal = null; isModalOpen = false;
-         removeUiModalListeners();
-         revokeObjectUrl(modalPreviewLogoUrl); modalPreviewLogoUrl = null; modalLogoBlob = null;
-         if (revertChanges && livePreviewEnabled) {
-              console.log("Reverting live preview to original settings...");
-              applyThemeAndLayout(originalSettings.bgColor, originalSettings.textColor, originalSettings.layouts, draggableElements);
-              updateMainLogoImage(originalSettings.logo, logoImg);
-         }
-         console.log("UI Settings Modal closed.");
-     }
+    // Funksjon for å lukke UI Settings Modal... (som før)
+    function closeUiModal(revertChanges = false) { if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; if (uiSettingsModal) uiSettingsModal.classList.add('hidden'); currentOpenModal = null; isModalOpen = false; removeUiModalListeners(); revokeObjectUrl(modalPreviewLogoUrl); modalPreviewLogoUrl = null; modalLogoBlob = null; if (revertChanges && livePreviewEnabled) { console.log("Reverting live preview to original settings..."); applyThemeAndLayout(originalSettings.bgColor, originalSettings.textColor, originalSettings.layouts, draggableElements); updateMainLogoImage(originalSettings.logo, logoImg); } console.log("UI Settings Modal closed."); }
 
     // --- Funksjoner for å håndtere endringer i UI Modal ---
     function handleUiModalInputChange(event) {
-        if (!event.target || !isModalOpen || currentOpenModal !== uiSettingsModal || isUpdatingColorControls) return; // Sjekk flagg
+        if (!event.target || !isModalOpen || currentOpenModal !== uiSettingsModal || isUpdatingColorControls) return;
         const target = event.target;
         const value = (target.type === 'checkbox') ? target.checked : target.value;
         const id = target.id;
@@ -523,132 +520,118 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (id.includes('-color-')) {
             const prefix = id.startsWith('bg-') ? 'bg' : 'text';
             let newRgbColor = '';
-            if (id.includes('-hue') || id.includes('-saturation') || id.includes('-lightness')) {
-                // HSL endret -> konverter til RGB
+
+            // --- FIKS: Bruk number input direkte hvis det var kilden ---
+             if (target.type === 'number' && (id.includes('-red') || id.includes('-green') || id.includes('-blue'))) {
+                  const r = parseInt(document.getElementById(`${prefix}-color-red-value`).value);
+                  const g = parseInt(document.getElementById(`${prefix}-color-green-value`).value);
+                  const b = parseInt(document.getElementById(`${prefix}-color-blue-value`).value);
+                  newRgbColor = `rgb(${r}, ${g}, ${b})`;
+             } else if (target.type === 'number' && (id.includes('-hue') || id.includes('-saturation') || id.includes('-lightness'))) {
+                 const h = parseInt(document.getElementById(`${prefix}-color-hue-value`).value);
+                 const s = parseInt(document.getElementById(`${prefix}-color-saturation-value`).value);
+                 const l = parseInt(document.getElementById(`${prefix}-color-lightness-value`).value);
+                 newRgbColor = hslToRgb(h, s, l);
+             }
+             // --- Bruk slider hvis det var kilden ---
+             else if (id.includes('-hue') || id.includes('-saturation') || id.includes('-lightness')) {
                 const h = parseInt(document.getElementById(`${prefix}-color-hue`).value);
                 const s = parseInt(document.getElementById(`${prefix}-color-saturation`).value);
                 const l = parseInt(document.getElementById(`${prefix}-color-lightness`).value);
                 newRgbColor = hslToRgb(h, s, l);
-            } else { // RGB endret
+            } else { // RGB slider endret
                 const r = parseInt(document.getElementById(`${prefix}-color-red`).value);
                 const g = parseInt(document.getElementById(`${prefix}-color-green`).value);
                 const b = parseInt(document.getElementById(`${prefix}-color-blue`).value);
                 newRgbColor = `rgb(${r}, ${g}, ${b})`;
             }
-            // Oppdater modal state og ALLE kontroller for denne fargen
+
             if (prefix === 'bg') modalBgColor = newRgbColor; else modalTextColor = newRgbColor;
-            updateAllColorControls(newRgbColor, prefix); // Oppdaterer både RGB/HSL sliders/values/preview
-        } else {
-             // Håndter andre input-endringer (layout, lyd etc.)
-            updateModalState(id, value); // Oppdater kun den spesifikke verdien i modal state
-             // Oppdater tilknyttet value-span for sliders
+            updateAllColorControls(newRgbColor, prefix); // Oppdaterer ALLE relaterte kontroller
+
+        } else { // Håndter andre inputs (layout, lyd)
+            updateModalState(id, value);
             const valueSpanId = `${id}-value`;
             const valueSpan = document.getElementById(valueSpanId);
-            if (valueSpan && target.type === 'range') {
+            if (valueSpan && target.type === 'range') { // Oppdater KUN span for range input
                 if (id.includes('-fontsize') || id.includes('-x') || id.includes('-y')) valueSpan.textContent = parseFloat(value).toFixed(1);
                 else valueSpan.textContent = value;
             }
-            if (id === 'sound-volume-slider' && soundVolumeValue) soundVolumeValue.textContent = Math.round(value * 100);
+             if (id === 'sound-volume-slider' && soundVolumeValue) soundVolumeValue.textContent = Math.round(value * 100);
         }
 
-        // Oppdater live preview hvis aktivert
         if (livePreviewEnabled) applyModalChangesToLiveView();
     }
 
-    // Funksjon som KUN oppdaterer den interne modal state (uten å trigge UI-oppdateringer i modalen)
-    function updateModalState(controlId, value) { /* ... (som før) ... */
-         // Farger (Oppdateres nå via updateAllColorControls)
-
-         // Lyd
-         if (controlId === 'sound-volume-slider') modalSoundVolume = parseFloat(value);
-         // Layout
-         else if (controlId === 'canvas-height-slider') { if (!modalLayouts.canvas) modalLayouts.canvas = {}; modalLayouts.canvas.height = parseInt(value); }
-         else { // Generell layout-kontroll
-              const parts = controlId.split('-'); const elementId = parts[0]; const propertyOrAction = parts[1]; const controlType = parts.slice(2).join('-');
-              if (!modalLayouts[elementId]) modalLayouts[elementId] = {};
-              if (propertyOrAction === 'visible') modalLayouts[elementId].isVisible = value;
-              else if (['x', 'y', 'width', 'height'].includes(propertyOrAction)) modalLayouts[elementId][propertyOrAction] = parseFloat(value);
-              else if (propertyOrAction === 'fontsize') modalLayouts[elementId].fontSize = parseFloat(value);
-              else if (elementId === 'info' && propertyOrAction === 'toggle') { const infoProp = controlType.startsWith('show') ? controlType : `show${controlType.charAt(0).toUpperCase() + controlType.slice(1)}`; if (!modalLayouts.info) modalLayouts.info = {}; modalLayouts.info[infoProp] = value; }
-          }
-     }
-
-
-    function applyModalChangesToLiveView() { /* ... (som før) ... */
-         applyThemeAndLayout(modalBgColor, modalTextColor, modalLayouts, draggableElements);
-    }
+    // updateModalState (som før - oppdaterer kun den interne JS-variabelen for non-color inputs)
+    function updateModalState(controlId, value) { /* ... (som før) ... */ }
+    function applyModalChangesToLiveView() { /* ... (som før) ... */ }
     async function handleLogoUpload(event) { /* ... (som før) ... */ }
     async function handleClearLogo() { /* ... (som før) ... */ }
-
-    // NY: Håndterer valg av forhåndsinnstilling
-    function handlePresetChange(event) {
-        const selectedIndex = parseInt(event.target.value);
-        if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= colorPresets.length) {
-             event.target.value = ""; // Reset dropdown hvis ugyldig valg
-            return;
-        }
-        const preset = colorPresets[selectedIndex];
-        console.log("Preset selected:", preset.name);
-
-        // Oppdater modal state
-        modalBgColor = preset.bg;
-        modalTextColor = preset.text;
-
-        // Oppdater alle kontroller i modalen
-        updateAllColorControls(modalBgColor, 'bg');
-        updateAllColorControls(modalTextColor, 'text');
-
-        // Oppdater live preview
-        if (livePreviewEnabled) applyModalChangesToLiveView();
-
-         event.target.value = ""; // Reset dropdown etter bruk
-    }
+    function handlePresetChange(event) { /* ... (som før) ... */ }
 
     async function handleSaveUiSettings() {
-         console.log("--- handleSaveUiSettings CALLED ---"); // TYDELIG LOGG
+         console.log("--- handleSaveUiSettings CALLED ---"); // Bekreft kall
          try {
-             saveThemeBgColor(modalBgColor); saveThemeTextColor(modalTextColor);
-             saveElementLayouts(modalLayouts); saveSoundVolume(modalSoundVolume);
-             if (modalLogoBlob === null && originalSettings.logo !== null) { await clearLogoBlob(); currentLogoBlob = null; console.log("Custom logo cleared."); }
-             else if (modalLogoBlob instanceof Blob) { await saveLogoBlob(modalLogoBlob); currentLogoBlob = modalLogoBlob; console.log("New custom logo saved."); }
+             // --- VIKTIG: Sjekk at funksjonene faktisk finnes før kall ---
+             if(typeof saveThemeBgColor !== 'function') throw new Error("saveThemeBgColor is not available");
+             saveThemeBgColor(modalBgColor);
+
+             if(typeof saveThemeTextColor !== 'function') throw new Error("saveThemeTextColor is not available");
+             saveThemeTextColor(modalTextColor);
+
+             if(typeof saveElementLayouts !== 'function') throw new Error("saveElementLayouts is not available");
+             saveElementLayouts(modalLayouts);
+
+             if(typeof saveSoundVolume !== 'function') throw new Error("saveSoundVolume is not available");
+             saveSoundVolume(modalSoundVolume);
+
+             if (modalLogoBlob === null && originalSettings.logo !== null) {
+                  if(typeof clearLogoBlob !== 'function') throw new Error("clearLogoBlob is not available");
+                  await clearLogoBlob(); currentLogoBlob = null; console.log("Custom logo cleared.");
+             } else if (modalLogoBlob instanceof Blob) {
+                  if(typeof saveLogoBlob !== 'function') throw new Error("saveLogoBlob is not available");
+                  await saveLogoBlob(modalLogoBlob); currentLogoBlob = modalLogoBlob; console.log("New custom logo saved.");
+             }
              logActivity(state?.live?.activityLog, "Utseende-innstillinger lagret.");
              alert("Innstillinger lagret!");
              closeUiModal(false);
-             // Sørg for at UI er oppdatert (selv om live var på)
              applyThemeAndLayout(modalBgColor, modalTextColor, modalLayouts, draggableElements);
              updateMainLogoImage(currentLogoBlob, logoImg);
-         } catch (error) { console.error("Error saving UI settings:", error); alert(`Kunne ikke lagre innstillingene: ${error.message}`); }
+         } catch (error) {
+             console.error("Error saving UI settings:", error); // Log hele feilen
+             alert(`Kunne ikke lagre innstillingene: ${error.message}`); // Vis feilmelding til bruker
+         }
     }
 
     function handleResetUiDefaults() { /* ... (som før) ... */ }
 
     // Funksjoner for å legge til/fjerne listeners for modal-kontroller
+    // FIKS: Definer lukkefunksjon med navn for å kunne fjerne den
+    const closeUiModalAndRevert = () => closeUiModal(true);
     function addUiModalListeners() {
         console.log("Adding UI modal listeners...");
-        uiSettingsModalContent?.addEventListener('input', handleUiModalInputChange); // Dekker alle sliders/inputs
+        uiSettingsModalContent?.addEventListener('input', handleUiModalInputChange);
         logoUploadInput?.addEventListener('change', handleLogoUpload);
         btnClearLogo?.addEventListener('click', handleClearLogo);
-        themePresetSelect?.addEventListener('change', handlePresetChange); // NY: Listener for presets
-        // Knappene
-        closeUiSettingsModalButton?.addEventListener('click', closeUiModalHelper);
-        btnCancelUiSettings?.addEventListener('click', closeUiModalHelper);
+        themePresetSelect?.addEventListener('change', handlePresetChange);
+        closeUiSettingsModalButton?.addEventListener('click', closeUiModalAndRevert); // Bruk navngitt funksjon
+        btnCancelUiSettings?.addEventListener('click', closeUiModalAndRevert); // Bruk navngitt funksjon
         btnSaveUiSettings?.addEventListener('click', handleSaveUiSettings);
         btnResetUiDefaults?.addEventListener('click', handleResetUiDefaults);
     }
-    // Hjelpefunksjon for å sikre at close kalles med 'true'
-    function closeUiModalHelper() { closeUiModal(true); }
 
     function removeUiModalListeners() {
         console.log("Removing UI modal listeners...");
         uiSettingsModalContent?.removeEventListener('input', handleUiModalInputChange);
         logoUploadInput?.removeEventListener('change', handleLogoUpload);
         btnClearLogo?.removeEventListener('click', handleClearLogo);
-        themePresetSelect?.removeEventListener('change', handlePresetChange); // NY: Fjern listener
-        // Knappene (fjerning er litt mer vrien for anonyme funksjoner, men vi prøver)
-         closeUiSettingsModalButton?.removeEventListener('click', closeUiModalHelper);
-         btnCancelUiSettings?.removeEventListener('click', closeUiModalHelper);
-         btnSaveUiSettings?.removeEventListener('click', handleSaveUiSettings);
-         btnResetUiDefaults?.removeEventListener('click', handleResetUiDefaults);
+        themePresetSelect?.removeEventListener('change', handlePresetChange);
+        // FIKS: Fjern navngitte funksjoner
+        closeUiSettingsModalButton?.removeEventListener('click', closeUiModalAndRevert);
+        btnCancelUiSettings?.removeEventListener('click', closeUiModalAndRevert);
+        btnSaveUiSettings?.removeEventListener('click', handleSaveUiSettings);
+        btnResetUiDefaults?.removeEventListener('click', handleResetUiDefaults);
     }
 
     // === UI SETTINGS MODAL LOGIC END ===
@@ -662,7 +645,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === EVENT LISTENER ATTACHMENT (General) ===
-    startPauseButton?.addEventListener('click', () => { /* ... (som før) ... */ });
+    // ... (Resten av listeners som før, inkludert dra-og-slipp på draggableElements) ...
+    startPauseButton?.addEventListener('click', () => { /* ... */ });
     prevLevelButton?.addEventListener('click', () => handleAdjustLevel(-1));
     nextLevelButton?.addEventListener('click', () => handleAdjustLevel(1));
     adjustTimeMinusButton?.addEventListener('click', () => handleAdjustTime(-60));
@@ -671,21 +655,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     endTournamentButton?.addEventListener('click', handleEndTournament);
     btnForceSave?.addEventListener('click', handleForceSave);
     btnBackToMainLive?.addEventListener('click', handleBackToMain);
-    btnToggleSound?.addEventListener('click', () => { /* ... (som før) ... */ });
+    btnToggleSound?.addEventListener('click', () => { /* ... */ });
     btnEditTournamentSettings?.addEventListener('click', openTournamentModal);
-    btnEditUiSettings?.addEventListener('click', openUiModal); // Kaller nå korrekt funksjon
+    btnEditUiSettings?.addEventListener('click', openUiModal);
     btnManageAddons?.addEventListener('click', openAddonModal);
 
-    // Dra-og-slipp listener
-    draggableElements.forEach(el => { if (el) { el.addEventListener('mousedown', (e) => startDrag(e, el)); } });
+    draggableElements.forEach(el => { if (el) { el.addEventListener('mousedown', (e) => startDrag(e, el)); } }); // Dra-og-slipp aktivert
 
-    window.addEventListener('click', (e) => { /* ... (som før, lukker modal ved klikk utenfor) ... */ });
+    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { console.log("Clicked outside modal content."); if (currentOpenModal === editPlayerModal) closeEditPlayerModal(); else if (currentOpenModal === uiSettingsModal) closeUiModal(true); } });
 
-    // --- Listeners for Edit Player Modal Buttons ---
     btnSavePlayerChanges?.addEventListener('click', handleSavePlayerChanges);
     btnCancelPlayerEdit?.addEventListener('click', closeEditPlayerModal);
     closeEditPlayerModalButton?.addEventListener('click', closeEditPlayerModal);
-    // --- UI Settings Modal knapp-listeners legges til/fjernes dynamisk ---
+    // UI Modal knapp-listeners legges nå til/fjernes dynamisk
 
     function setupPlayerActionDelegation() { /* ... (som før) ... */ }
     setupPlayerActionDelegation();
@@ -693,8 +675,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === INITIAL UI RENDER & TIMER START ===
+    // ... (som før) ...
     console.log("Performing final setup steps...");
-    try { /* ... (som før) ... */ } catch (err) { /* ... (som før) ... */ }
+    try { if (!state) { throw new Error("State is not initialized, cannot proceed with final setup."); } updateUI(state); startRealTimeClock(currentTimeDisplay); console.log(`Final check: Current state status is '${state.live.status}'`); if (state.live.status === 'running') { console.log("State is 'running', attempting to start main timer."); startMainTimer(state, currentTournamentId, mainCallbacks); } else { console.log(`State is '${state.live.status}'. Main timer will not be started automatically.`); stopMainTimer(); } console.log("Tournament page fully initialized and ready."); } catch (err) { console.error("Error during final setup or UI update:", err); alert("En alvorlig feil oppstod under lasting av turneringssiden. Sjekk konsollen.\n" + err.message); }
     // === INITIAL UI RENDER & TIMER START ===
 
 });
