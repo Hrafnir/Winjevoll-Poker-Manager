@@ -88,6 +88,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeTournamentSettingsModalButton = document.getElementById('close-tournament-settings-modal-button'); const editLockMessage = document.getElementById('edit-lock-message'); const editTournamentNameInput = document.getElementById('edit-tournament-name'); const editTournamentTypeSelect = document.getElementById('edit-tournament-type'); const editBuyInInput = document.getElementById('edit-buy-in'); const editStartStackInput = document.getElementById('edit-start-stack'); const editPlayersPerTableInput = document.getElementById('edit-players-per-table'); const editLateRegLevelInput = document.getElementById('edit-late-reg-level'); const editKnockoutSection = document.getElementById('edit-knockout-section'); const editBountyAmountInput = document.getElementById('edit-bounty-amount'); const editRebuySection = document.getElementById('edit-rebuy-section'); const editRebuyCostInput = document.getElementById('edit-rebuy-cost'); const editRebuyChipsInput = document.getElementById('edit-rebuy-chips'); const editRebuyLevelsInput = document.getElementById('edit-rebuy-levels'); const editAddonCostInput = document.getElementById('edit-addon-cost'); const editAddonChipsInput = document.getElementById('edit-addon-chips'); const editBasicValidationError = document.getElementById('edit-basic-validation-error'); const editPaidPlacesInput = document.getElementById('edit-paid-places'); const editPrizeDistributionTextarea = document.getElementById('edit-prize-distribution'); const btnGeneratePayoutModal = document.getElementById('btn-generate-payout-modal'); const editPrizeValidationError = document.getElementById('edit-prize-validation-error'); const editBlindStructureBody = document.getElementById('edit-blind-structure-body'); const editBlindsValidationError = document.getElementById('edit-blinds-validation-error'); const btnAddLevelModal = document.getElementById('btn-add-level-modal'); const btnClearBlindsModal = document.getElementById('btn-clear-blinds-modal'); const btnSaveTournamentSettings = document.getElementById('btn-save-tournament-settings'); const btnCancelTournamentSettings = document.getElementById('btn-cancel-tournament-settings');
     // --- Addon Modal Elements ---
     const addonModalContent = addonModal?.querySelector('.modal-content'); const closeAddonModalButton = document.getElementById('close-addon-modal-button'); const addonCostDisplay = document.getElementById('addon-cost-display'); const addonChipsDisplay = document.getElementById('addon-chips-display'); const addonValidationError = document.getElementById('addon-validation-error'); const addonPlayerListUl = document.getElementById('addon-player-list'); const btnConfirmAddons = document.getElementById('btn-confirm-addons'); const btnCancelAddons = document.getElementById('btn-cancel-addons');
+    // --- Tab Elements (NY) ---
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const tableVisualizationContainer = document.getElementById('table-visualization');
+    const tableCountInfo = document.getElementById('table-count-info');
     // -----------------------------------------------------------------------
     // === 04: DOM REFERENCES END ===
 
@@ -186,18 +191,150 @@ document.addEventListener('DOMContentLoaded', async () => {
     // === 12: EDIT PLAYER MODAL LOGIC END ===
 
 
-     // === 13: ADDON MODAL LOGIC START ===
-     // -----------------------------------------------------------------------
+    // === 13: ADDON MODAL LOGIC START ===
+    // -----------------------------------------------------------------------
     function populateAddonModal() { if (!state || !addonPlayerListUl) return; console.log("Populating Addon Modal..."); if(addonCostDisplay) addonCostDisplay.textContent = state.config.addonCost || 0; if(addonChipsDisplay) addonChipsDisplay.textContent = state.config.addonChips || 0; if(addonValidationError) addonValidationError.classList.add('hidden'); addonPlayerListUl.innerHTML = ''; let eligiblePlayers = 0; state.live.players.filter(p => !p.addon).forEach(player => { eligiblePlayers++; const li = document.createElement('li'); li.style.cursor = 'pointer'; li.innerHTML = `<label style="display:flex; align-items:center; width:100%; cursor:pointer;"><input type="checkbox" value="${player.id}" class="addon-player-checkbox" style="margin-right: 10px; transform: scale(1.2);"><span class="player-name">${player.name}</span><span class="player-details" style="margin-left: auto;">(B${player.table}S${player.seat})</span></label>`; li.onclick = (e) => { if (e.target.type !== 'checkbox') { const checkbox = li.querySelector('.addon-player-checkbox'); if (checkbox) checkbox.checked = !checkbox.checked; } }; addonPlayerListUl.appendChild(li); }); if (eligiblePlayers === 0) { addonPlayerListUl.innerHTML = '<li>Ingen kvalifiserte spillere for Add-on.</li>'; if(btnConfirmAddons) btnConfirmAddons.disabled = true; } else { if(btnConfirmAddons) btnConfirmAddons.disabled = false; } console.log("Addon Modal populated."); }
     function openAddonModal() { if (!addonModal) { console.error("Addon Modal element not found!"); return; } if (state.config.type !== 'rebuy' || !(state.config.addonCost > 0 && state.config.addonChips > 0)) { alert("Add-on er ikke aktivert for denne turneringen."); return; } console.log("Opening Addon Modal..."); populateAddonModal(); addonModal.classList.remove('hidden'); currentOpenModal = addonModal; isModalOpen = true; }
     function closeAddonModal() { if (addonModal) addonModal.classList.add('hidden'); currentOpenModal = null; isModalOpen = false; console.log("Addon Modal closed."); }
     function handleConfirmAddons() { if (!state || !addonPlayerListUl) return; const selectedCheckboxes = addonPlayerListUl.querySelectorAll('.addon-player-checkbox:checked'); if (selectedCheckboxes.length === 0) { if(addonValidationError) { addonValidationError.textContent = "Ingen spillere valgt."; addonValidationError.classList.remove('hidden'); } return; } const playerIdsToAddon = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value)); console.log(`Confirming addons for player IDs: ${playerIdsToAddon.join(', ')}`); let addonsProcessed = 0; let totalCostAdded = 0; let totalChipsAdded = 0; playerIdsToAddon.forEach(playerId => { const player = state.live.players.find(p => p.id === playerId); if (player && !player.addon) { player.addon = true; player.stack += state.config.addonChips; state.live.totalPot += state.config.addonCost; state.live.totalEntries++; state.live.totalAddons++; logActivity(state.live.activityLog, `${player.name} tok Add-on (+${state.config.addonChips} chips).`); addonsProcessed++; totalCostAdded += state.config.addonCost; totalChipsAdded += state.config.addonChips; } else if (player && player.addon) { console.warn(`Player ${playerId} (${player.name}) already had addon. Skipped.`); } else { console.warn(`Could not find active player with ID ${playerId} to give addon.`); } }); if (addonsProcessed > 0) { console.log(`${addonsProcessed} addons processed. Pot +${totalCostAdded}, Total Chips +${totalChipsAdded}`); updateUI(state); saveTournamentState(currentTournamentId, state); alert(`${addonsProcessed} Add-on(s) registrert!`); } else { alert("Ingen nye Add-ons ble registrert."); } closeAddonModal(); }
-     // -----------------------------------------------------------------------
-     // === 13: ADDON MODAL LOGIC END ===
-
-
-    // === 14: EVENT LISTENER ATTACHMENT (General) START ===
     // -----------------------------------------------------------------------
+    // === 13: ADDON MODAL LOGIC END ===
+
+
+    // === 14: TAB SWITCHING LOGIC START ===
+    // -----------------------------------------------------------------------
+    function switchTab(event) {
+        const targetTabId = event.target.dataset.tab;
+        if (!targetTabId) return;
+
+        // Oppdater knapper
+        tabButtons.forEach(button => {
+            button.classList.toggle('active', button.dataset.tab === targetTabId);
+        });
+
+        // Oppdater innhold
+        tabContents.forEach(content => {
+            content.classList.toggle('active', content.id === targetTabId);
+        });
+
+        console.log(`Switched to tab: ${targetTabId}`);
+        // Oppdater bordvisning hvis vi bytter TIL den fanen
+        if (targetTabId === 'view-tables') {
+             renderVisualTables(); // Kall funksjonen for å tegne bordene
+        }
+    }
+    // -----------------------------------------------------------------------
+    // === 14: TAB SWITCHING LOGIC END ===
+
+
+    // === 15: TABLE VISUALIZATION LOGIC START ===
+    // -----------------------------------------------------------------------
+    function renderVisualTables() {
+        if (!tableVisualizationContainer || !state || !state.live || !state.config) {
+            console.warn("Cannot render visual tables - missing container or state.");
+            if(tableVisualizationContainer) tableVisualizationContainer.innerHTML = '<p>Kunne ikke laste bordvisning.</p>';
+            return;
+        }
+        console.log("Rendering visual tables...");
+        tableVisualizationContainer.innerHTML = ''; // Tøm container
+
+        const players = state.live.players;
+        const playersPerTableSetting = state.config.playersPerTable || 9;
+        const tables = {}; // Objekt for å gruppere spillere etter bordnummer
+
+        players.forEach(p => {
+            if (p.table && p.table > 0) {
+                if (!tables[p.table]) {
+                    tables[p.table] = [];
+                }
+                tables[p.table].push(p);
+            } else {
+                // Håndter spillere uten bord? Bør ikke skje i en aktiv turnering.
+                 console.warn(`Player ${p.name} (ID: ${p.id}) has no assigned table.`);
+            }
+        });
+
+        const sortedTableNumbers = Object.keys(tables).map(Number).sort((a, b) => a - b);
+
+        if(tableCountInfo) tableCountInfo.textContent = `Antall bord: ${sortedTableNumbers.length}`;
+
+        // Vis maks 3 bord visuelt
+        const tablesToVisualize = sortedTableNumbers.slice(0, 3);
+
+        if (tablesToVisualize.length === 0) {
+            tableVisualizationContainer.innerHTML = '<p>Ingen aktive bord å vise.</p>';
+            return;
+        }
+
+        tablesToVisualize.forEach(tableNum => {
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'poker-table';
+
+            const tableLabel = document.createElement('div');
+            tableLabel.className = 'table-label';
+            tableLabel.textContent = `Bord ${tableNum}`;
+            tableDiv.appendChild(tableLabel);
+
+            const playersAtTable = tables[tableNum] || [];
+            const occupiedSeats = playersAtTable.map(p => p.seat);
+
+            for (let seatNum = 1; seatNum <= playersPerTableSetting; seatNum++) {
+                const seatDiv = document.createElement('div');
+                seatDiv.className = 'player-seat';
+                seatDiv.dataset.seat = seatNum;
+
+                const player = playersAtTable.find(p => p.seat === seatNum);
+
+                if (player) {
+                    seatDiv.innerHTML = `
+                        <span class="seat-number">${seatNum}</span>
+                        <span class="player-name-table" title="${player.name} (${player.stack})">${player.name}</span>
+                        <span class="player-stack-table">${player.stack.toLocaleString('nb-NO')}</span>
+                    `;
+                } else {
+                    seatDiv.classList.add('empty');
+                    seatDiv.innerHTML = `<span class="seat-number">${seatNum}</span><span>Tomt</span>`;
+                }
+
+                // Posisjoner setet (dette er en enkel versjon, kan gjøres mer avansert)
+                positionSeat(seatDiv, seatNum, playersPerTableSetting);
+
+                tableDiv.appendChild(seatDiv);
+            }
+            tableVisualizationContainer.appendChild(tableDiv);
+        });
+         console.log(`Rendered ${tablesToVisualize.length} visual tables.`);
+    }
+
+    // Hjelpefunksjon for å posisjonere seter rundt bordet
+    function positionSeat(seatDiv, seatNum, maxSeats) {
+        // Enkel sirkulær posisjonering (juster radius og startvinkel etter behov)
+        const angleIncrement = 360 / maxSeats;
+        // Start litt til høyre for toppen (f.eks. -80 grader)
+        const angle = -80 + (seatNum -1) * angleIncrement;
+        const angleRad = angle * (Math.PI / 180);
+
+        // Radius justert for å plassere setet utenfor railen
+        // Juster disse prosentene basert på bord- og setestørrelse i CSS
+        const radiusX = 53; // Litt mer enn 50% for å komme utenfor ovalen i X-retning
+        const radiusY = 55; // Litt mer enn 50% for å komme utenfor ovalen i Y-retning
+
+        // Beregn senterposisjon i prosent
+        const centerX = 50 + radiusX * Math.cos(angleRad);
+        const centerY = 50 + radiusY * Math.sin(angleRad);
+
+        // Sett stilene (transform for å sentrere selve sete-diven)
+        seatDiv.style.left = `${centerX}%`;
+        seatDiv.style.top = `${centerY}%`;
+        seatDiv.style.transform = 'translate(-50%, -50%)';
+    }
+    // -----------------------------------------------------------------------
+    // === 15: TABLE VISUALIZATION LOGIC END ===
+
+
+    // === 16: EVENT LISTENER ATTACHMENT START ===
+    // -----------------------------------------------------------------------
+    // --- Generelle kontroller ---
     startPauseButton?.addEventListener('click', () => { if (!state) return; console.log("Start/Pause Button Clicked. Current Status:", state.live.status); if (state.live.status === 'paused') { state.live.status = 'running'; startMainTimer(state, currentTournamentId, mainCallbacks); logActivity(state.live.activityLog, "Klokke startet."); updateUI(state); } else if (state.live.status === 'running') { state.live.status = 'paused'; stopMainTimer(); logActivity(state.live.activityLog, "Klokke pauset."); saveTournamentState(currentTournamentId, state); updateUI(state); } else { console.log("Start/Pause button ignored, status is 'finished'."); } });
     prevLevelButton?.addEventListener('click', () => handleAdjustLevel(-1));
     nextLevelButton?.addEventListener('click', () => handleAdjustLevel(1));
@@ -208,38 +345,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnForceSave?.addEventListener('click', handleForceSave);
     btnBackToMainLive?.addEventListener('click', handleBackToMain);
     btnToggleSound?.addEventListener('click', () => { console.log("btnToggleSound clicked."); soundsEnabled = !soundsEnabled; saveSoundPreference(soundsEnabled); updateSoundToggleVisuals(soundsEnabled); if (state) logActivity(state.live.activityLog, `Lyd ${soundsEnabled ? 'PÅ' : 'AV'}.`); });
+
+    // --- Knapper for å åpne Modaler ---
     btnEditTournamentSettings?.addEventListener('click', openTournamentModal);
     btnEditUiSettings?.addEventListener('click', openUiModal);
     btnManageAddons?.addEventListener('click', openAddonModal);
+
+    // --- Dra-og-slipp ---
     draggableElements.forEach(el => { if (el) { el.addEventListener('mousedown', (e) => startDrag(e, el)); } });
-    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { console.log("Clicked outside modal content."); if (currentOpenModal === editPlayerModal) closeEditPlayerModal(); else if (currentOpenModal === uiSettingsModal) closeUiModal(true); else if (currentOpenModal === tournamentSettingsModal) closeTournamentModal(); } });
-    // Edit Player Modal Buttons
+
+    // --- Lukk modal ved klikk utenfor ---
+    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { console.log("Clicked outside modal content."); if (currentOpenModal === editPlayerModal) closeEditPlayerModal(); else if (currentOpenModal === uiSettingsModal) closeUiModal(true); else if (currentOpenModal === tournamentSettingsModal) closeTournamentModal(); else if (currentOpenModal === addonModal) closeAddonModal(); } });
+
+    // --- Knapper inne i Modaler ---
+    // Edit Player
     btnSavePlayerChanges?.addEventListener('click', handleSavePlayerChanges);
     btnCancelPlayerEdit?.addEventListener('click', closeEditPlayerModal);
     closeEditPlayerModalButton?.addEventListener('click', closeEditPlayerModal);
-    // UI Modal Buttons - legges til/fjernes dynamisk
-    // Tournament Settings Modal Buttons
+    // UI Settings - legges til/fjernes dynamisk
+    // Tournament Settings
     closeTournamentSettingsModalButton?.addEventListener('click', closeTournamentModal);
     btnCancelTournamentSettings?.addEventListener('click', closeTournamentModal);
     btnSaveTournamentSettings?.addEventListener('click', handleSaveTournamentSettings);
-    // Addon Modal Buttons
+    // Addon
     closeAddonModalButton?.addEventListener('click', closeAddonModal);
     btnCancelAddons?.addEventListener('click', closeAddonModal);
     btnConfirmAddons?.addEventListener('click', handleConfirmAddons);
-    // Interne knapper i Tournament Settings legges til i openTournamentModal
 
+    // --- Spillerliste Handlinger ---
     function setupPlayerActionDelegation() { const handleActions = (event) => { if (!state) return; const button = event.target.closest('button'); if (!button) return; const action = Array.from(button.classList).find(cls => cls.startsWith('btn-')); if (!action) return; const playerId = Number(button.dataset.playerId); if (action === 'btn-edit-player') { if (!playerId || isNaN(playerId)) { console.warn("Invalid player ID for edit action", button); return; } console.log(`Delegated action: ${action} for player ID: ${playerId}`); openEditPlayerModal(playerId); } else { if (!playerId || isNaN(playerId)) { console.warn("Invalid player ID for action", action, button); return; } console.log(`Delegated action: ${action} for player ID: ${playerId}`); switch (action) { case 'btn-rebuy': handleRebuy(event, state, currentTournamentId, mainCallbacks); break; case 'btn-eliminate': handleEliminate(event, state, currentTournamentId, mainCallbacks); break; case 'btn-restore': handleRestore(event, state, currentTournamentId, mainCallbacks); break; } } }; playerListUl?.addEventListener('click', handleActions); eliminatedPlayerListUl?.addEventListener('click', handleActions); console.log("Player action delegation listeners added."); }
     setupPlayerActionDelegation();
+
+    // --- Fanebytte (NY) ---
+    tabButtons.forEach(button => {
+        button.addEventListener('click', switchTab);
+    });
     // -----------------------------------------------------------------------
-    // === 14: EVENT LISTENER ATTACHMENT (General) END ===
+    // === 16: EVENT LISTENER ATTACHMENT END ===
 
 
-    // === 15: INITIAL UI RENDER & TIMER START ===
+    // === 17: INITIAL UI RENDER & TIMER START ===
     // -----------------------------------------------------------------------
     console.log("Performing final setup steps...");
-    try { if (!state) { throw new Error("State is not initialized, cannot proceed with final setup."); } updateUI(state); startRealTimeClock(currentTimeDisplay); console.log(`Final check: Current state status is '${state.live.status}'`); if (state.live.status === 'running') { console.log("State is 'running', attempting to start main timer."); startMainTimer(state, currentTournamentId, mainCallbacks); } else { console.log(`State is '${state.live.status}'. Main timer will not be started automatically.`); stopMainTimer(); } console.log("Tournament page fully initialized and ready."); } catch (err) { console.error("Error during final setup or UI update:", err); alert("En alvorlig feil oppstod under lasting av turneringssiden. Sjekk konsollen.\n" + err.message); }
+    try {
+        if (!state) { throw new Error("State is not initialized, cannot proceed with final setup."); }
+        updateUI(state); // Første render av klokke-info etc.
+        renderVisualTables(); // Første render av bordene (selv om fanen er skjult)
+        startRealTimeClock(currentTimeDisplay);
+        console.log(`Final check: Current state status is '${state.live.status}'`);
+        if (state.live.status === 'running') { console.log("State is 'running', attempting to start main timer."); startMainTimer(state, currentTournamentId, mainCallbacks); }
+        else { console.log(`State is '${state.live.status}'. Main timer will not be started automatically.`); stopMainTimer(); }
+        console.log("Tournament page fully initialized and ready.");
+    } catch (err) {
+        console.error("Error during final setup or UI update:", err);
+        alert("En alvorlig feil oppstod under lasting av turneringssiden. Sjekk konsollen.\n" + err.message);
+    }
     // -----------------------------------------------------------------------
-    // === 15: INITIAL UI RENDER & TIMER START END ===
+    // === 17: INITIAL UI RENDER & TIMER START END ===
+
 
 // -----------------------------------------------------------------------
 // === 02: DOMContentLoaded WRAPPER END ===
