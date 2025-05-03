@@ -9,63 +9,94 @@
     <!-- === 01: HEAD SECTION END === -->
 </head>
 <body>
-        <!-- === 03: MAIN CONTENT SECTION START === -->
-    <main class="tournament-live">
-        <!-- Canvas for Draggable Elements -->
-        <div id="live-canvas">
-            <div id="title-element" class="draggable-element" data-element-id="title"> <h1 id="tournament-name-display" class="main-tournament-title">Laster...</h1> </div>
-            <div id="timer-element" class="draggable-element" data-element-id="timer"> <div class="timer-section"> <h2>Tid Igjen</h2> <div id="timer-display">--:--</div> <div id="break-info" class="hidden">PAUSE</div> </div> </div>
-            <div id="blinds-element" class="draggable-element" data-element-id="blinds"> <div class="blinds-section"> <h3>Blinds <span id="current-level"></span></h3> <div id="blinds-display"> <span class="value">--</span>/<span class="value">--</span><span class="label">A:</span><span class="value">--</span> </div> </div> </div>
-            <div id="logo-element" class="draggable-element" data-element-id="logo"> <div class="logo-area"> <img src="placeholder-logo.png" alt="Turnering Logo" class="logo"> </div> </div>
-            <div id="info-element" class="draggable-element info-box" data-element-id="info"> <p id="info-next-blinds">Neste: <span id="next-blinds">--</span></p> <p id="info-next-pause" class="hidden">Neste Pause: <span id="next-pause-time">--</span></p> <p id="info-avg-stack">Average Stack: <span id="average-stack">--</span></p> <p id="info-players">Spillere: <span id="players-remaining">--</span> (<span id="total-entries">--</span>)</p> <p id="info-late-reg">Late Reg: <span id="late-reg-status">--</span></p> </div>
-        </div>
+    <!-- === 02: HEADER/TAB SECTION START === -->
+    <header class="main-header">
+        <!-- Plass til logo/tittel øverst om ønskelig -->
+        <!-- <img src="placeholder-logo.png" alt="Logo" class="header-logo"> -->
+        <!-- <h1 class="header-title">Winjevoll Poker</h1> -->
 
-        <!-- Controls under canvas -->
-        <div class="sub-canvas-controls header-right-controls">
-            <p>Klokke: <span id="current-time">--:--:--</span></p>
+        <!-- Faneknapper -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="view-clock" id="tab-button-clock">Klokke & Info</button>
+            <button class="tab-button" data-tab="view-tables" id="tab-button-tables">Spillere & Bord</button>
+        </div>
+         <!-- Kontroller som alltid er synlige øverst til høyre -->
+         <div class="sub-canvas-controls header-right-controls" style="position: absolute; top: 5px; right: 15px; background: none; border: none; padding: 0;">
+            <p style="margin-right: 15px;">Klokke: <span id="current-time">--:--:--</span></p>
             <button id="btn-toggle-sound" title="Slå lyd av/på" class="small-button">🔊 Lyd På</button>
             <button id="btn-edit-tournament-settings" title="Rediger Turneringsregler" class="small-button">📜 Regler</button>
             <button id="btn-edit-ui-settings" title="Rediger Utseende" class="small-button">🎨 Utseende</button>
             <button id="btn-back-to-main-live" title="Tilbake til Start" class="small-button"> Hjem</button>
         </div>
+    </header>
+    <!-- === 02: HEADER/TAB SECTION END === -->
 
-        <!-- Prize Display -->
-        <div id="prize-display-live" class="live-info-prizes hidden">
-            <h3>Premiefordeling (Totalpott: <span id="total-pot">--</span> kr)</h3>
-            <p>Laster...</p>
-        </div>
+    <!-- === 03: MAIN CONTENT SECTION START === -->
+    <main class="tournament-live">
 
-        <!-- Main Controls -->
-        <div class="controls">
-             <button id="btn-start-pause">Start Klokke</button>
-             <button id="btn-prev-level"><< Nivå</button>
-             <button id="btn-next-level">Nivå >></button>
-             <button id="btn-adjust-time-minus">-1 min</button>
-             <button id="btn-adjust-time-plus">+1 min</button>
-             <button id="btn-late-reg" disabled>Late Reg</button>
-             <button id="btn-manage-addons" class="info-button hidden">Administrer Add-ons</button>
-        </div>
-
-        <!-- Player Management -->
-        <div class="player-management">
-            <div class="player-column">
-                <h2>Aktive (<span id="active-player-count">--</span>)</h2>
-                <p id="table-balance-info" class="warning hidden">Ubalanserte bord!</p>
-                <ul id="player-list" class="item-list player-list-live"><li>Laster...</li></ul>
+        <!-- === Innhold for Klokke & Info-fanen === -->
+        <div id="view-clock" class="tab-content active">
+            <!-- Canvas for Draggable Elements -->
+            <div id="live-canvas">
+                <div id="title-element" class="draggable-element" data-element-id="title"> <h1 id="tournament-name-display" class="main-tournament-title">Laster...</h1> </div>
+                <div id="timer-element" class="draggable-element" data-element-id="timer"> <div class="timer-section"> <h2>Tid Igjen</h2> <div id="timer-display">--:--</div> <div id="break-info" class="hidden">PAUSE</div> </div> </div>
+                <div id="blinds-element" class="draggable-element" data-element-id="blinds"> <div class="blinds-section"> <h3>Blinds <span id="current-level"></span></h3> <div id="blinds-display"> <span class="value">--</span>/<span class="value">--</span><span class="label">A:</span><span class="value">--</span> </div> </div> </div>
+                <div id="logo-element" class="draggable-element" data-element-id="logo"> <div class="logo-area"> <img src="placeholder-logo.png" alt="Turnering Logo" class="logo"> </div> </div>
+                <div id="info-element" class="draggable-element info-box" data-element-id="info"> <p id="info-next-blinds">Neste: <span id="next-blinds">--</span></p> <p id="info-next-pause" class="hidden">Neste Pause: <span id="next-pause-time">--</span></p> <p id="info-avg-stack">Average Stack: <span id="average-stack">--</span></p> <p id="info-players">Spillere: <span id="players-remaining">--</span> (<span id="total-entries">--</span>)</p> <p id="info-late-reg">Late Reg: <span id="late-reg-status">--</span></p> </div>
             </div>
-            <div class="player-column">
-                <h2>Eliminerte (<span id="eliminated-player-count">--</span>)</h2>
-                <ul id="eliminated-player-list" class="item-list player-list-live"></ul>
+
+             <!-- Prize Display -->
+            <div id="prize-display-live" class="live-info-prizes hidden">
+                <h3>Premiefordeling (Totalpott: <span id="total-pot">--</span> kr)</h3>
+                <p>Laster...</p>
+            </div>
+
+             <!-- Main Controls -->
+            <div class="controls">
+                 <button id="btn-start-pause">Start Klokke</button>
+                 <button id="btn-prev-level"><< Nivå</button>
+                 <button id="btn-next-level">Nivå >></button>
+                 <button id="btn-adjust-time-minus">-1 min</button>
+                 <button id="btn-adjust-time-plus">+1 min</button>
+                 <button id="btn-late-reg" disabled>Late Reg</button>
+                 <button id="btn-manage-addons" class="info-button hidden">Administrer Add-ons</button>
+            </div>
+
+             <!-- Activity Log -->
+            <div id="activity-log-container">
+                <h3>Aktivitetslogg</h3>
+                <ul id="activity-log-list"><li>Loggen starter...</li></ul>
             </div>
         </div>
 
-        <!-- Activity Log -->
-        <div id="activity-log-container">
-            <h3>Aktivitetslogg</h3>
-            <ul id="activity-log-list"><li>Loggen starter...</li></ul>
+        <!-- === Innhold for Spillere & Bord-fanen === -->
+        <div id="view-tables" class="tab-content" style="padding: 15px;"> <!-- Legg til padding her -->
+            <h2>Bordoversikt</h2>
+            <p id="table-count-info">Antall bord: Laster...</p>
+
+            <!-- Container for visuelle bord -->
+            <div id="table-visualization" class="table-visualization-container">
+                <!-- Bord genereres av JS -->
+                <p>Laster bordvisning...</p>
+            </div>
+
+             <hr style="margin: 25px 0;">
+
+            <!-- Spillerlister (kan beholdes her for en fullstendig oversikt) -->
+            <div class="player-management">
+                <div class="player-column">
+                    <h2>Aktive (<span id="active-player-count">--</span>)</h2>
+                     <p id="table-balance-info" class="warning hidden">Ubalanserte bord!</p> <!-- Flyttet hit? -->
+                    <ul id="player-list" class="item-list player-list-live"><li>Laster...</li></ul>
+                </div>
+                <div class="player-column">
+                    <h2>Eliminerte (<span id="eliminated-player-count">--</span>)</h2>
+                    <ul id="eliminated-player-list" class="item-list player-list-live"></ul>
+                </div>
+            </div>
         </div>
 
-         <!-- UI Error Message Area -->
+         <!-- UI Error Message Area (felles for begge views?) -->
          <div id="ui-error-message" class="warning hidden" style="margin: 15px;"></div>
 
     </main>
@@ -81,92 +112,17 @@
     </footer>
     <!-- === 04: FOOTER SECTION END === -->
 
-    <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS START === -->
-    <div id="tournament-settings-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 800px;">
-            <span class="close-button" id="close-tournament-settings-modal-button" title="Lukk">×</span>
-            <h2>Rediger Turneringsregler</h2>
-            <p id="edit-lock-message" class="warning hidden" style="font-weight: bold;">Turneringen har startet (etter nivå 1). Kjerneinnstillinger (Type, Buy-in, Stack) er låst.</p>
-            <p><small>Endringer i premier og fremtidige blindnivåer er fortsatt mulig.</small></p>
-            <hr>
-            <div id="edit-basic-info-section">
-                <h3>Grunnleggende</h3>
-                <div id="edit-basic-validation-error" class="warning hidden"></div>
-                <label for="edit-tournament-name">Turneringsnavn:</label><input type="text" id="edit-tournament-name" required>
-                <label for="edit-tournament-type">Type:</label><select id="edit-tournament-type"><option value="freezeout">Freezeout</option><option value="rebuy">Re-buy (+ Add-on)</option><option value="knockout">Knockout</option></select>
-                <label for="edit-buy-in">Buy-in (kr):</label><input type="number" id="edit-buy-in" value="0" min="0" step="10" required>
-                <label for="edit-start-stack">Start Stack:</label><input type="number" id="edit-start-stack" value="10000" min="100" step="100" required>
-                <label for="edit-players-per-table">Maks spillere per bord:</label><input type="number" id="edit-players-per-table" value="9" min="2" max="10" required>
-                <label for="edit-late-reg-level">Sen Registrering t.o.m. nivå:</label><input type="number" id="edit-late-reg-level" value="0" min="0"><small>(0 = ingen)</small>
-            </div>
-            <div id="edit-knockout-section" class="config-section hidden"><h4>Knockout</h4><label for="edit-bounty-amount">Bounty per spiller (kr):</label><input type="number" id="edit-bounty-amount" value="0" min="0" step="10"><small>Trekkes fra Buy-in før premiepott beregnes.</small></div>
-            <div id="edit-rebuy-section" class="config-section hidden"><h4>Re-buy / Add-on</h4><label for="edit-rebuy-cost">Re-buy Kostnad (kr):</label><input type="number" id="edit-rebuy-cost" value="0" min="0" step="10"><label for="edit-rebuy-chips">Re-buy Sjetonger:</label><input type="number" id="edit-rebuy-chips" value="10000" min="100" step="100"><label for="edit-rebuy-levels">Re-buy t.o.m. nivå:</label><input type="number" id="edit-rebuy-levels" value="1" min="1"><hr style="margin: 10px 0; border-style: dashed;"><label for="edit-addon-cost">Add-on Kostnad (kr):</label><input type="number" id="edit-addon-cost" value="0" min="0" step="10"><label for="edit-addon-chips">Add-on Sjetonger:</label><input type="number" id="edit-addon-chips" value="15000" min="100" step="100"><small>(Add-on vanligvis etter Re-buy)</small></div><hr>
-            <div id="edit-prizes-section"><h3>Premier</h3><div id="edit-prize-validation-error" class="warning hidden"></div><label for="edit-paid-places">Antall Betalte Plasseringer:</label><input type="number" id="edit-paid-places" value="1" min="1" required style="max-width: 100px;"><label for="edit-prize-distribution">Premiefordeling (% per plass, topp først, komma-separert):</label><textarea id="edit-prize-distribution" placeholder="Eks: 50, 30, 20" rows="2"></textarea><button type="button" id="btn-generate-payout-modal">Generer Standard Fordeling</button><small>Antall % må matche Antall Betalte. Sum = 100%.</small></div><hr>
-            <div id="edit-blinds-section"><h3>Blindstruktur</h3><div id="edit-blinds-validation-error" class="warning hidden"></div><small>Merk: Nivåer som allerede er spilt (markert med <small>(Spilt)</small>) kan ikke endres.</small><div class="blind-table-container" style="max-height: 40vh;"><table id="edit-blind-structure-table"><thead><tr><th>Nivå</th><th>SB</th><th>BB</th><th>Ante</th><th>Varighet (min)</th><th>Pause Etter (min)</th><th></th></tr></thead><tbody id="edit-blind-structure-body"></tbody></table></div><button type="button" id="btn-add-level-modal">Legg til Nivå</button><button type="button" id="btn-clear-blinds-modal" class="warning-button small-button">Tøm Struktur (kun fremtidige)</button></div>
-            <div class="modal-actions"><button id="btn-save-tournament-settings" class="success-button">Lagre Regelendringer</button><button id="btn-cancel-tournament-settings" type="button">Avbryt</button></div>
-        </div>
-    </div>
-    <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS END === -->
+    <!-- === 05: MODALS START === -->
+    <!-- Tournament Settings Modal -->
+    <div id="tournament-settings-modal" class="modal hidden">...</div>
+    <!-- UI Settings Modal -->
+    <div id="ui-settings-modal" class="modal hidden">...</div>
+    <!-- Addon Modal -->
+    <div id="addon-modal" class="modal hidden">...</div>
+    <!-- Edit Player Modal -->
+    <div id="edit-player-modal" class="modal hidden">...</div>
+    <!-- === 05: MODALS END === -->
 
-    <!-- === 05b: MODAL FOR UI SETTINGS START === -->
-    <div id="ui-settings-modal" class="modal hidden">
-         <div class="modal-content">
-            <span class="close-button" id="close-ui-settings-modal-button" title="Lukk">×</span>
-            <h2>Rediger Utseende</h2>
-            <div id="edit-theme-section"><h3>Fargetema</h3><div style="margin-bottom: 20px;"><label for="theme-preset-select">Forhåndsvalg:</label><select id="theme-preset-select" style="max-width: 250px;"><option value="">-- Velg forhåndsvalg --</option></select></div><div class="theme-editor-row"><div class="theme-editor-color"><h5>Bakgrunnsfarge</h5><div class="control-group"><label for="bg-color-hue">H</label><input type="range" id="bg-color-hue" min="0" max="360" step="1" class="hue-slider"><input type="number" id="bg-color-hue-value" min="0" max="360" step="1" class="color-value-input">°</div><div class="control-group"><label for="bg-color-saturation">S</label><input type="range" id="bg-color-saturation" min="0" max="100" step="1"><input type="number" id="bg-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%</div><div class="control-group"><label for="bg-color-lightness">L</label><input type="range" id="bg-color-lightness" min="0" max="100" step="1"><input type="number" id="bg-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%</div><hr style="margin: 8px 0;"><small style="margin-bottom: 5px; display:inline-block;">RGB:</small><div class="control-group"><label for="bg-color-red">R</label><input type="range" id="bg-color-red" min="0" max="255" step="1"><input type="number" id="bg-color-red-value" min="0" max="255" step="1" class="color-value-input"></div><div class="control-group"><label for="bg-color-green">G</label><input type="range" id="bg-color-green" min="0" max="255" step="1"><input type="number" id="bg-color-green-value" min="0" max="255" step="1" class="color-value-input"></div><div class="control-group"><label for="bg-color-blue">B</label><input type="range" id="bg-color-blue" min="0" max="255" step="1"><input type="number" id="bg-color-blue-value" min="0" max="255" step="1" class="color-value-input"></div></div><div class="theme-editor-preview"><div id="bg-color-preview" class="color-preview-box">BG</div></div></div><hr style="border-style: solid; margin: 10px 0;"><div class="theme-editor-row"><div class="theme-editor-color"><h5>Tekstfarge</h5><div class="control-group"><label for="text-color-hue">H</label><input type="range" id="text-color-hue" min="0" max="360" step="1" class="hue-slider"><input type="number" id="text-color-hue-value" min="0" max="360" step="1" class="color-value-input">°</div><div class="control-group"><label for="text-color-saturation">S</label><input type="range" id="text-color-saturation" min="0" max="100" step="1"><input type="number" id="text-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%</div><div class="control-group"><label for="text-color-lightness">L</label><input type="range" id="text-color-lightness" min="0" max="100" step="1"><input type="number" id="text-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%</div><hr style="margin: 8px 0;"><small style="margin-bottom: 5px; display:inline-block;">RGB:</small><div class="control-group"><label for="text-color-red">R</label><input type="range" id="text-color-red" min="0" max="255" step="1"><input type="number" id="text-color-red-value" min="0" max="255" step="1" class="color-value-input"></div><div class="control-group"><label for="text-color-green">G</label><input type="range" id="text-color-green" min="0" max="255" step="1"><input type="number" id="text-color-green-value" min="0" max="255" step="1" class="color-value-input"></div><div class="control-group"><label for="text-color-blue">B</label><input type="range" id="text-color-blue" min="0" max="255" step="1"><input type="number" id="text-color-blue-value" min="0" max="255" step="1" class="color-value-input"></div></div><div class="theme-editor-preview"><div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div></div></div></div><hr>
-            <div id="edit-layout-section"><h3>Layout</h3><div class="layout-control" style="margin-bottom: 20px;"><label for="canvas-height-slider">Canvas Høyde (% av viewport)</label><input type="range" id="canvas-height-slider" min="30" max="100" step="1"><span id="canvas-height-value">--</span>%</div><div id="element-layout-grid"><div class="element-layout-controls" id="title-layout-controls"><h5>Tittel (<label><input type="checkbox" id="title-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="title-x-slider">X Pos (%)</label><input type="range" id="title-x-slider" min="0" max="100" step="0.1"><span id="title-x-value">--</span>%</div><div class="layout-control"><label for="title-y-slider">Y Pos (%)</label><input type="range" id="title-y-slider" min="0" max="100" step="0.1"><span id="title-y-value">--</span>%</div><div class="layout-control"><label for="title-width-slider">Bredde (%)</label><input type="range" id="title-width-slider" min="10" max="100" step="1"><span id="title-width-value">--</span>%</div><div class="layout-control"><label for="title-fontsize-slider">Font (em)</label><input type="range" id="title-fontsize-slider" min="1" max="10" step="0.1"><span id="title-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="timer-layout-controls"><h5>Timer (<label><input type="checkbox" id="timer-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="timer-x-slider">X Pos (%)</label><input type="range" id="timer-x-slider" min="0" max="100" step="0.1"><span id="timer-x-value">--</span>%</div><div class="layout-control"><label for="timer-y-slider">Y Pos (%)</label><input type="range" id="timer-y-slider" min="0" max="100" step="0.1"><span id="timer-y-value">--</span>%</div><div class="layout-control"><label for="timer-width-slider">Bredde (%)</label><input type="range" id="timer-width-slider" min="10" max="100" step="1"><span id="timer-width-value">--</span>%</div><div class="layout-control"><label for="timer-fontsize-slider">Font (em)</label><input type="range" id="timer-fontsize-slider" min="5" max="25" step="0.5"><span id="timer-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="blinds-layout-controls"><h5>Blinds (<label><input type="checkbox" id="blinds-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="blinds-x-slider">X Pos (%)</label><input type="range" id="blinds-x-slider" min="0" max="100" step="0.1"><span id="blinds-x-value">--</span>%</div><div class="layout-control"><label for="blinds-y-slider">Y Pos (%)</label><input type="range" id="blinds-y-slider" min="0" max="100" step="0.1"><span id="blinds-y-value">--</span>%</div><div class="layout-control"><label for="blinds-width-slider">Bredde (%)</label><input type="range" id="blinds-width-slider" min="10" max="100" step="1"><span id="blinds-width-value">--</span>%</div><div class="layout-control"><label for="blinds-fontsize-slider">Font (em)</label><input type="range" id="blinds-fontsize-slider" min="2" max="15" step="0.1"><span id="blinds-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="logo-layout-controls"><h5>Logo (<label><input type="checkbox" id="logo-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="logo-x-slider">X Pos (%)</label><input type="range" id="logo-x-slider" min="0" max="100" step="0.1"><span id="logo-x-value">--</span>%</div><div class="layout-control"><label for="logo-y-slider">Y Pos (%)</label><input type="range" id="logo-y-slider" min="0" max="100" step="0.1"><span id="logo-y-value">--</span>%</div><div class="layout-control"><label for="logo-width-slider">Bredde (%)</label><input type="range" id="logo-width-slider" min="5" max="80" step="1"><span id="logo-width-value">--</span>%</div><div class="layout-control" style="display: none;"><label for="logo-height-slider">Høyde (%)</label><input type="range" id="logo-height-slider" min="5" max="80" step="1"><span id="logo-height-value">--</span>%</div><div class="layout-control" style="display: none;"><label for="logo-fontsize-slider">Font (em)</label><input type="range" id="logo-fontsize-slider" min="1" max="1" step="0.1"><span id="logo-fontsize-value">--</span>em</div></div><div class="element-layout-controls" id="info-layout-controls"><h5>Info Boks (<label><input type="checkbox" id="info-visible-toggle"> Synlig</label>)</h5><div class="layout-control"><label for="info-x-slider">X Pos (%)</label><input type="range" id="info-x-slider" min="0" max="100" step="0.1"><span id="info-x-value">--</span>%</div><div class="layout-control"><label for="info-y-slider">Y Pos (%)</label><input type="range" id="info-y-slider" min="0" max="100" step="0.1"><span id="info-y-value">--</span>%</div><div class="layout-control"><label for="info-width-slider">Bredde (%)</label><input type="range" id="info-width-slider" min="10" max="100" step="1"><span id="info-width-value">--</span>%</div><div class="layout-control"><label for="info-fontsize-slider">Font (em)</label><input type="range" id="info-fontsize-slider" min="0.5" max="3" step="0.1"><span id="info-fontsize-value">--</span>em</div><div class="info-toggles"><h5>Vis Info:</h5><label><input type="checkbox" id="info-toggle-nextblinds"> Neste Blinds</label><label><input type="checkbox" id="info-toggle-avgstack"> Avg Stack</label><label><input type="checkbox" id="info-toggle-players"> Spillere</label><label><input type="checkbox" id="info-toggle-latereg"> Late Reg</label><label><input type="checkbox" id="info-toggle-nextpause"> Neste Pause</label></div></div></div></div><hr><div id="edit-logo-section"><h3>Logo</h3><label for="logo-upload">Last opp ny logo (PNG, JPG, GIF):</label><input type="file" id="logo-upload" accept="image/*"><div style="margin-top: 10px;"><p>Nåværende logo:</p><img id="current-logo-preview" src="#" alt="Logo Preview" style="max-height: 80px; max-width: 200px; border: 1px solid #ccc; display: none; margin-bottom: 10px;"><button id="btn-clear-logo" class="danger-button small-button" disabled>Fjern Egendefinert Logo</button></div></div><hr><div id="edit-sound-section"><h3>Lyd</h3><div class="layout-control"><label for="sound-volume-slider">Volum (%)</label><input type="range" id="sound-volume-slider" min="0" max="1" step="0.01"><span id="sound-volume-value">--</span>%</div></div>
-            <div class="modal-actions"><button id="btn-reset-ui-defaults" type="button" class="warning-button">Tilbakestill Alt</button><button id="btn-save-ui-settings" class="success-button">Lagre Utseende</button><button id="btn-cancel-ui-settings" type="button">Avbryt</button></div>
-        </div>
-    </div>
-    <!-- === 05b: MODAL FOR UI SETTINGS END === -->
-
-    <!-- === 05c: MODAL FOR ADD-ONS START (Oppdatert) === -->
-    <div id="addon-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="close-button" id="close-addon-modal-button" title="Lukk">×</span>
-            <h2>Administrer Add-ons</h2>
-            <p>Velg aktive spillere som skal få Add-on. Kostnad: <span id="addon-cost-display">--</span> kr, Sjetonger: <span id="addon-chips-display">--</span>.</p>
-            <p><small>Kun spillere uten add-on kan velges. Total pott og antall entries økes.</small></p>
-            <div id="addon-validation-error" class="warning hidden"></div>
-            <div id="addon-player-list-container" style="max-height: 60vh; overflow-y: auto; border: 1px solid #eee; margin-bottom: 15px; padding: 10px;">
-                 <ul id="addon-player-list" class="item-list" style="max-height: none; border-top: none; margin: 0;">
-                     <li>Laster spillere...</li>
-                 </ul>
-            </div>
-            <div class="modal-actions">
-                <button id="btn-confirm-addons" class="success-button">Bekreft Valgte Add-ons</button>
-                <button id="btn-cancel-addons" type="button">Avbryt</button>
-            </div>
-        </div>
-    </div>
-    <!-- === 05c: MODAL FOR ADD-ONS END === -->
-
-    <!-- === 05d: MODAL FOR EDIT PLAYER START === -->
-    <div id="edit-player-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close-button" id="close-edit-player-modal-button" title="Lukk">×</span>
-            <h2>Rediger Spillerdetaljer</h2>
-            <input type="hidden" id="edit-player-id-input">
-            <div id="edit-player-details-section">
-                <p><strong>Spiller:</strong> <span id="edit-player-name-display"></span></p>
-                <p><small>(Navn, Rebuys og Add-on kan justeres nedenfor)</small></p>
-                <hr>
-                 <label for="edit-player-name-input">Navn:</label>
-                 <input type="text" id="edit-player-name-input" required style="max-width: 300px;">
-                 <label for="edit-player-rebuys-input">Antall Rebuys:</label>
-                 <input type="number" id="edit-player-rebuys-input" min="0" step="1" style="max-width: 100px;">
-                 <label style="display: inline-block; margin-right: 10px; margin-top: 10px;">
-                     <input type="checkbox" id="edit-player-addon-checkbox"> Har Add-on
-                 </label>
-                 <p style="margin-top: 15px;"><small>Advarsel: Manuell endring av rebuys/add-on vil justere total pott og tellere.</small></p>
-            </div>
-            <div class="modal-actions">
-                <button id="btn-save-player-changes" class="success-button">Lagre Endringer</button>
-                <button id="btn-cancel-player-edit" type="button">Avbryt</button>
-            </div>
-        </div>
-    </div>
-    <!-- === 05d: MODAL FOR EDIT PLAYER END === -->
 
    <!-- === 06: SCRIPTS SECTION START === -->
     <script type="module" src="js/storage.js"></script>
