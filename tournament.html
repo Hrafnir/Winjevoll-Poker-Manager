@@ -96,20 +96,47 @@
     </div>
     <!-- === 05a: MODAL FOR TOURNAMENT SETTINGS END === -->
 
-    <!-- === 05b: MODAL FOR UI SETTINGS START (MED KORREKTE ID-er) === -->
+    <!-- === 05b: MODAL FOR UI SETTINGS START (MED NYE KONTROLLER) === -->
     <div id="ui-settings-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-button" id="close-ui-settings-modal-button" title="Lukk">×</span>
             <h2>Rediger Utseende</h2>
 
-            <!-- === Tema Seksjon === -->
+            <!-- === Tema Seksjon (Oppdatert) === -->
             <div id="edit-theme-section">
                 <h3>Fargetema</h3>
-                <!-- TODO: Theme Favorites Section -->
-                 <!-- <div class="theme-favorites-section"> ... </div> -->
+
+                <!-- Color Presets -->
+                <div style="margin-bottom: 20px;">
+                    <label for="theme-preset-select">Forhåndsvalg:</label>
+                    <select id="theme-preset-select" style="max-width: 250px;">
+                        <option value="">-- Velg forhåndsvalg --</option>
+                        <!-- Options added by JS -->
+                    </select>
+                </div>
+
                 <div class="theme-editor-row">
                     <div class="theme-editor-color">
                         <h5>Bakgrunnsfarge</h5>
+                        <!-- HSL Controls -->
+                        <div class="control-group">
+                            <label for="bg-color-hue">H</label>
+                            <input type="range" id="bg-color-hue" min="0" max="360" step="1" class="hue-slider">
+                            <input type="number" id="bg-color-hue-value" min="0" max="360" step="1" class="color-value-input">°
+                        </div>
+                        <div class="control-group">
+                            <label for="bg-color-saturation">S</label>
+                            <input type="range" id="bg-color-saturation" min="0" max="100" step="1">
+                            <input type="number" id="bg-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%
+                        </div>
+                         <div class="control-group">
+                            <label for="bg-color-lightness">L</label>
+                            <input type="range" id="bg-color-lightness" min="0" max="100" step="1">
+                            <input type="number" id="bg-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%
+                        </div>
+                         <hr style="margin: 8px 0;">
+                         <!-- RGB Controls -->
+                        <small style="margin-bottom: 5px; display:inline-block;">RGB:</small>
                         <div class="control-group">
                             <label for="bg-color-red">R</label>
                             <input type="range" id="bg-color-red" min="0" max="255" step="1">
@@ -134,6 +161,25 @@
                 <div class="theme-editor-row">
                     <div class="theme-editor-color">
                         <h5>Tekstfarge</h5>
+                         <!-- HSL Controls -->
+                         <div class="control-group">
+                             <label for="text-color-hue">H</label>
+                             <input type="range" id="text-color-hue" min="0" max="360" step="1" class="hue-slider">
+                             <input type="number" id="text-color-hue-value" min="0" max="360" step="1" class="color-value-input">°
+                         </div>
+                         <div class="control-group">
+                             <label for="text-color-saturation">S</label>
+                             <input type="range" id="text-color-saturation" min="0" max="100" step="1">
+                             <input type="number" id="text-color-saturation-value" min="0" max="100" step="1" class="color-value-input">%
+                         </div>
+                          <div class="control-group">
+                             <label for="text-color-lightness">L</label>
+                             <input type="range" id="text-color-lightness" min="0" max="100" step="1">
+                             <input type="number" id="text-color-lightness-value" min="0" max="100" step="1" class="color-value-input">%
+                         </div>
+                          <hr style="margin: 8px 0;">
+                          <!-- RGB Controls -->
+                         <small style="margin-bottom: 5px; display:inline-block;">RGB:</small>
                         <div class="control-group">
                             <label for="text-color-red">R</label>
                             <input type="range" id="text-color-red" min="0" max="255" step="1">
@@ -154,8 +200,8 @@
                         <div id="text-color-preview" class="color-preview-box"><span>Tekst</span></div>
                     </div>
                 </div>
-                 <!-- TODO: HSL Sliders? -->
             </div>
+            <!-- === Slutt Tema Seksjon === -->
 
             <hr>
 
