@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let originalSettings = {}; // For å kunne avbryte/resette
     let livePreviewEnabled = true; // Kontroller om endringer i modal skal vises live
     let isUpdatingColorControls = false; // For å hindre HSL/RGB loops
+    let logoClearedInModal = false; // NY: Flagg for å spore sletting
 
     // Fargeforvalg
     const colorPresets = [
@@ -255,79 +256,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === 04b: INITIAL THEME, LAYOUT, LOGO APPLICATION ===
-    async function applyInitialThemeLayoutAndLogo() {
-        console.log("applyInitialThemeLayoutAndLogo: Starting...");
-        const bgColor = loadThemeBgColor(); let textColor = loadThemeTextColor();
-        if (!textColor || !textColor.startsWith('rgb(') || textColor.split(',').length !== 3) { console.warn(`Invalid textColor loaded: "${textColor}". Falling back to default.`); textColor = DEFAULT_THEME_TEXT; }
-        const elementLayouts = loadElementLayouts(); let logoDataBlob = null;
-        try { logoDataBlob = await loadLogoBlob(); } catch (err) { console.error("Error loading logo blob:", err); }
-        console.log("applyInitialThemeLayoutAndLogo: Data fetched. Applying theme/layout. Logo Blob:", logoDataBlob);
-        applyThemeAndLayout(bgColor, textColor, elementLayouts, draggableElements);
-        currentLogoBlob = logoDataBlob; updateMainLogoImage(currentLogoBlob, logoImg);
-        console.log("applyInitialThemeLayoutAndLogo: Done.");
-    }
+    async function applyInitialThemeLayoutAndLogo() { console.log("applyInitialThemeLayoutAndLogo: Starting..."); const bgColor = loadThemeBgColor(); let textColor = loadThemeTextColor(); if (!textColor || !textColor.startsWith('rgb(') || textColor.split(',').length !== 3) { console.warn(`Invalid textColor loaded: "${textColor}". Falling back to default.`); textColor = DEFAULT_THEME_TEXT; } const elementLayouts = loadElementLayouts(); let logoDataBlob = null; try { logoDataBlob = await loadLogoBlob(); } catch (err) { console.error("Error loading logo blob:", err); } console.log("applyInitialThemeLayoutAndLogo: Data fetched. Applying theme/layout. Logo Blob:", logoDataBlob); applyThemeAndLayout(bgColor, textColor, elementLayouts, draggableElements); currentLogoBlob = logoDataBlob; updateMainLogoImage(currentLogoBlob, logoImg); console.log("applyInitialThemeLayoutAndLogo: Done."); }
     try { await applyInitialThemeLayoutAndLogo(); } catch (err) { console.error("CRITICAL Error during initial theme/layout/logo setup:", err); }
     // === 04b: INITIAL THEME, LAYOUT, LOGO APPLICATION END ===
 
 
     // === MIDLERTIDIGE / TODO FUNKSJONER START ===
-    function handleAdjustLevel(delta) {
-        console.log("handleAdjustLevel", delta);
-        if (!state || state.live.status === 'finished') return;
-        const newIdx = state.live.currentLevelIndex + delta;
-        if (newIdx >= 0 && newIdx < state.config.blindLevels.length) {
-            const oldLvlNum = state.config.blindLevels[state.live.currentLevelIndex]?.level || '?';
-            const newLvl = state.config.blindLevels[newIdx];
-            if (!confirm(`Endre til Nivå ${newLvl.level} (${formatBlindsHTML(newLvl)})?\nKlokken nullstilles.`)) return;
-            state.live.currentLevelIndex = newIdx;
-            state.live.timeRemainingInLevel = newLvl.duration * 60;
-            state.live.isOnBreak = false;
-            state.live.timeRemainingInBreak = 0;
-            logActivity(state.live.activityLog, `Nivå manuelt endret: ${oldLvlNum} -> ${newLvl.level}.`);
-            // playSound('NEW_LEVEL'); // TODO
-            updateUI(state);
-            saveTournamentState(currentTournamentId, state);
-        } else {
-            alert("Kan ikke gå til nivået.");
-        }
-    }
-    function handleAdjustTime(deltaSeconds) {
-        console.log("handleAdjustTime", deltaSeconds);
-        if (!state || state.live.status === 'finished') return;
-        let key = state.live.isOnBreak ? 'timeRemainingInBreak' : 'timeRemainingInLevel';
-        let maxT = Infinity;
-        if (!state.live.isOnBreak) {
-            const lvl = state.config.blindLevels[state.live.currentLevelIndex];
-            if (lvl) maxT = lvl.duration * 60;
-        }
-        state.live[key] = Math.max(0, Math.min(state.live[key] + deltaSeconds, maxT));
-        logActivity(state.live.activityLog, `Tid justert ${deltaSeconds > 0 ? '+' : ''}${deltaSeconds / 60} min.`);
-        updateUI(state);
-        // Vurder lagring: saveTournamentState(currentTournamentId, state);
-    }
-    async function finishTournament() {
-        if (!state || state.live.status === 'finished') return;
-        console.log("Finishing Tournament...");
-        logActivity(state.live.activityLog, "Turnering fullføres.");
-        // playSound('TOURNAMENT_END'); // TODO
-        stopMainTimer();
-        stopRealTimeClock();
-        state.live.status = 'finished';
-        state.live.isOnBreak = false;
-        state.live.timeRemainingInLevel = 0;
-        state.live.timeRemainingInBreak = 0;
-        if (state.live.players.length === 1) {
-             const winner = state.live.players[0];
-             winner.place = 1; state.live.eliminatedPlayers.push(winner); state.live.players.splice(0, 1);
-             logActivity(state.live.activityLog, `Vinner: ${winner.name}!`);
-        } else if (state.live.players.length > 1) {
-             logActivity(state.live.activityLog, `Fullført med ${state.live.players.length} spillere igjen (ingen klar vinner definert).`);
-             state.live.players.forEach(p => { p.eliminated = true; p.place = null; state.live.eliminatedPlayers.push(p); });
-             state.live.players = [];
-        } else { logActivity(state.live.activityLog, `Fullført uten aktive spillere igjen.`); }
-        state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity));
-        updateUI(state); saveTournamentState(currentTournamentId, state); alert("Turneringen er fullført!");
-    }
+    function handleAdjustLevel(delta) { console.log("handleAdjustLevel", delta); if (!state || state.live.status === 'finished') return; const newIdx = state.live.currentLevelIndex + delta; if (newIdx >= 0 && newIdx < state.config.blindLevels.length) { const oldLvlNum = state.config.blindLevels[state.live.currentLevelIndex]?.level || '?'; const newLvl = state.config.blindLevels[newIdx]; if (!confirm(`Endre til Nivå ${newLvl.level} (${formatBlindsHTML(newLvl)})?\nKlokken nullstilles.`)) return; state.live.currentLevelIndex = newIdx; state.live.timeRemainingInLevel = newLvl.duration * 60; state.live.isOnBreak = false; state.live.timeRemainingInBreak = 0; logActivity(state.live.activityLog, `Nivå manuelt endret: ${oldLvlNum} -> ${newLvl.level}.`); updateUI(state); saveTournamentState(currentTournamentId, state); } else { alert("Kan ikke gå til nivået."); } }
+    function handleAdjustTime(deltaSeconds) { console.log("handleAdjustTime", deltaSeconds); if (!state || state.live.status === 'finished') return; let key = state.live.isOnBreak ? 'timeRemainingInBreak' : 'timeRemainingInLevel'; let maxT = Infinity; if (!state.live.isOnBreak) { const lvl = state.config.blindLevels[state.live.currentLevelIndex]; if (lvl) maxT = lvl.duration * 60; } state.live[key] = Math.max(0, Math.min(state.live[key] + deltaSeconds, maxT)); logActivity(state.live.activityLog, `Tid justert ${deltaSeconds > 0 ? '+' : ''}${deltaSeconds / 60} min.`); updateUI(state); }
+    async function finishTournament() { if (!state || state.live.status === 'finished') return; console.log("Finishing Tournament..."); logActivity(state.live.activityLog, "Turnering fullføres."); stopMainTimer(); stopRealTimeClock(); state.live.status = 'finished'; state.live.isOnBreak = false; state.live.timeRemainingInLevel = 0; state.live.timeRemainingInBreak = 0; if (state.live.players.length === 1) { const winner = state.live.players[0]; winner.place = 1; state.live.eliminatedPlayers.push(winner); state.live.players.splice(0, 1); logActivity(state.live.activityLog, `Vinner: ${winner.name}!`); } else if (state.live.players.length > 1) { logActivity(state.live.activityLog, `Fullført med ${state.live.players.length} spillere igjen.`); state.live.players.forEach(p => { p.eliminated = true; p.place = null; state.live.eliminatedPlayers.push(p); }); state.live.players = []; } else { logActivity(state.live.activityLog, `Fullført uten aktive spillere.`); } state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity)); updateUI(state); saveTournamentState(currentTournamentId, state); alert("Turneringen er fullført!"); }
     function handleEndTournament() { console.log("handleEndTournament called."); finishTournament(); }
     function handleForceSave() { if(state) { console.log("handleForceSave"); saveTournamentState(currentTournamentId, state); alert('Turnering lagret!');} else {console.warn("handleForceSave: State not available.")} }
     function handleBackToMain() { console.log("handleBackToMain"); if (state && state.live.status !== 'finished') { saveTournamentState(currentTournamentId, state); } window.location.href = 'index.html'; }
@@ -337,201 +274,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // === DRAG AND DROP LOGIC START ===
-    function startDrag(event, element) {
-        if (!element || !element.classList.contains('draggable-element')) return;
-        if (event.target.closest('button, input, select, textarea, a')) return;
-
-        console.log("startDrag initiated on element:", element.id);
-        isDragging = true;
-        draggedElement = element;
-        dragElementId = element.id.replace('-element', '');
-
-        const rect = element.getBoundingClientRect();
-        dragOffsetX = event.clientX - rect.left;
-        dragOffsetY = event.clientY - rect.top;
-
-        element.classList.add('dragging');
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDrag);
-        document.addEventListener('mouseleave', stopDrag);
-    }
-
-    function drag(event) {
-        if (!isDragging || !draggedElement || !liveCanvas) return;
-        event.preventDefault();
-
-        const canvasRect = liveCanvas.getBoundingClientRect();
-        if (canvasRect.width === 0 || canvasRect.height === 0) return;
-
-        let newX = event.clientX - canvasRect.left - dragOffsetX;
-        let newY = event.clientY - canvasRect.top - dragOffsetY;
-        let newXPercent = (newX / canvasRect.width) * 100;
-        let newYPercent = (newY / canvasRect.height) * 100;
-
-        newXPercent = Math.max(0, Math.min(newXPercent, 100));
-        newYPercent = Math.max(0, Math.min(newYPercent, 100));
-
-        draggedElement.style.left = `${newXPercent}%`;
-        draggedElement.style.top = `${newYPercent}%`;
-
-        if (isModalOpen && currentOpenModal === uiSettingsModal && modalLayouts[dragElementId]) {
-             const xFixed = parseFloat(newXPercent.toFixed(1));
-             const yFixed = parseFloat(newYPercent.toFixed(1));
-             modalLayouts[dragElementId].x = xFixed;
-             modalLayouts[dragElementId].y = yFixed;
-
-             const controls = layoutControls[dragElementId];
-             if(controls?.x) controls.x.value = xFixed;
-             if(controls?.xValue) controls.xValue.textContent = xFixed;
-             if(controls?.y) controls.y.value = yFixed;
-             if(controls?.yValue) controls.yValue.textContent = yFixed;
-        }
-    }
-
-    function stopDrag(event) {
-        if (!isDragging || !draggedElement) return;
-        console.log("stopDrag for element:", draggedElement.id);
-
-        isDragging = false;
-        draggedElement.classList.remove('dragging');
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', stopDrag);
-        document.removeEventListener('mouseleave', stopDrag);
-
-        const finalX = parseFloat(draggedElement.style.left);
-        const finalY = parseFloat(draggedElement.style.top);
-
-        if (isModalOpen && currentOpenModal === uiSettingsModal && modalLayouts[dragElementId]) {
-             modalLayouts[dragElementId].x = parseFloat(finalX.toFixed(1));
-             modalLayouts[dragElementId].y = parseFloat(finalY.toFixed(1));
-             console.log(`Final position for ${dragElementId} saved to modalLayouts: X=${modalLayouts[dragElementId].x}, Y=${modalLayouts[dragElementId].y}`);
-        } else {
-            // Consider direct save if needed
-        }
-        draggedElement = null; dragElementId = null;
-    }
+    function startDrag(event, element) { if (!element || !element.classList.contains('draggable-element')) return; if (event.target.closest('button, input, select, textarea, a')) return; console.log("startDrag initiated on element:", element.id); isDragging = true; draggedElement = element; dragElementId = element.id.replace('-element', ''); const rect = element.getBoundingClientRect(); dragOffsetX = event.clientX - rect.left; dragOffsetY = event.clientY - rect.top; element.classList.add('dragging'); document.addEventListener('mousemove', drag); document.addEventListener('mouseup', stopDrag); document.addEventListener('mouseleave', stopDrag); }
+    function drag(event) { if (!isDragging || !draggedElement || !liveCanvas) return; event.preventDefault(); const canvasRect = liveCanvas.getBoundingClientRect(); if (canvasRect.width === 0 || canvasRect.height === 0) return; let newX = event.clientX - canvasRect.left - dragOffsetX; let newY = event.clientY - canvasRect.top - dragOffsetY; let newXPercent = (newX / canvasRect.width) * 100; let newYPercent = (newY / canvasRect.height) * 100; newXPercent = Math.max(0, Math.min(newXPercent, 100)); newYPercent = Math.max(0, Math.min(newYPercent, 100)); draggedElement.style.left = `${newXPercent}%`; draggedElement.style.top = `${newYPercent}%`; if (isModalOpen && currentOpenModal === uiSettingsModal && modalLayouts[dragElementId]) { const xFixed = parseFloat(newXPercent.toFixed(1)); const yFixed = parseFloat(newYPercent.toFixed(1)); modalLayouts[dragElementId].x = xFixed; modalLayouts[dragElementId].y = yFixed; const controls = layoutControls[dragElementId]; if(controls?.x) controls.x.value = xFixed; if(controls?.xValue) controls.xValue.textContent = xFixed; if(controls?.y) controls.y.value = yFixed; if(controls?.yValue) controls.yValue.textContent = yFixed; } }
+    function stopDrag(event) { if (!isDragging || !draggedElement) return; console.log("stopDrag for element:", draggedElement.id); isDragging = false; draggedElement.classList.remove('dragging'); document.removeEventListener('mousemove', drag); document.removeEventListener('mouseup', stopDrag); document.removeEventListener('mouseleave', stopDrag); const finalX = parseFloat(draggedElement.style.left); const finalY = parseFloat(draggedElement.style.top); if (isModalOpen && currentOpenModal === uiSettingsModal && modalLayouts[dragElementId]) { modalLayouts[dragElementId].x = parseFloat(finalX.toFixed(1)); modalLayouts[dragElementId].y = parseFloat(finalY.toFixed(1)); console.log(`Final position for ${dragElementId} saved to modalLayouts: X=${modalLayouts[dragElementId].x}, Y=${modalLayouts[dragElementId].y}`); } draggedElement = null; dragElementId = null; }
     // === DRAG AND DROP LOGIC END ===
 
 
     // === CALLBACKS ===
-     const mainCallbacks = {
-        updateUI: () => { if (state) updateUI(state); }, saveState: () => { if (state) saveTournamentState(currentTournamentId, state); }, playSound: null, finishTournament: finishTournament, logActivity: (msg) => { if (state) logActivity(state.live.activityLog, msg); }, checkAndHandleTableBreak: () => { if (state) return checkAndHandleTableBreak(state, currentTournamentId, mainCallbacks); else return false; }, assignTableSeat: (player, excludeTableNum) => { if (state) assignTableSeat(player, state, excludeTableNum); }
-    };
+     const mainCallbacks = { updateUI: () => { if (state) updateUI(state); }, saveState: () => { if (state) saveTournamentState(currentTournamentId, state); }, playSound: null, finishTournament: finishTournament, logActivity: (msg) => { if (state) logActivity(state.live.activityLog, msg); }, checkAndHandleTableBreak: () => { if (state) return checkAndHandleTableBreak(state, currentTournamentId, mainCallbacks); else return false; }, assignTableSeat: (player, excludeTableNum) => { if (state) assignTableSeat(player, state, excludeTableNum); } };
     // === END CALLBACKS ===
 
 
     // === UI SETTINGS MODAL LOGIC START ===
-
-    function updateAllColorControls(rgbString, prefix) {
-        if (isUpdatingColorControls) return;
-        isUpdatingColorControls = true;
-        try {
-            const [r, g, b] = parseRgbString(rgbString);
-            const hsl = rgbToHsl(r, g, b);
-
-            const rSlider = document.getElementById(`${prefix}-color-red`); if (rSlider) rSlider.value = r;
-            const rValueInput = document.getElementById(`${prefix}-color-red-value`); if (rValueInput) rValueInput.value = r;
-            const gSlider = document.getElementById(`${prefix}-color-green`); if (gSlider) gSlider.value = g;
-            const gValueInput = document.getElementById(`${prefix}-color-green-value`); if (gValueInput) gValueInput.value = g;
-            const bSlider = document.getElementById(`${prefix}-color-blue`); if (bSlider) bSlider.value = b;
-            const bValueInput = document.getElementById(`${prefix}-color-blue-value`); if (bValueInput) bValueInput.value = b;
-
-            const hSlider = document.getElementById(`${prefix}-color-hue`); if (hSlider) hSlider.value = hsl.h;
-            const hValueInput = document.getElementById(`${prefix}-color-hue-value`); if (hValueInput) hValueInput.value = hsl.h;
-            const sSlider = document.getElementById(`${prefix}-color-saturation`); if (sSlider) sSlider.value = hsl.s;
-            const sValueInput = document.getElementById(`${prefix}-color-saturation-value`); if (sValueInput) sValueInput.value = hsl.s;
-            const lSlider = document.getElementById(`${prefix}-color-lightness`); if (lSlider) lSlider.value = hsl.l;
-            const lValueInput = document.getElementById(`${prefix}-color-lightness-value`); if (lValueInput) lValueInput.value = hsl.l;
-
-            const previewBox = document.getElementById(`${prefix}-color-preview`);
-            if (previewBox) {
-                if (prefix === 'bg') previewBox.style.backgroundColor = rgbString;
-                else if (prefix === 'text') (previewBox.querySelector('span') || previewBox).style.color = rgbString;
-            }
-        } catch (e) { console.error(`Error updating all color controls for ${prefix}:`, e); }
-        finally { isUpdatingColorControls = false; }
-    }
-
-
-    async function populateUiSettingsModal() {
-        console.log("Populating UI Settings Modal...");
-        let loadedLayouts = loadElementLayouts();
-        if (!loadedLayouts || typeof loadedLayouts !== 'object') { console.warn("Invalid layouts loaded, falling back to default.", loadedLayouts); loadedLayouts = JSON.parse(JSON.stringify(DEFAULT_ELEMENT_LAYOUTS)); }
-        else { loadedLayouts = { ...DEFAULT_ELEMENT_LAYOUTS, ...loadedLayouts }; for(const key in DEFAULT_ELEMENT_LAYOUTS) { if(typeof DEFAULT_ELEMENT_LAYOUTS[key] === 'object' && DEFAULT_ELEMENT_LAYOUTS[key] !== null) { loadedLayouts[key] = {...DEFAULT_ELEMENT_LAYOUTS[key], ...(loadedLayouts[key] || {})}; } } }
-
-        originalSettings = { bgColor: loadThemeBgColor(), textColor: loadThemeTextColor(), layouts: JSON.parse(JSON.stringify(loadedLayouts)), volume: loadSoundVolume(), logo: currentLogoBlob };
-        modalLogoBlob = null;
-
-        if (themePresetSelect) { themePresetSelect.innerHTML = '<option value="">-- Velg forhåndsvalg --</option>'; colorPresets.forEach((preset, index) => { const option = document.createElement('option'); option.value = index.toString(); option.textContent = preset.name; themePresetSelect.appendChild(option); }); }
-
-        let validTextColor = DEFAULT_THEME_TEXT; if (originalSettings.textColor && originalSettings.textColor.startsWith('rgb(') && originalSettings.textColor.split(',').length === 3) validTextColor = originalSettings.textColor; else console.warn(`PopulateModal: Invalid original textColor "${originalSettings.textColor}". Using default.`);
-        updateAllColorControls(originalSettings.bgColor, 'bg'); updateAllColorControls(validTextColor, 'text');
-
-        const currentLayouts = originalSettings.layouts;
-        if (currentLayouts.canvas && canvasHeightSlider && canvasHeightValue) { canvasHeightSlider.value = currentLayouts.canvas.height ?? 65; canvasHeightValue.textContent = canvasHeightSlider.value; } else { console.warn("Canvas height controls missing."); }
-        for (const elementId in layoutControls) {
-             const controls = layoutControls[elementId]; const layout = currentLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId] || {}; if (!controls) { console.warn(`Layout controls object for '${elementId}' missing.`); continue; }
-             if (controls.visible) controls.visible.checked = layout.isVisible ?? true;
-             if (controls.x && controls.xValue) { controls.x.value = layout.x ?? 0; controls.xValue.textContent = parseFloat(controls.x.value).toFixed(1); }
-             if (controls.y && controls.yValue) { controls.y.value = layout.y ?? 0; controls.yValue.textContent = parseFloat(controls.y.value).toFixed(1); }
-             if (controls.width && controls.widthValue) { controls.width.value = layout.width ?? 50; controls.widthValue.textContent = controls.width.value; }
-             const heightParent = controls.height?.parentElement; if (elementId === 'logo' && controls.height && controls.heightValue) { if(heightParent) heightParent.style.display = ''; controls.height.value = layout.height ?? 30; controls.heightValue.textContent = controls.height.value; } else if (heightParent) { heightParent.style.display = 'none'; }
-             const fontParent = controls.fontSize?.parentElement; if (elementId !== 'logo' && controls.fontSize && controls.fontSizeValue) { if(fontParent) fontParent.style.display = ''; controls.fontSize.value = layout.fontSize ?? 1; controls.fontSizeValue.textContent = parseFloat(controls.fontSize.value).toFixed(1); } else if (fontParent) { fontParent.style.display = 'none'; }
-             if (elementId === 'info' && layout) { if(controls.showNextBlinds) controls.showNextBlinds.checked = layout.showNextBlinds ?? true; if(controls.showAvgStack) controls.showAvgStack.checked = layout.showAvgStack ?? true; if(controls.showPlayers) controls.showPlayers.checked = layout.showPlayers ?? true; if(controls.showLateReg) controls.showLateReg.checked = layout.showLateReg ?? true; if(controls.showNextPause) controls.showNextPause.checked = layout.showNextPause ?? true; }
-         }
-
-        if (currentLogoPreview && logoUploadInput) { revokeObjectUrl(modalPreviewLogoUrl); if (originalSettings.logo) { modalPreviewLogoUrl = URL.createObjectURL(originalSettings.logo); currentLogoPreview.src = modalPreviewLogoUrl; currentLogoPreview.style.display = 'block'; if(btnClearLogo) btnClearLogo.disabled = false; } else { currentLogoPreview.src = '#'; currentLogoPreview.style.display = 'none'; if(btnClearLogo) btnClearLogo.disabled = true; modalPreviewLogoUrl = null; } logoUploadInput.value = ''; } else { console.warn("Logo controls missing."); }
-        if(soundVolumeSlider && soundVolumeValue) { soundVolumeSlider.value = originalSettings.volume; soundVolumeValue.textContent = Math.round(originalSettings.volume * 100); } else { console.warn("Sound volume controls missing."); }
-        console.log("UI Settings Modal populated.");
-    }
-
+    function updateAllColorControls(rgbString, prefix) { if (isUpdatingColorControls) return; isUpdatingColorControls = true; try { const [r, g, b] = parseRgbString(rgbString); const hsl = rgbToHsl(r, g, b); const rSlider = document.getElementById(`${prefix}-color-red`); if (rSlider) rSlider.value = r; const rValueInput = document.getElementById(`${prefix}-color-red-value`); if (rValueInput) rValueInput.value = r; const gSlider = document.getElementById(`${prefix}-color-green`); if (gSlider) gSlider.value = g; const gValueInput = document.getElementById(`${prefix}-color-green-value`); if (gValueInput) gValueInput.value = g; const bSlider = document.getElementById(`${prefix}-color-blue`); if (bSlider) bSlider.value = b; const bValueInput = document.getElementById(`${prefix}-color-blue-value`); if (bValueInput) bValueInput.value = b; const hSlider = document.getElementById(`${prefix}-color-hue`); if (hSlider) hSlider.value = hsl.h; const hValueInput = document.getElementById(`${prefix}-color-hue-value`); if (hValueInput) hValueInput.value = hsl.h; const sSlider = document.getElementById(`${prefix}-color-saturation`); if (sSlider) sSlider.value = hsl.s; const sValueInput = document.getElementById(`${prefix}-color-saturation-value`); if (sValueInput) sValueInput.value = hsl.s; const lSlider = document.getElementById(`${prefix}-color-lightness`); if (lSlider) lSlider.value = hsl.l; const lValueInput = document.getElementById(`${prefix}-color-lightness-value`); if (lValueInput) lValueInput.value = hsl.l; const previewBox = document.getElementById(`${prefix}-color-preview`); if (previewBox) { if (prefix === 'bg') previewBox.style.backgroundColor = rgbString; else if (prefix === 'text') (previewBox.querySelector('span') || previewBox).style.color = rgbString; } } catch (e) { console.error(`Error updating all color controls for ${prefix}:`, e); } finally { isUpdatingColorControls = false; } }
+    async function populateUiSettingsModal() { console.log("Populating UI Settings Modal..."); logoClearedInModal = false; let loadedLayouts = loadElementLayouts(); if (!loadedLayouts || typeof loadedLayouts !== 'object') { console.warn("Invalid layouts loaded, falling back to default.", loadedLayouts); loadedLayouts = JSON.parse(JSON.stringify(DEFAULT_ELEMENT_LAYOUTS)); } else { loadedLayouts = { ...DEFAULT_ELEMENT_LAYOUTS, ...loadedLayouts }; for(const key in DEFAULT_ELEMENT_LAYOUTS) { if(typeof DEFAULT_ELEMENT_LAYOUTS[key] === 'object' && DEFAULT_ELEMENT_LAYOUTS[key] !== null) { loadedLayouts[key] = {...DEFAULT_ELEMENT_LAYOUTS[key], ...(loadedLayouts[key] || {})}; } } } originalSettings = { bgColor: loadThemeBgColor(), textColor: loadThemeTextColor(), layouts: JSON.parse(JSON.stringify(loadedLayouts)), volume: loadSoundVolume(), logo: currentLogoBlob }; modalLogoBlob = null; if (themePresetSelect) { themePresetSelect.innerHTML = '<option value="">-- Velg forhåndsvalg --</option>'; colorPresets.forEach((preset, index) => { const option = document.createElement('option'); option.value = index.toString(); option.textContent = preset.name; themePresetSelect.appendChild(option); }); } let validTextColor = DEFAULT_THEME_TEXT; if (originalSettings.textColor && originalSettings.textColor.startsWith('rgb(') && originalSettings.textColor.split(',').length === 3) validTextColor = originalSettings.textColor; else console.warn(`PopulateModal: Invalid original textColor "${originalSettings.textColor}". Using default.`); updateAllColorControls(originalSettings.bgColor, 'bg'); updateAllColorControls(validTextColor, 'text'); const currentLayouts = originalSettings.layouts; if (currentLayouts.canvas && canvasHeightSlider && canvasHeightValue) { canvasHeightSlider.value = currentLayouts.canvas.height ?? 65; canvasHeightValue.textContent = canvasHeightSlider.value; } else { console.warn("Canvas height controls missing."); } for (const elementId in layoutControls) { const controls = layoutControls[elementId]; const layout = currentLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId] || {}; if (!controls) { console.warn(`Layout controls object for '${elementId}' missing.`); continue; } if (controls.visible) controls.visible.checked = layout.isVisible ?? true; if (controls.x && controls.xValue) { controls.x.value = layout.x ?? 0; controls.xValue.textContent = parseFloat(controls.x.value).toFixed(1); } if (controls.y && controls.yValue) { controls.y.value = layout.y ?? 0; controls.yValue.textContent = parseFloat(controls.y.value).toFixed(1); } if (controls.width && controls.widthValue) { controls.width.value = layout.width ?? 50; controls.widthValue.textContent = controls.width.value; } const heightParent = controls.height?.parentElement; if (elementId === 'logo' && controls.height && controls.heightValue) { if(heightParent) heightParent.style.display = ''; controls.height.value = layout.height ?? 30; controls.heightValue.textContent = controls.height.value; } else if (heightParent) { heightParent.style.display = 'none'; } const fontParent = controls.fontSize?.parentElement; if (elementId !== 'logo' && controls.fontSize && controls.fontSizeValue) { if(fontParent) fontParent.style.display = ''; controls.fontSize.value = layout.fontSize ?? 1; controls.fontSizeValue.textContent = parseFloat(controls.fontSize.value).toFixed(1); } else if (fontParent) { fontParent.style.display = 'none'; } if (elementId === 'info' && layout) { if(controls.showNextBlinds) controls.showNextBlinds.checked = layout.showNextBlinds ?? true; if(controls.showAvgStack) controls.showAvgStack.checked = layout.showAvgStack ?? true; if(controls.showPlayers) controls.showPlayers.checked = layout.showPlayers ?? true; if(controls.showLateReg) controls.showLateReg.checked = layout.showLateReg ?? true; if(controls.showNextPause) controls.showNextPause.checked = layout.showNextPause ?? true; } } if (currentLogoPreview && logoUploadInput) { revokeObjectUrl(modalPreviewLogoUrl); if (originalSettings.logo) { modalPreviewLogoUrl = URL.createObjectURL(originalSettings.logo); currentLogoPreview.src = modalPreviewLogoUrl; currentLogoPreview.style.display = 'block'; if(btnClearLogo) btnClearLogo.disabled = false; } else { currentLogoPreview.src = '#'; currentLogoPreview.style.display = 'none'; if(btnClearLogo) btnClearLogo.disabled = true; modalPreviewLogoUrl = null; } logoUploadInput.value = ''; } else { console.warn("Logo controls missing."); } if(soundVolumeSlider && soundVolumeValue) { soundVolumeSlider.value = originalSettings.volume; soundVolumeValue.textContent = Math.round(originalSettings.volume * 100); } else { console.warn("Sound volume controls missing."); } console.log("UI Settings Modal populated."); }
     async function openUiModal() { if (!uiSettingsModal) { console.error("UI Settings Modal element not found!"); alert("Kunne ikke åpne utseende-innstillinger."); return; } console.log("Opening UI Settings Modal..."); await populateUiSettingsModal(); addUiModalListeners(); uiSettingsModal.classList.remove('hidden'); currentOpenModal = uiSettingsModal; isModalOpen = true; }
-    function closeUiModal(revertChanges = false) { if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; if (uiSettingsModal) uiSettingsModal.classList.add('hidden'); currentOpenModal = null; isModalOpen = false; removeUiModalListeners(); revokeObjectUrl(modalPreviewLogoUrl); modalPreviewLogoUrl = null; modalLogoBlob = null; if (revertChanges && livePreviewEnabled) { console.log("Reverting live preview to original settings..."); applyThemeAndLayout(originalSettings.bgColor, originalSettings.textColor, originalSettings.layouts, draggableElements); updateMainLogoImage(originalSettings.logo, logoImg); } console.log("UI Settings Modal closed."); }
-
-    function handleUiModalInputChange(event) {
-        if (!event.target || !isModalOpen || currentOpenModal !== uiSettingsModal || isUpdatingColorControls) return;
-        const target = event.target; const value = (target.type === 'checkbox') ? target.checked : target.value; const id = target.id;
-        if (id.includes('-color-')) {
-            const prefix = id.startsWith('bg-') ? 'bg' : 'text'; let newRgbColor = '';
-             if (target.type === 'number' && (id.includes('-red-value') || id.includes('-green-value') || id.includes('-blue-value'))) { const r = parseInt(document.getElementById(`${prefix}-color-red-value`).value); const g = parseInt(document.getElementById(`${prefix}-color-green-value`).value); const b = parseInt(document.getElementById(`${prefix}-color-blue-value`).value); newRgbColor = `rgb(${r}, ${g}, ${b})`; }
-             else if (target.type === 'number' && (id.includes('-hue-value') || id.includes('-saturation-value') || id.includes('-lightness-value'))) { const h = parseInt(document.getElementById(`${prefix}-color-hue-value`).value); const s = parseInt(document.getElementById(`${prefix}-color-saturation-value`).value); const l = parseInt(document.getElementById(`${prefix}-color-lightness-value`).value); newRgbColor = hslToRgb(h, s, l); }
-             else if (id.includes('-hue') || id.includes('-saturation') || id.includes('-lightness')) { const h = parseInt(document.getElementById(`${prefix}-color-hue`).value); const s = parseInt(document.getElementById(`${prefix}-color-saturation`).value); const l = parseInt(document.getElementById(`${prefix}-color-lightness`).value); newRgbColor = hslToRgb(h, s, l); }
-             else { const r = parseInt(document.getElementById(`${prefix}-color-red`).value); const g = parseInt(document.getElementById(`${prefix}-color-green`).value); const b = parseInt(document.getElementById(`${prefix}-color-blue`).value); newRgbColor = `rgb(${r}, ${g}, ${b})`; }
-            if (prefix === 'bg') modalBgColor = newRgbColor; else modalTextColor = newRgbColor;
-            updateAllColorControls(newRgbColor, prefix);
-        } else {
-            updateModalState(id, value); const valueSpanId = `${id}-value`; const valueSpan = document.getElementById(valueSpanId);
-            if (valueSpan && target.type === 'range') { if (id.includes('-fontsize') || id.includes('-x') || id.includes('-y')) valueSpan.textContent = parseFloat(value).toFixed(1); else valueSpan.textContent = value; }
-            if (id === 'sound-volume-slider' && soundVolumeValue) soundVolumeValue.textContent = Math.round(value * 100);
-        }
-        if (livePreviewEnabled) applyModalChangesToLiveView();
-    }
-
+    function closeUiModal(revertChanges = false) { if (!isModalOpen || currentOpenModal !== uiSettingsModal) return; if (uiSettingsModal) uiSettingsModal.classList.add('hidden'); currentOpenModal = null; isModalOpen = false; removeUiModalListeners(); revokeObjectUrl(modalPreviewLogoUrl); modalPreviewLogoUrl = null; modalLogoBlob = null; logoClearedInModal = false; if (revertChanges && livePreviewEnabled) { console.log("Reverting live preview to original settings..."); applyThemeAndLayout(originalSettings.bgColor, originalSettings.textColor, originalSettings.layouts, draggableElements); updateMainLogoImage(originalSettings.logo, logoImg); } console.log("UI Settings Modal closed."); }
+    function handleUiModalInputChange(event) { if (!event.target || !isModalOpen || currentOpenModal !== uiSettingsModal || isUpdatingColorControls) return; const target = event.target; const value = (target.type === 'checkbox') ? target.checked : target.value; const id = target.id; if (id.includes('-color-')) { const prefix = id.startsWith('bg-') ? 'bg' : 'text'; let newRgbColor = ''; if (target.type === 'number' && (id.includes('-red-value') || id.includes('-green-value') || id.includes('-blue-value'))) { const r = parseInt(document.getElementById(`${prefix}-color-red-value`).value); const g = parseInt(document.getElementById(`${prefix}-color-green-value`).value); const b = parseInt(document.getElementById(`${prefix}-color-blue-value`).value); newRgbColor = `rgb(${r}, ${g}, ${b})`; } else if (target.type === 'number' && (id.includes('-hue-value') || id.includes('-saturation-value') || id.includes('-lightness-value'))) { const h = parseInt(document.getElementById(`${prefix}-color-hue-value`).value); const s = parseInt(document.getElementById(`${prefix}-color-saturation-value`).value); const l = parseInt(document.getElementById(`${prefix}-color-lightness-value`).value); newRgbColor = hslToRgb(h, s, l); } else if (id.includes('-hue') || id.includes('-saturation') || id.includes('-lightness')) { const h = parseInt(document.getElementById(`${prefix}-color-hue`).value); const s = parseInt(document.getElementById(`${prefix}-color-saturation`).value); const l = parseInt(document.getElementById(`${prefix}-color-lightness`).value); newRgbColor = hslToRgb(h, s, l); } else { const r = parseInt(document.getElementById(`${prefix}-color-red`).value); const g = parseInt(document.getElementById(`${prefix}-color-green`).value); const b = parseInt(document.getElementById(`${prefix}-color-blue`).value); newRgbColor = `rgb(${r}, ${g}, ${b})`; } if (prefix === 'bg') modalBgColor = newRgbColor; else modalTextColor = newRgbColor; updateAllColorControls(newRgbColor, prefix); } else { updateModalState(id, value); const valueSpanId = `${id}-value`; const valueSpan = document.getElementById(valueSpanId); if (valueSpan && target.type === 'range') { if (id.includes('-fontsize') || id.includes('-x') || id.includes('-y')) valueSpan.textContent = parseFloat(value).toFixed(1); else valueSpan.textContent = value; } if (id === 'sound-volume-slider' && soundVolumeValue) soundVolumeValue.textContent = Math.round(value * 100); } if (livePreviewEnabled) applyModalChangesToLiveView(); }
     function updateModalState(controlId, value) { if (controlId === 'sound-volume-slider') modalSoundVolume = parseFloat(value); else if (controlId === 'canvas-height-slider') { if (!modalLayouts.canvas) modalLayouts.canvas = {}; modalLayouts.canvas.height = parseInt(value); } else { const parts = controlId.split('-'); const elementId = parts[0]; const propertyOrAction = parts[1]; const controlType = parts.slice(2).join('-'); if (!modalLayouts[elementId]) modalLayouts[elementId] = {}; if (propertyOrAction === 'visible') modalLayouts[elementId].isVisible = value; else if (['x', 'y', 'width', 'height'].includes(propertyOrAction)) modalLayouts[elementId][propertyOrAction] = parseFloat(value); else if (propertyOrAction === 'fontsize') modalLayouts[elementId].fontSize = parseFloat(value); else if (elementId === 'info' && propertyOrAction === 'toggle') { const infoProp = controlType.startsWith('show') ? controlType : `show${controlType.charAt(0).toUpperCase() + controlType.slice(1)}`; if (!modalLayouts.info) modalLayouts.info = {}; modalLayouts.info[infoProp] = value; } } }
     function applyModalChangesToLiveView() { applyThemeAndLayout(modalBgColor, modalTextColor, modalLayouts, draggableElements); }
     async function handleLogoUpload(event) { const file = event.target.files?.[0]; if (!file) return; console.log("Logo file selected:", file.name); if (!file.type.startsWith('image/')) { alert("Vennligst velg en bildefil."); return; } modalLogoBlob = file; revokeObjectUrl(modalPreviewLogoUrl); modalPreviewLogoUrl = URL.createObjectURL(modalLogoBlob); if (currentLogoPreview) { currentLogoPreview.src = modalPreviewLogoUrl; currentLogoPreview.style.display = 'block'; } if (btnClearLogo) btnClearLogo.disabled = false; if (livePreviewEnabled) updateMainLogoImage(modalLogoBlob, logoImg); }
-    async function handleClearLogo() { if (!confirm("Fjerne egendefinert logo?")) return; modalLogoBlob = null; revokeObjectUrl(modalPreviewLogoUrl); modalPreviewLogoUrl = null; if (currentLogoPreview) { currentLogoPreview.src = '#'; currentLogoPreview.style.display = 'none'; } if (btnClearLogo) btnClearLogo.disabled = true; if (logoUploadInput) logoUploadInput.value = ''; if (livePreviewEnabled) updateMainLogoImage(null, logoImg); console.log("Logo marked for clearing."); }
+    async function handleClearLogo() { if (!confirm("Fjerne egendefinert logo?")) return; modalLogoBlob = null; logoClearedInModal = true; revokeObjectUrl(modalPreviewLogoUrl); modalPreviewLogoUrl = null; if (currentLogoPreview) { currentLogoPreview.src = '#'; currentLogoPreview.style.display = 'none'; } if (btnClearLogo) btnClearLogo.disabled = true; if (logoUploadInput) logoUploadInput.value = ''; if (livePreviewEnabled) updateMainLogoImage(null, logoImg); console.log("Logo marked for clearing."); }
     function handlePresetChange(event) { const selectedIndex = parseInt(event.target.value); if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= colorPresets.length) { event.target.value = ""; return; } const preset = colorPresets[selectedIndex]; console.log("Preset selected:", preset.name); modalBgColor = preset.bg; modalTextColor = preset.text; updateAllColorControls(modalBgColor, 'bg'); updateAllColorControls(modalTextColor, 'text'); if (livePreviewEnabled) applyModalChangesToLiveView(); event.target.value = ""; }
-
-    async function handleSaveUiSettings() {
-         console.log("--- handleSaveUiSettings CALLED ---");
-         try {
-             if(typeof saveThemeBgColor !== 'function') throw new Error("saveThemeBgColor is not available"); saveThemeBgColor(modalBgColor);
-             if(typeof saveThemeTextColor !== 'function') throw new Error("saveThemeTextColor is not available"); saveThemeTextColor(modalTextColor);
-             if(typeof saveElementLayouts !== 'function') throw new Error("saveElementLayouts is not available"); saveElementLayouts(modalLayouts);
-             if(typeof saveSoundVolume !== 'function') throw new Error("saveSoundVolume is not available"); saveSoundVolume(modalSoundVolume);
-             if (modalLogoBlob === null && originalSettings.logo !== null) { if(typeof clearLogoBlob !== 'function') throw new Error("clearLogoBlob is not available"); await clearLogoBlob(); currentLogoBlob = null; console.log("Custom logo cleared."); }
-             else if (modalLogoBlob instanceof Blob) { if(typeof saveLogoBlob !== 'function') throw new Error("saveLogoBlob is not available"); await saveLogoBlob(modalLogoBlob); currentLogoBlob = modalLogoBlob; console.log("New custom logo saved."); }
-             logActivity(state?.live?.activityLog, "Utseende-innstillinger lagret.");
-             alert("Innstillinger lagret!");
-             closeUiModal(false);
-             applyThemeAndLayout(modalBgColor, modalTextColor, modalLayouts, draggableElements);
-             updateMainLogoImage(currentLogoBlob, logoImg);
-         } catch (error) { console.error("Error saving UI settings:", error); alert(`Kunne ikke lagre innstillingene: ${error.message}`); }
-    }
-
-    function handleResetUiDefaults() { if (!confirm("Tilbakestille alle utseende-innstillinger til standard?")) return; console.log("Resetting UI to defaults..."); modalBgColor = DEFAULT_THEME_BG; modalTextColor = DEFAULT_THEME_TEXT; modalLayouts = JSON.parse(JSON.stringify(DEFAULT_ELEMENT_LAYOUTS)); modalSoundVolume = loadSoundVolume(); modalLogoBlob = null; populateUiSettingsModal(); if (livePreviewEnabled) { applyModalChangesToLiveView(); updateMainLogoImage(null, logoImg); } console.log("Modal state reset to defaults and controls updated."); }
-
+    async function handleSaveUiSettings() { console.log("--- handleSaveUiSettings CALLED ---"); try { if(typeof saveThemeBgColor !== 'function') throw new Error("saveThemeBgColor is not available"); saveThemeBgColor(modalBgColor); if(typeof saveThemeTextColor !== 'function') throw new Error("saveThemeTextColor is not available"); saveThemeTextColor(modalTextColor); if(typeof saveElementLayouts !== 'function') throw new Error("saveElementLayouts is not available"); saveElementLayouts(modalLayouts); if(typeof saveSoundVolume !== 'function') throw new Error("saveSoundVolume is not available"); saveSoundVolume(modalSoundVolume); if (logoClearedInModal) { if(typeof clearLogoBlob !== 'function') throw new Error("clearLogoBlob is not available"); await clearLogoBlob(); currentLogoBlob = null; console.log("Custom logo explicitly cleared."); } else if (modalLogoBlob instanceof Blob) { if(typeof saveLogoBlob !== 'function') throw new Error("saveLogoBlob is not available"); await saveLogoBlob(modalLogoBlob); currentLogoBlob = modalLogoBlob; console.log("New custom logo saved."); } logActivity(state?.live?.activityLog, "Utseende-innstillinger lagret."); alert("Innstillinger lagret!"); closeUiModal(false); applyThemeAndLayout(modalBgColor, modalTextColor, modalLayouts, draggableElements); updateMainLogoImage(currentLogoBlob, logoImg); } catch (error) { console.error("Error saving UI settings:", error); alert(`Kunne ikke lagre innstillingene: ${error.message}`); } }
+    function handleResetUiDefaults() { if (!confirm("Tilbakestille alle utseende-innstillinger til standard?")) return; console.log("Resetting UI to defaults..."); modalBgColor = DEFAULT_THEME_BG; modalTextColor = DEFAULT_THEME_TEXT; modalLayouts = JSON.parse(JSON.stringify(DEFAULT_ELEMENT_LAYOUTS)); modalSoundVolume = loadSoundVolume(); modalLogoBlob = null; logoClearedInModal = false; populateUiSettingsModal(); if (livePreviewEnabled) { applyModalChangesToLiveView(); updateMainLogoImage(null, logoImg); } console.log("Modal state reset to defaults and controls updated."); }
     const closeUiModalAndRevert = () => closeUiModal(true);
     function addUiModalListeners() { console.log("Adding UI modal listeners..."); uiSettingsModalContent?.addEventListener('input', handleUiModalInputChange); logoUploadInput?.addEventListener('change', handleLogoUpload); btnClearLogo?.addEventListener('click', handleClearLogo); themePresetSelect?.addEventListener('change', handlePresetChange); closeUiSettingsModalButton?.addEventListener('click', closeUiModalAndRevert); btnCancelUiSettings?.addEventListener('click', closeUiModalAndRevert); btnSaveUiSettings?.addEventListener('click', handleSaveUiSettings); btnResetUiDefaults?.addEventListener('click', handleResetUiDefaults); }
     function removeUiModalListeners() { console.log("Removing UI modal listeners..."); uiSettingsModalContent?.removeEventListener('input', handleUiModalInputChange); logoUploadInput?.removeEventListener('change', handleLogoUpload); btnClearLogo?.removeEventListener('click', handleClearLogo); themePresetSelect?.removeEventListener('change', handlePresetChange); closeUiSettingsModalButton?.removeEventListener('click', closeUiModalAndRevert); btnCancelUiSettings?.removeEventListener('click', closeUiModalAndRevert); btnSaveUiSettings?.removeEventListener('click', handleSaveUiSettings); btnResetUiDefaults?.removeEventListener('click', handleResetUiDefaults); }
@@ -565,7 +331,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnCancelPlayerEdit?.addEventListener('click', closeEditPlayerModal);
     closeEditPlayerModalButton?.addEventListener('click', closeEditPlayerModal);
     // UI Modal knapp-listeners legges nå til/fjernes dynamisk
-
     function setupPlayerActionDelegation() { const handleActions = (event) => { if (!state) return; const button = event.target.closest('button'); if (!button) return; const action = Array.from(button.classList).find(cls => cls.startsWith('btn-')); if (!action) return; const playerId = Number(button.dataset.playerId); if (action === 'btn-edit-player') { if (!playerId || isNaN(playerId)) { console.warn("Invalid player ID for edit action", button); return; } console.log(`Delegated action: ${action} for player ID: ${playerId}`); openEditPlayerModal(playerId); } else { if (!playerId || isNaN(playerId)) { console.warn("Invalid player ID for action", action, button); return; } console.log(`Delegated action: ${action} for player ID: ${playerId}`); switch (action) { case 'btn-rebuy': handleRebuy(event, state, currentTournamentId, mainCallbacks); break; case 'btn-eliminate': handleEliminate(event, state, currentTournamentId, mainCallbacks); break; case 'btn-restore': handleRestore(event, state, currentTournamentId, mainCallbacks); break; } } }; playerListUl?.addEventListener('click', handleActions); eliminatedPlayerListUl?.addEventListener('click', handleActions); console.log("Player action delegation listeners added."); }
     setupPlayerActionDelegation();
     // === EVENT LISTENER ATTACHMENT END ===
