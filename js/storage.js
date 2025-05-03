@@ -1,4 +1,5 @@
 // === 01: CONSTANTS SECTION START ===
+// Interne nøkler (trenger vanligvis ikke export)
 const TOURNAMENT_COLLECTION_KEY = 'winjevollTournamentCollection_v1';
 const TEMPLATE_COLLECTION_KEY = 'winjevollTemplateCollection_v1';
 const ACTIVE_TOURNAMENT_ID_KEY = 'winjevollActiveTournamentId_v1';
@@ -9,14 +10,27 @@ const ELEMENT_LAYOUTS_KEY = 'winjevollElementLayouts_v1';
 const THEME_FAVORITES_KEY = 'winjevollThemeFavorites_v1';
 const SOUND_ENABLED_KEY = 'winjevollSoundEnabled_v1';
 const SOUND_VOLUME_KEY = 'winjevollSoundVolume_v1';
+
+// Interne DB-konstanter (trenger vanligvis ikke export)
 const DB_NAME = 'winjevollDB_v1';
 const DB_VERSION = 1;
 const LOGO_STORE_NAME = 'customLogoStore';
 const LOGO_KEY = 'userLogo';
-const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
-const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
-const DEFAULT_SOUND_VOLUME = 0.7;
-const DEFAULT_ELEMENT_LAYOUTS = { canvas: { height: 65 }, title:  { x: 5,  y: 2,  width: 90, fontSize: 3.5, isVisible: true }, timer:  { x: 5,  y: 20, width: 55, fontSize: 16,  isVisible: true }, blinds: { x: 65, y: 40, width: 30, fontSize: 8,   isVisible: true }, logo:   { x: 65, y: 5,  width: 30, height: 30,  isVisible: true }, info:   { x: 65, y: 75, width: 30, fontSize: 1.2, isVisible: true, showNextBlinds: true, showAvgStack: true, showPlayers: true, showLateReg: true, showNextPause: true } };
+
+// Eksporterte standardverdier (brukes som fallbacks eller defaults i UI)
+export const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
+export const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)'; // ENDRET: Lagt til export
+export const DEFAULT_SOUND_VOLUME = 0.7;
+export const DEFAULT_ELEMENT_LAYOUTS = {
+    canvas: { height: 65 },
+    title:  { x: 5,  y: 2,  width: 90, fontSize: 3.5, isVisible: true },
+    timer:  { x: 5,  y: 20, width: 55, fontSize: 16,  isVisible: true },
+    blinds: { x: 65, y: 40, width: 30, fontSize: 8,   isVisible: true },
+    logo:   { x: 65, y: 5,  width: 30, height: 30,  isVisible: true },
+    info:   { x: 65, y: 75, width: 30, fontSize: 1.2, isVisible: true,
+              showNextBlinds: true, showAvgStack: true, showPlayers: true,
+              showLateReg: true, showNextPause: true }
+};
 // === 01: CONSTANTS SECTION END ===
 
 // === 02: UTILITY FUNCTIONS (Load/Save localStorage) START ===
