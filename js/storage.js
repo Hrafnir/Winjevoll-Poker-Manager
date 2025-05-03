@@ -1,3 +1,5 @@
+// === storage.js ===
+
 // === 01: CONSTANTS SECTION START ===
 // Interne nøkler (trenger vanligvis ikke export)
 const TOURNAMENT_COLLECTION_KEY = 'winjevollTournamentCollection_v1';
@@ -19,7 +21,7 @@ const LOGO_KEY = 'userLogo';
 
 // Eksporterte standardverdier (brukes som fallbacks eller defaults i UI)
 export const DEFAULT_THEME_BG = 'rgb(65, 65, 65)';
-export const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)'; // ENDRET: Lagt til export
+export const DEFAULT_THEME_TEXT = 'rgb(235, 235, 235)';
 export const DEFAULT_SOUND_VOLUME = 0.7;
 export const DEFAULT_ELEMENT_LAYOUTS = {
     canvas: { height: 65 },
@@ -44,48 +46,44 @@ export function loadObject(key, defaultValue = {}) {
     let returnValue = defaultValue; // Start med default
     try {
         const json = localStorage.getItem(key);
-        console.log(` -> localStorage.getItem("${key}") returned: type=${typeof json}, value=${json}`);
+        console.log(` -> localStorage.getItem("${key}") returned: type=${typeof json}, value=${json ? json.substring(0,100)+'...' : json}`); // Log preview
 
         if (json !== null && json !== undefined && json !== '') {
             console.log(` -> Attempting JSON.parse...`);
-            let parsed = null; // Definer utenfor try for å unngå scope-problemer
+            let parsed = null;
             try {
                  parsed = JSON.parse(json);
-                 console.log(` -> JSON.parse successful. Result type=${typeof parsed}, value=`, parsed);
+                 console.log(` -> JSON.parse successful. Result type=${typeof parsed}`);
             } catch (parseError) {
                  console.error(` -> JSON.parse failed for key "${key}":`, parseError);
                  console.warn(` -> Removing potentially corrupt item for key: "${key}"`);
-                 localStorage.removeItem(key); // Fjern korrupt data
+                 localStorage.removeItem(key);
                  console.log(` -> Returning default value due to parse error.`);
-                 return defaultValue; // Returner default umiddelbart ved parse-feil
+                 return defaultValue;
             }
 
-            // Sjekk om resultatet er et objekt (og ikke null)
             if (typeof parsed === 'object' && parsed !== null) {
                 console.log(` -> Parsed value is a valid object. Returning it.`);
                 returnValue = parsed;
             } else {
                 console.warn(` -> Parsed value for key "${key}" is not a valid object (type: ${typeof parsed}). Returning default value.`);
-                // Vurder å fjerne ugyldig, men parse-bar data? Kan være farlig hvis f.eks. en streng var lagret med vilje.
-                // localStorage.removeItem(key);
                 returnValue = defaultValue;
             }
         } else {
             console.log(` -> JSON string from localStorage is null, undefined, or empty. Returning default value.`);
             returnValue = defaultValue;
         }
-    } catch (e) { // Fanger opp feil i localStorage.getItem eller andre uventede feil
+    } catch (e) {
         console.error(`Unexpected error in loadObject for key "${key}":`, e);
         returnValue = defaultValue;
     }
-    // Sikre at vi *alltid* returnerer et objekt hvis defaultValue er et objekt
     if (typeof defaultValue === 'object' && defaultValue !== null) {
         if (typeof returnValue !== 'object' || returnValue === null) {
             console.warn(`loadObject for key "${key}" resulted in non-object (${typeof returnValue}). Forcing return of default object.`);
-            return defaultValue; // Returner ALLTID default hvis vi forventet et objekt men ikke fikk det
+            return defaultValue;
         }
     }
-    console.log(`loadObject for key "${key}" final return value:`, returnValue);
+    // console.log(`loadObject for key "${key}" final return value:`, returnValue); // Kan gi for mye logg
     return returnValue;
 }
 
@@ -109,7 +107,7 @@ export function deleteTournamentState(tournamentId) { if (!tournamentId) return;
 // === 03: TOURNAMENT FUNCTIONS END ===
 
 // === 04: TEMPLATE FUNCTIONS START ===
-export function loadTemplateCollection() { return loadObject(TEMPLATE_COLLECTION_KEY); } // Bruker loadObject
+export function loadTemplateCollection() { return loadObject(TEMPLATE_COLLECTION_KEY); }
 export function saveTemplate(templateId, templateData) { if (!templateId || !templateData?.config) { console.error("Invalid data to saveTemplate."); return false; } try { const collection = loadTemplateCollection(); collection[templateId] = templateData; saveObject(TEMPLATE_COLLECTION_KEY, collection); console.log(`Template ${templateId} saved.`); return true; } catch(error) { console.error(`Failed save template ${templateId}`, error); return false; } }
 export function loadTemplate(templateId) { if (!templateId) return null; const collection = loadTemplateCollection(); if(collection[templateId]?.config) { return collection[templateId]; } else { console.warn(`Template ${templateId} not found/invalid.`); return null; } }
 export function deleteTemplate(templateId) { if (!templateId) return; try { const collection = loadTemplateCollection(); if (collection[templateId]) { delete collection[templateId]; saveObject(TEMPLATE_COLLECTION_KEY, collection); console.log(`Template ${templateId} deleted.`); if (getActiveTemplateId() === templateId) { clearActiveTemplateId(); } } } catch (error) { console.error(`Failed delete template ${templateId}`, error); alert(`Kunne ikke slette mal ${templateId}.`); } }
@@ -129,27 +127,23 @@ export async function clearAllData() { try { localStorage.removeItem(TOURNAMENT_
 // === 06: CLEAR ALL DATA FUNCTION END ===
 
 // === 06c: THEME COLOR FUNCTIONS START ===
-export function saveThemeBgColor(rgbString) { saveItem(THEME_BG_COLOR_KEY, rgbString); } // ENDRET: Lagt til export
+export function saveThemeBgColor(rgbString) { saveItem(THEME_BG_COLOR_KEY, rgbString); }
 export function loadThemeBgColor() { return loadItem(THEME_BG_COLOR_KEY) || DEFAULT_THEME_BG; }
-export function saveThemeTextColor(rgbString) { saveItem(THEME_TEXT_COLOR_KEY, rgbString); } // ENDRET: Lagt til export
+export function saveThemeTextColor(rgbString) { saveItem(THEME_TEXT_COLOR_KEY, rgbString); }
 export function loadThemeTextColor() { return loadItem(THEME_TEXT_COLOR_KEY) || DEFAULT_THEME_TEXT; }
-export function parseRgbString(rgbString) { /* ... (som før) ... */ }
-export function rgbToHsl(r, g, b) { /* ... (som før) ... */ }
-export function hslToRgb(h, s, l) { /* ... (som før) ... */ }
+export function parseRgbString(rgbString) { if (!rgbString || !rgbString.startsWith('rgb')) return [128, 128, 128]; const values = rgbString.substring(rgbString.indexOf('(') + 1, rgbString.indexOf(')')).split(',').map(v => parseInt(v.trim())); return values.length === 3 ? values : [128, 128, 128]; }
+export function rgbToHsl(r, g, b) { r /= 255; g /= 255; b /= 255; const max = Math.max(r, g, b), min = Math.min(r, g, b); let h=0, s, l = (max + min) / 2; if (max === min) { h = s = 0; } else { const d = max - min; s = l > 0.5 ? d / (2 - max - min) : d / (max + min); switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; default: h=0; } h /= 6; } return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) }; }
+export function hslToRgb(h, s, l) { s /= 100; l /= 100; let c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c/2, r = 0, g = 0, b = 0; if (0 <= h && h < 60) { r = c; g = x; b = 0; } else if (60 <= h && h < 120) { r = x; g = c; b = 0; } else if (120 <= h && h < 180) { r = 0; g = c; b = x; } else if (180 <= h && h < 240) { r = 0; g = x; b = c; } else if (240 <= h && h < 300) { r = x; g = 0; b = c; } else if (300 <= h && h < 360) { r = c; g = 0; b = x; } r = Math.round((r + m) * 255); g = Math.round((g + m) * 255); b = Math.round((b + m) * 255); return `rgb(${r}, ${g}, ${b})`; }
 // === 06c: THEME COLOR FUNCTIONS END ===
 
 // === 06d: ELEMENT LAYOUT FUNCTIONS START ===
-export function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); } // ENDRET: Lagt til export
+// --- SIKRET AT DENNE KUN ER DEFINERT ÉN GANG ---
+export function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); }
 export function loadElementLayouts() { return loadObject(ELEMENT_LAYOUTS_KEY, DEFAULT_ELEMENT_LAYOUTS); }
 // === 06d: ELEMENT LAYOUT FUNCTIONS END ===
 
-// === 06d: ELEMENT LAYOUT FUNCTIONS START ===
-export function saveElementLayouts(layoutSettings) { saveObject(ELEMENT_LAYOUTS_KEY, layoutSettings); }
-export function loadElementLayouts() { return loadObject(ELEMENT_LAYOUTS_KEY, DEFAULT_ELEMENT_LAYOUTS); } // Bruker loadObject, sender med default
-// === 06d: ELEMENT LAYOUT FUNCTIONS END ===
-
 // === 06e: THEME FAVORITES FUNCTIONS START ===
-export function loadThemeFavorites() { return loadObject(THEME_FAVORITES_KEY, []); } // Bruker loadObject
+export function loadThemeFavorites() { return loadObject(THEME_FAVORITES_KEY, []); }
 export function saveThemeFavorites(favoritesArray) { saveObject(THEME_FAVORITES_KEY, favoritesArray); }
 export function addThemeFavorite(name, bgRgb, textRgb) { const favorites = loadThemeFavorites(); const newFav = { id: generateUniqueId('fav'), name: name || `Favoritt ${favorites.length + 1}`, bg: bgRgb, text: textRgb }; favorites.push(newFav); saveThemeFavorites(favorites); return newFav; }
 export function deleteThemeFavorite(favoriteId) { let favorites = loadThemeFavorites(); favorites = favorites.filter(fav => fav.id !== favoriteId); saveThemeFavorites(favorites); }
@@ -166,7 +160,7 @@ export function loadSoundVolume() { const storedValue = loadItem(SOUND_VOLUME_KE
 // === 06g: SOUND VOLUME FUNCTIONS END ===
 
 // === 07: UNIQUE ID GENERATOR SECTION START ===
-export function generateUniqueId(prefix = 'id') { const timestamp = Date.now(); const randomPart = Math.random().toString().substring(2, 15); const newId = `${prefix}-${timestamp}-${randomPart}`; console.log("Generated ID:", newId); return newId; }
+export function generateUniqueId(prefix = 'id') { const timestamp = Date.now(); const randomPart = Math.random().toString(36).substring(2, 15); const newId = `${prefix}-${timestamp}-${randomPart}`; console.log("Generated ID:", newId); return newId; }
 // === 07: UNIQUE ID GENERATOR SECTION END ===
 
 // === FINAL SCRIPT PARSE CHECK START ===
