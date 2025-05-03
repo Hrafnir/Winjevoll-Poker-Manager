@@ -3,79 +3,41 @@
 
 // --- STORAGE & CORE ---
 import {
-    getActiveTournamentId,
-    loadTournamentState,
-    saveTournamentState,
-    clearActiveTournamentId,
-    loadSoundPreference,
-    saveSoundPreference,
-    loadThemeBgColor,
-    loadThemeTextColor,
-    loadElementLayouts,
-    loadLogoBlob,
-    DEFAULT_THEME_TEXT,
-    parseRgbString,
-    loadSoundVolume,
-    saveSoundVolume,
-    saveLogoBlob,
-    clearLogoBlob,
-    DEFAULT_ELEMENT_LAYOUTS,
-    DEFAULT_THEME_BG,
-    rgbToHsl,
-    hslToRgb,
-    // Importer lagringsfunksjoner (skal nå være eksportert fra storage.js)
-    saveThemeBgColor,
-    saveThemeTextColor,
-    saveElementLayouts
+    getActiveTournamentId, loadTournamentState, saveTournamentState, clearActiveTournamentId,
+    loadSoundPreference, saveSoundPreference, loadThemeBgColor, loadThemeTextColor, loadElementLayouts,
+    loadLogoBlob, DEFAULT_THEME_TEXT, parseRgbString, loadSoundVolume, saveSoundVolume,
+    saveLogoBlob, clearLogoBlob, DEFAULT_ELEMENT_LAYOUTS, DEFAULT_THEME_BG,
+    rgbToHsl, hslToRgb, saveThemeBgColor, saveThemeTextColor, saveElementLayouts
 } from './storage.js';
 
 // --- UI & FORMATTING ---
 import {
-    applyThemeAndLayout,
-    updateMainLogoImage,
-    updateSoundToggleVisuals,
-    updateUI,
-    formatBlindsHTML,
-    formatTime,
-    formatNextBlindsText,
-    revokeObjectUrl
+    applyThemeAndLayout, updateMainLogoImage, updateSoundToggleVisuals, updateUI,
+    formatBlindsHTML, formatTime, formatNextBlindsText, revokeObjectUrl
 } from './tournament-ui.js';
 
 // --- LOGIC ---
 import {
-    logActivity,
-    calculateAverageStack,
-    calculatePrizes,
-    findNextPauseInfo,
-    getPlayerNameById
+    logActivity, calculateAverageStack, calculatePrizes, findNextPauseInfo, getPlayerNameById
 } from './tournament-logic.js';
 
 // --- TIMER ---
 import {
-    startMainTimer,
-    stopMainTimer,
-    startRealTimeClock,
-    stopRealTimeClock
+    startMainTimer, stopMainTimer, startRealTimeClock, stopRealTimeClock
 } from './tournament-timer.js';
 
 // --- PLAYER ACTIONS ---
 import {
-    handleRebuy,
-    handleEliminate,
-    handleRestore,
-    handleLateRegClick
+    handleRebuy, handleEliminate, handleRestore, handleLateRegClick
 } from './tournament-player-actions.js';
 
 // --- TABLES ---
 import {
-    assignTableSeat,
-    reassignAllSeats,
-    checkAndHandleTableBreak,
-    balanceTables
+    assignTableSeat, reassignAllSeats, checkAndHandleTableBreak, balanceTables
 } from './tournament-tables.js';
 
 // TODO: Importer modaler (når de er laget), sound
-// import { openTournamentModal, openAddonModal } from './tournament-modals.js';
+// import { openAddonModal } from './tournament-modals.js';
 // import { playSound } from './tournament-sound.js';
 
 
@@ -87,36 +49,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentTournamentId = getActiveTournamentId();
     let state = null;
     let soundsEnabled = loadSoundPreference();
-    let currentLogoBlob = null; // Hovedsidens logo blob
+    let currentLogoBlob = null;
     let isModalOpen = false;
     let currentOpenModal = null;
-
-    // Drag & Drop State
-    let isDragging = false;
-    let draggedElement = null;
-    let dragOffsetX = 0;
-    let dragOffsetY = 0;
-    let dragElementId = null; // ID for layout-oppdatering
-
-    // UI Modal spesifikk state
-    let modalBgColor = loadThemeBgColor();
-    let modalTextColor = loadThemeTextColor();
-    let modalLayouts = loadElementLayouts();
-    let modalSoundVolume = loadSoundVolume();
-    let modalLogoBlob = null; // Blob for preview/nytt bilde i modal
-    let modalPreviewLogoUrl = null; // Object URL for modal preview
-    let originalSettings = {}; // For å kunne avbryte/resette
-    let livePreviewEnabled = true; // Kontroller om endringer i modal skal vises live
-    let isUpdatingColorControls = false; // For å hindre HSL/RGB loops
-    let logoClearedInModal = false; // NY: Flagg for å spore sletting
-
-    // Fargeforvalg
-    const colorPresets = [
-        { name: "Mørk (Standard)", bg: "rgb(65, 65, 65)", text: "rgb(235, 235, 235)" },
-        { name: "Lys", bg: "rgb(248, 249, 250)", text: "rgb(33, 37, 41)" },
-        { name: "Blå", bg: "rgb(13, 40, 89)", text: "rgb(210, 218, 226)" },
-        { name: "Grå/Grønn", bg: "rgb(73, 80, 87)", text: "rgb(160, 210, 170)" }
-    ];
+    let isDragging = false; let draggedElement = null; let dragOffsetX = 0; let dragOffsetY = 0; let dragElementId = null;
+    let modalBgColor = loadThemeBgColor(); let modalTextColor = loadThemeTextColor(); let modalLayouts = loadElementLayouts(); let modalSoundVolume = loadSoundVolume(); let modalLogoBlob = null; let modalPreviewLogoUrl = null; let originalSettings = {}; let livePreviewEnabled = true; let isUpdatingColorControls = false; let logoClearedInModal = false;
+    const colorPresets = [ { name: "Mørk (Standard)", bg: "rgb(65, 65, 65)", text: "rgb(235, 235, 235)" }, { name: "Lys", bg: "rgb(248, 249, 250)", text: "rgb(33, 37, 41)" }, { name: "Blå", bg: "rgb(13, 40, 89)", text: "rgb(210, 218, 226)" }, { name: "Grå/Grønn", bg: "rgb(73, 80, 87)", text: "rgb(160, 210, 170)" } ];
+    let modalBlindLevelCounter = 0; // Teller for blinds i modal
+    const standardPayouts = { 1: [100], 2: [65, 35], 3: [50, 30, 20], 4: [45, 27, 18, 10], 5: [40, 25, 16, 11, 8], 6: [38, 24, 15, 10, 8, 5], 7: [36, 23, 14, 10, 8, 5, 4], 8: [35, 22, 13, 9, 7, 6, 4, 4], 9: [34, 21, 13, 9, 7, 6, 4, 3, 3], 10: [33, 20, 12, 9, 7, 6, 5, 3, 3, 2] };
     // === 02: STATE VARIABLES END ===
 
 
@@ -128,7 +68,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnEditUiSettings = document.getElementById('btn-edit-ui-settings');
     const btnBackToMainLive = document.getElementById('btn-back-to-main-live');
     const prizeDisplayLive = document.getElementById('prize-display-live');
-    // const totalPotPrizeSpan = document.getElementById('total-pot'); // Hentes i displayPrizes
     const startPauseButton = document.getElementById('btn-start-pause');
     const prevLevelButton = document.getElementById('btn-prev-level');
     const nextLevelButton = document.getElementById('btn-next-level');
@@ -145,8 +84,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const activityLogUl = document.getElementById('activity-log-list');
     const headerRightControls = document.querySelector('.header-right-controls');
     const btnManageAddons = document.getElementById('btn-manage-addons');
-
-    // Canvas elementer
     const liveCanvas = document.getElementById('live-canvas');
     const titleElement = document.getElementById('title-element');
     const timerElement = document.getElementById('timer-element');
@@ -154,8 +91,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoElement = document.getElementById('logo-element');
     const infoElement = document.getElementById('info-element');
     const draggableElements = [titleElement, timerElement, blindsElement, logoElement, infoElement];
-
-    // Display elementer
     const nameDisplay = document.getElementById('tournament-name-display');
     const timerDisplay = document.getElementById('timer-display');
     const breakInfo = document.getElementById('break-info');
@@ -168,14 +103,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const playersRemainingDisplay = document.getElementById('players-remaining');
     const totalEntriesDisplay = document.getElementById('total-entries');
     const lateRegStatusDisplay = document.getElementById('late-reg-status');
-
-    // Modaler
     const tournamentSettingsModal = document.getElementById('tournament-settings-modal');
     const uiSettingsModal = document.getElementById('ui-settings-modal');
     const addonModal = document.getElementById('addon-modal');
     const editPlayerModal = document.getElementById('edit-player-modal');
-
-    // Edit Player Modal elementer
     const editPlayerModalContent = editPlayerModal?.querySelector('.modal-content');
     const editPlayerIdInput = document.getElementById('edit-player-id-input');
     const editPlayerNameDisplay = document.getElementById('edit-player-name-display');
@@ -185,8 +116,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnSavePlayerChanges = document.getElementById('btn-save-player-changes');
     const btnCancelPlayerEdit = document.getElementById('btn-cancel-player-edit');
     const closeEditPlayerModalButton = document.getElementById('close-edit-player-modal-button');
-
-    // --- UI Settings Modal Elements ---
     const uiSettingsModalContent = uiSettingsModal?.querySelector('.modal-content');
     const closeUiSettingsModalButton = document.getElementById('close-ui-settings-modal-button');
     const btnSaveUiSettings = document.getElementById('btn-save-ui-settings');
@@ -195,51 +124,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     const themePresetSelect = document.getElementById('theme-preset-select');
     const bgColorDisplay = document.getElementById('bg-color-preview');
     const textColorDisplay = document.getElementById('text-color-preview');
-    const bgColorRedSlider = document.getElementById('bg-color-red');
-    const bgColorRedValue = document.getElementById('bg-color-red-value');
-    const bgColorGreenSlider = document.getElementById('bg-color-green');
-    const bgColorGreenValue = document.getElementById('bg-color-green-value');
-    const bgColorBlueSlider = document.getElementById('bg-color-blue');
-    const bgColorBlueValue = document.getElementById('bg-color-blue-value');
-    const bgColorHueSlider = document.getElementById('bg-color-hue');
-    const bgColorHueValue = document.getElementById('bg-color-hue-value');
-    const bgColorSaturationSlider = document.getElementById('bg-color-saturation');
-    const bgColorSaturationValue = document.getElementById('bg-color-saturation-value');
-    const bgColorLightnessSlider = document.getElementById('bg-color-lightness');
-    const bgColorLightnessValue = document.getElementById('bg-color-lightness-value');
-    const textColorRedSlider = document.getElementById('text-color-red');
-    const textColorRedValue = document.getElementById('text-color-red-value');
-    const textColorGreenSlider = document.getElementById('text-color-green');
-    const textColorGreenValue = document.getElementById('text-color-green-value');
-    const textColorBlueSlider = document.getElementById('text-color-blue');
-    const textColorBlueValue = document.getElementById('text-color-blue-value');
-    const textColorHueSlider = document.getElementById('text-color-hue');
-    const textColorHueValue = document.getElementById('text-color-hue-value');
-    const textColorSaturationSlider = document.getElementById('text-color-saturation');
-    const textColorSaturationValue = document.getElementById('text-color-saturation-value');
-    const textColorLightnessSlider = document.getElementById('text-color-lightness');
-    const textColorLightnessValue = document.getElementById('text-color-lightness-value');
-    const layoutControlContainer = document.getElementById('element-layout-grid');
-    const canvasHeightSlider = document.getElementById('canvas-height-slider');
-    const canvasHeightValue = document.getElementById('canvas-height-value');
-    const layoutControls = {};
-    draggableElements.forEach(el => {
-        if (!el) return; const id = el.id.replace('-element', '');
-        layoutControls[id] = {
-            container: document.getElementById(`${id}-layout-controls`), visible: document.getElementById(`${id}-visible-toggle`),
-            x: document.getElementById(`${id}-x-slider`), xValue: document.getElementById(`${id}-x-value`),
-            y: document.getElementById(`${id}-y-slider`), yValue: document.getElementById(`${id}-y-value`),
-            width: document.getElementById(`${id}-width-slider`), widthValue: document.getElementById(`${id}-width-value`),
-            height: document.getElementById(`${id}-height-slider`), heightValue: document.getElementById(`${id}-height-value`),
-            fontSize: document.getElementById(`${id}-fontsize-slider`), fontSizeValue: document.getElementById(`${id}-fontsize-value`),
-        };
-        if (id === 'info') { layoutControls.info.showNextBlinds = document.getElementById('info-toggle-nextblinds'); layoutControls.info.showAvgStack = document.getElementById('info-toggle-avgstack'); layoutControls.info.showPlayers = document.getElementById('info-toggle-players'); layoutControls.info.showLateReg = document.getElementById('info-toggle-latereg'); layoutControls.info.showNextPause = document.getElementById('info-toggle-nextpause'); }
-    });
-    const logoUploadInput = document.getElementById('logo-upload');
-    const currentLogoPreview = document.getElementById('current-logo-preview');
-    const btnClearLogo = document.getElementById('btn-clear-logo');
-    const soundVolumeSlider = document.getElementById('sound-volume-slider');
-    const soundVolumeValue = document.getElementById('sound-volume-value');
+    const bgColorRedSlider = document.getElementById('bg-color-red'); const bgColorRedValue = document.getElementById('bg-color-red-value'); const bgColorGreenSlider = document.getElementById('bg-color-green'); const bgColorGreenValue = document.getElementById('bg-color-green-value'); const bgColorBlueSlider = document.getElementById('bg-color-blue'); const bgColorBlueValue = document.getElementById('bg-color-blue-value'); const bgColorHueSlider = document.getElementById('bg-color-hue'); const bgColorHueValue = document.getElementById('bg-color-hue-value'); const bgColorSaturationSlider = document.getElementById('bg-color-saturation'); const bgColorSaturationValue = document.getElementById('bg-color-saturation-value'); const bgColorLightnessSlider = document.getElementById('bg-color-lightness'); const bgColorLightnessValue = document.getElementById('bg-color-lightness-value'); const textColorRedSlider = document.getElementById('text-color-red'); const textColorRedValue = document.getElementById('text-color-red-value'); const textColorGreenSlider = document.getElementById('text-color-green'); const textColorGreenValue = document.getElementById('text-color-green-value'); const textColorBlueSlider = document.getElementById('text-color-blue'); const textColorBlueValue = document.getElementById('text-color-blue-value'); const textColorHueSlider = document.getElementById('text-color-hue'); const textColorHueValue = document.getElementById('text-color-hue-value'); const textColorSaturationSlider = document.getElementById('text-color-saturation'); const textColorSaturationValue = document.getElementById('text-color-saturation-value'); const textColorLightnessSlider = document.getElementById('text-color-lightness'); const textColorLightnessValue = document.getElementById('text-color-lightness-value'); const layoutControlContainer = document.getElementById('element-layout-grid'); const canvasHeightSlider = document.getElementById('canvas-height-slider'); const canvasHeightValue = document.getElementById('canvas-height-value'); const layoutControls = {}; draggableElements.forEach(el => { if (!el) return; const id = el.id.replace('-element', ''); layoutControls[id] = { container: document.getElementById(`${id}-layout-controls`), visible: document.getElementById(`${id}-visible-toggle`), x: document.getElementById(`${id}-x-slider`), xValue: document.getElementById(`${id}-x-value`), y: document.getElementById(`${id}-y-slider`), yValue: document.getElementById(`${id}-y-value`), width: document.getElementById(`${id}-width-slider`), widthValue: document.getElementById(`${id}-width-value`), height: document.getElementById(`${id}-height-slider`), heightValue: document.getElementById(`${id}-height-value`), fontSize: document.getElementById(`${id}-fontsize-slider`), fontSizeValue: document.getElementById(`${id}-fontsize-value`), }; if (id === 'info') { layoutControls.info.showNextBlinds = document.getElementById('info-toggle-nextblinds'); layoutControls.info.showAvgStack = document.getElementById('info-toggle-avgstack'); layoutControls.info.showPlayers = document.getElementById('info-toggle-players'); layoutControls.info.showLateReg = document.getElementById('info-toggle-latereg'); layoutControls.info.showNextPause = document.getElementById('info-toggle-nextpause'); } }); const logoUploadInput = document.getElementById('logo-upload'); const currentLogoPreview = document.getElementById('current-logo-preview'); const btnClearLogo = document.getElementById('btn-clear-logo'); const soundVolumeSlider = document.getElementById('sound-volume-slider'); const soundVolumeValue = document.getElementById('sound-volume-value');
+    // --- Tournament Settings Modal Elements ---
+    const closeTournamentSettingsModalButton = document.getElementById('close-tournament-settings-modal-button');
+    const editLockMessage = document.getElementById('edit-lock-message');
+    const editTournamentNameInput = document.getElementById('edit-tournament-name');
+    const editTournamentTypeSelect = document.getElementById('edit-tournament-type');
+    const editBuyInInput = document.getElementById('edit-buy-in');
+    const editStartStackInput = document.getElementById('edit-start-stack');
+    const editPlayersPerTableInput = document.getElementById('edit-players-per-table');
+    const editLateRegLevelInput = document.getElementById('edit-late-reg-level');
+    const editKnockoutSection = document.getElementById('edit-knockout-section');
+    const editBountyAmountInput = document.getElementById('edit-bounty-amount');
+    const editRebuySection = document.getElementById('edit-rebuy-section');
+    const editRebuyCostInput = document.getElementById('edit-rebuy-cost');
+    const editRebuyChipsInput = document.getElementById('edit-rebuy-chips');
+    const editRebuyLevelsInput = document.getElementById('edit-rebuy-levels');
+    const editAddonCostInput = document.getElementById('edit-addon-cost');
+    const editAddonChipsInput = document.getElementById('edit-addon-chips');
+    const editBasicValidationError = document.getElementById('edit-basic-validation-error');
+    const editPaidPlacesInput = document.getElementById('edit-paid-places');
+    const editPrizeDistributionTextarea = document.getElementById('edit-prize-distribution');
+    const btnGeneratePayoutModal = document.getElementById('btn-generate-payout-modal');
+    const editPrizeValidationError = document.getElementById('edit-prize-validation-error');
+    const editBlindStructureBody = document.getElementById('edit-blind-structure-body');
+    const editBlindsValidationError = document.getElementById('edit-blinds-validation-error');
+    const btnAddLevelModal = document.getElementById('btn-add-level-modal');
+    const btnClearBlindsModal = document.getElementById('btn-clear-blinds-modal');
+    const btnSaveTournamentSettings = document.getElementById('btn-save-tournament-settings');
+    const btnCancelTournamentSettings = document.getElementById('btn-cancel-tournament-settings');
     // === 03: DOM REFERENCES END ===
 
 
@@ -268,7 +181,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     function handleEndTournament() { console.log("handleEndTournament called."); finishTournament(); }
     function handleForceSave() { if(state) { console.log("handleForceSave"); saveTournamentState(currentTournamentId, state); alert('Turnering lagret!');} else {console.warn("handleForceSave: State not available.")} }
     function handleBackToMain() { console.log("handleBackToMain"); if (state && state.live.status !== 'finished') { saveTournamentState(currentTournamentId, state); } window.location.href = 'index.html'; }
-    function openTournamentModal() { console.log("TEMP openTournamentModal"); alert("Funksjon for redigering av turneringsregler er ikke implementert ennå."); }
     function openAddonModal() { console.log("TEMP openAddonModal"); alert("Funksjon for add-ons er ikke implementert ennå."); }
     // === MIDLERTIDIGE / TODO FUNKSJONER SLUTT ===
 
@@ -304,6 +216,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // === UI SETTINGS MODAL LOGIC END ===
 
 
+    // === TOURNAMENT SETTINGS MODAL LOGIC START ===
+    function addModalBlindLevelRow(levelData = {}) { if (!editBlindStructureBody) return; modalBlindLevelCounter++; const row = editBlindStructureBody.insertRow(); row.dataset.levelNumber = modalBlindLevelCounter; const isPastLevel = state && levelData.level <= (state.live.currentLevelIndex + 1); const sb = levelData.sb ?? ''; const bb = levelData.bb ?? ''; const ante = levelData.ante ?? 0; const duration = levelData.duration ?? 20; const pauseMinutes = levelData.pauseMinutes ?? 0; row.innerHTML = `<td><span class="level-number">${modalBlindLevelCounter}</span> ${isPastLevel ? '<small>(Spilt)</small>':''}</td><td><input type="number" class="sb-input" value="${sb}" min="0" step="1" required ${isPastLevel ? 'disabled' : ''}></td><td><input type="number" class="bb-input" value="${bb}" min="0" step="1" required ${isPastLevel ? 'disabled' : ''}></td><td><input type="number" class="ante-input" value="${ante}" min="0" step="1" placeholder="0" ${isPastLevel ? 'disabled' : ''}></td><td><input type="number" class="duration-input" value="${duration}" min="1" required ${isPastLevel ? 'disabled' : ''}></td><td><input type="number" class="pause-duration-input" value="${pauseMinutes}" min="0" placeholder="0" ${isPastLevel ? 'disabled' : ''}></td><td><button type="button" class="btn-remove-level small-button danger-button" title="Fjern nivå ${modalBlindLevelCounter}" ${isPastLevel ? 'disabled' : ''}>X</button></td>`; const removeBtn = row.querySelector('.btn-remove-level'); if (removeBtn && !isPastLevel) { removeBtn.onclick = () => { if (confirm(`Sikker på at du vil fjerne Nivå ${row.dataset.levelNumber}?`)) { row.remove(); updateModalLevelNumbers(); } }; } }
+    function updateModalLevelNumbers() { if (!editBlindStructureBody) return; const rows = editBlindStructureBody.querySelectorAll('tr'); rows.forEach((row, index) => { const levelNum = index + 1; row.dataset.levelNumber = levelNum; const levelNumSpan = row.querySelector('.level-number'); if (levelNumSpan) levelNumSpan.textContent = levelNum; const removeBtn = row.querySelector('.btn-remove-level'); if (removeBtn) removeBtn.title = `Fjern nivå ${levelNum}`; }); modalBlindLevelCounter = rows.length; }
+    function setCoreSettingsLocked(locked) { const coreInputs = [editTournamentTypeSelect, editBuyInInput, editStartStackInput, editBountyAmountInput, editRebuyCostInput, editRebuyChipsInput, editRebuyLevelsInput, editAddonCostInput, editAddonChipsInput]; coreInputs.forEach(input => { if(input) input.disabled = locked; }); if(editLockMessage) editLockMessage.classList.toggle('hidden', !locked); }
+    function toggleKoRebuySectionsModal() { if (!editTournamentTypeSelect) return; const selectedType = editTournamentTypeSelect.value; if(editKnockoutSection) editKnockoutSection.classList.toggle('hidden', selectedType !== 'knockout'); if(editRebuySection) editRebuySection.classList.toggle('hidden', selectedType !== 'rebuy'); }
+    function populateTournamentSettingsModal() { if (!state || !state.config) return; console.log("Populating Tournament Settings Modal..."); const isLocked = state.live.status !== 'paused' || state.live.currentLevelIndex > 0; setCoreSettingsLocked(isLocked); if(editTournamentNameInput) editTournamentNameInput.value = state.config.name || ''; if(editTournamentTypeSelect) editTournamentTypeSelect.value = state.config.type || 'freezeout'; if(editBuyInInput) editBuyInInput.value = state.config.buyIn || 0; if(editStartStackInput) editStartStackInput.value = state.config.startStack || 10000; if(editPlayersPerTableInput) editPlayersPerTableInput.value = state.config.playersPerTable || 9; if(editLateRegLevelInput) editLateRegLevelInput.value = state.config.lateRegLevel || 0; if(editBasicValidationError) editBasicValidationError.classList.add('hidden'); if(editBountyAmountInput) editBountyAmountInput.value = state.config.bountyAmount || 0; if(editRebuyCostInput) editRebuyCostInput.value = state.config.rebuyCost || 0; if(editRebuyChipsInput) editRebuyChipsInput.value = state.config.rebuyChips || 0; if(editRebuyLevelsInput) editRebuyLevelsInput.value = state.config.rebuyLevels || 0; if(editAddonCostInput) editAddonCostInput.value = state.config.addonCost || 0; if(editAddonChipsInput) editAddonChipsInput.value = state.config.addonChips || 0; toggleKoRebuySectionsModal(); if (editPaidPlacesInput) editPaidPlacesInput.value = state.config.paidPlaces || 1; if (editPrizeDistributionTextarea) editPrizeDistributionTextarea.value = (state.config.prizeDistribution || []).join(', '); if (editPrizeValidationError) editPrizeValidationError.classList.add('hidden'); if (editBlindStructureBody) { editBlindStructureBody.innerHTML = ''; modalBlindLevelCounter = 0; state.config.blindLevels.forEach(level => { addModalBlindLevelRow(level); }); updateModalLevelNumbers(); } if(editBlindsValidationError) editBlindsValidationError.classList.add('hidden'); console.log("Tournament Settings Modal populated."); }
+    function openTournamentModal() { if (!tournamentSettingsModal) { console.error("Tournament Settings Modal element not found!"); return; } console.log("Opening Tournament Settings Modal..."); populateTournamentSettingsModal(); editTournamentTypeSelect?.addEventListener('change', toggleKoRebuySectionsModal); btnAddLevelModal?.addEventListener('click', () => addModalBlindLevelRow()); btnClearBlindsModal?.addEventListener('click', () => { if (confirm("Fjerne ALLE fremtidige blindnivåer fra denne listen?")) { if (editBlindStructureBody) { const rows = editBlindStructureBody.querySelectorAll('tr'); for (let i = rows.length - 1; i >= 0; i--) { const removeBtn = rows[i].querySelector('.btn-remove-level:not(:disabled)'); if (removeBtn) { rows[i].remove(); } } updateModalLevelNumbers(); } } }); btnGeneratePayoutModal?.addEventListener('click', () => { if (editPaidPlacesInput && editPrizeDistributionTextarea) { const places = parseInt(editPaidPlacesInput.value) || 0; if (places > 0 && standardPayouts[places]) { editPrizeDistributionTextarea.value = standardPayouts[places].join(', '); } else { editPrizeDistributionTextarea.value = ''; } } }); tournamentSettingsModal.classList.remove('hidden'); currentOpenModal = tournamentSettingsModal; isModalOpen = true; }
+    function closeTournamentModal() { if (!tournamentSettingsModal) return; tournamentSettingsModal.classList.add('hidden'); editTournamentTypeSelect?.removeEventListener('change', toggleKoRebuySectionsModal); currentOpenModal = null; isModalOpen = false; console.log("Tournament Settings Modal closed."); }
+    function handleSaveTournamentSettings() { if (!state || !state.config) return; console.log("Attempting to save tournament settings..."); const isLocked = state.live.status !== 'paused' || state.live.currentLevelIndex > 0; console.log("Core settings locked:", isLocked); let isValid = true; editBasicValidationError.classList.add('hidden'); editPrizeValidationError.classList.add('hidden'); editBlindsValidationError.classList.add('hidden'); const newConfig = {}; let basicErrors = []; newConfig.name = editTournamentNameInput.value.trim(); if (!newConfig.name) { isValid = false; basicErrors.push("Turneringsnavn mangler."); editTournamentNameInput.classList.add('invalid'); } else { editTournamentNameInput.classList.remove('invalid'); } if (!isLocked) { newConfig.type = editTournamentTypeSelect.value; newConfig.buyIn = parseInt(editBuyInInput.value); newConfig.startStack = parseInt(editStartStackInput.value); newConfig.bountyAmount = (newConfig.type === 'knockout') ? parseInt(editBountyAmountInput.value) || 0 : 0; newConfig.rebuyCost = (newConfig.type === 'rebuy') ? parseInt(editRebuyCostInput.value) || 0 : 0; newConfig.rebuyChips = (newConfig.type === 'rebuy') ? parseInt(editRebuyChipsInput.value) || 0 : 0; newConfig.rebuyLevels = (newConfig.type === 'rebuy') ? parseInt(editRebuyLevelsInput.value) || 0 : 0; newConfig.addonCost = (newConfig.type === 'rebuy') ? parseInt(editAddonCostInput.value) || 0 : 0; newConfig.addonChips = (newConfig.type === 'rebuy') ? parseInt(editAddonChipsInput.value) || 0 : 0; if (isNaN(newConfig.buyIn) || newConfig.buyIn < 0) { isValid = false; basicErrors.push("Ugyldig Buy-in."); editBuyInInput.classList.add('invalid'); } else { editBuyInInput.classList.remove('invalid'); } if (isNaN(newConfig.startStack) || newConfig.startStack <= 0) { isValid = false; basicErrors.push("Ugyldig Start Stack."); editStartStackInput.classList.add('invalid'); } else { editStartStackInput.classList.remove('invalid'); } if (newConfig.type === 'knockout') { if (isNaN(newConfig.bountyAmount) || newConfig.bountyAmount < 0) { isValid = false; basicErrors.push("Ugyldig Bounty."); editBountyAmountInput.classList.add('invalid');} else if (newConfig.bountyAmount > newConfig.buyIn) { isValid = false; basicErrors.push("Bounty > Buy-in."); editBountyAmountInput.classList.add('invalid');} else { editBountyAmountInput.classList.remove('invalid'); } } if (newConfig.type === 'rebuy') { if (isNaN(newConfig.rebuyCost) || newConfig.rebuyCost < 0) { isValid = false; basicErrors.push("Ugyldig Re-buy kostnad."); editRebuyCostInput.classList.add('invalid'); } else {editRebuyCostInput.classList.remove('invalid');} if (isNaN(newConfig.rebuyChips) || newConfig.rebuyChips <= 0) { isValid = false; basicErrors.push("Ugyldig Re-buy sjetonger."); editRebuyChipsInput.classList.add('invalid'); } else {editRebuyChipsInput.classList.remove('invalid');} if (isNaN(newConfig.rebuyLevels) || newConfig.rebuyLevels < 0) { isValid = false; basicErrors.push("Ugyldig Re-buy nivå."); editRebuyLevelsInput.classList.add('invalid'); } else {editRebuyLevelsInput.classList.remove('invalid');} if (isNaN(newConfig.addonCost) || newConfig.addonCost < 0) { isValid = false; basicErrors.push("Ugyldig Add-on kostnad."); editAddonCostInput.classList.add('invalid'); } else {editAddonCostInput.classList.remove('invalid');} if (isNaN(newConfig.addonChips) || newConfig.addonChips <= 0) { isValid = false; basicErrors.push("Ugyldig Add-on sjetonger."); editAddonChipsInput.classList.add('invalid'); } else {editAddonChipsInput.classList.remove('invalid');} } } else { newConfig.type = state.config.type; newConfig.buyIn = state.config.buyIn; newConfig.startStack = state.config.startStack; newConfig.bountyAmount = state.config.bountyAmount; newConfig.rebuyCost = state.config.rebuyCost; newConfig.rebuyChips = state.config.rebuyChips; newConfig.rebuyLevels = state.config.rebuyLevels; newConfig.addonCost = state.config.addonCost; newConfig.addonChips = state.config.addonChips; } newConfig.playersPerTable = parseInt(editPlayersPerTableInput.value); newConfig.lateRegLevel = parseInt(editLateRegLevelInput.value); if (isNaN(newConfig.playersPerTable) || newConfig.playersPerTable < 2) { isValid = false; basicErrors.push("Ugyldig spillere/bord."); editPlayersPerTableInput.classList.add('invalid'); } else { editPlayersPerTableInput.classList.remove('invalid');} if (isNaN(newConfig.lateRegLevel) || newConfig.lateRegLevel < 0) { isValid = false; basicErrors.push("Ugyldig Late Reg nivå."); editLateRegLevelInput.classList.add('invalid'); } else { editLateRegLevelInput.classList.remove('invalid');} if (basicErrors.length > 0) { editBasicValidationError.textContent = basicErrors.join(' '); editBasicValidationError.classList.remove('hidden'); isValid = false; } let prizeErrors = []; newConfig.paidPlaces = parseInt(editPaidPlacesInput.value); const newPrizeDistText = editPrizeDistributionTextarea.value.trim(); newConfig.prizeDistribution = []; if (isNaN(newConfig.paidPlaces) || newConfig.paidPlaces < 1) { isValid = false; prizeErrors.push("Ugyldig antall betalte plasser."); } else { newConfig.prizeDistribution = newPrizeDistText.split(',').map(p => parseFloat(p.trim())).filter(p => !isNaN(p)); if (newPrizeDistText === '' && newConfig.paidPlaces > 0) { isValid = false; prizeErrors.push("Premiefordeling mangler."); } else if (newConfig.prizeDistribution.length !== newConfig.paidPlaces) { isValid = false; prizeErrors.push(`Antall premier (${newConfig.prizeDistribution.length}) != Betalte plasser (${newConfig.paidPlaces}).`); } else if (newConfig.prizeDistribution.some(p => p < 0)) { isValid = false; prizeErrors.push("Premier kan ikke være negative."); } else { const sum = newConfig.prizeDistribution.reduce((a, b) => a + b, 0); if (Math.abs(sum - 100) > 0.1) { isValid = false; prizeErrors.push(`Sum premier (${sum.toFixed(1)}%) != 100%.`); } } } if (prizeErrors.length > 0) { editPrizeValidationError.textContent = prizeErrors.join(' '); editPrizeValidationError.classList.remove('hidden'); isValid = false; } const newBlindLevels = []; const blindRows = editBlindStructureBody.querySelectorAll('tr'); let blindErrors = []; let foundInvalidBlind = false; if (blindRows.length === 0) { isValid = false; blindErrors.push("Blindstruktur kan ikke være tom."); } else { blindRows.forEach((row, index) => { const levelNum = index + 1; const sbInput = row.querySelector('.sb-input'); const bbInput = row.querySelector('.bb-input'); const anteInput = row.querySelector('.ante-input'); const durationInput = row.querySelector('.duration-input'); const pauseInput = row.querySelector('.pause-duration-input'); [sbInput, bbInput, anteInput, durationInput, pauseInput].forEach(el => el?.classList.remove('invalid')); const sb = parseInt(sbInput.value); const bb = parseInt(bbInput.value); const ante = parseInt(anteInput.value) || 0; const duration = parseInt(durationInput.value); const pauseMinutes = parseInt(pauseInput.value) || 0; let rowValid = true; if (isNaN(sb) || sb < 0) { rowValid = false; sbInput.classList.add('invalid'); } if (isNaN(bb) || bb <= 0) { rowValid = false; bbInput.classList.add('invalid'); } else if (sb > bb && bb > 0) { rowValid = false; sbInput.classList.add('invalid'); bbInput.classList.add('invalid'); blindErrors.push(`L${levelNum}: SB > BB.`); } if (isNaN(ante) || ante < 0) { rowValid = false; anteInput.classList.add('invalid'); } if (isNaN(duration) || duration <= 0) { rowValid = false; durationInput.classList.add('invalid'); } if (isNaN(pauseMinutes) || pauseMinutes < 0) { rowValid = false; pauseInput.classList.add('invalid'); } if (!rowValid && !sbInput.disabled) { foundInvalidBlind = true; } newBlindLevels.push({ level: levelNum, sb, bb, ante, duration, pauseMinutes }); }); } if (foundInvalidBlind || blindErrors.length > 0) { isValid = false; if (!blindErrors.some(msg => msg.includes("Blindstruktur"))) { blindErrors.unshift("Ugyldige verdier i blindstruktur."); } editBlindsValidationError.textContent = [...new Set(blindErrors)].join(' '); editBlindsValidationError.classList.remove('hidden'); } newConfig.blindLevels = newBlindLevels; if (isValid) { console.log("Validation successful. Saving changes..."); let changesMade = []; for (const key in newConfig) { if (JSON.stringify(state.config[key]) !== JSON.stringify(newConfig[key])) { changesMade.push(key); state.config[key] = newConfig[key]; } } if (changesMade.length > 0) { logActivity(state.live.activityLog, `Turneringsregler endret: ${changesMade.join(', ')}.`); saveTournamentState(currentTournamentId, state); updateUI(state); alert("Regelendringer lagret!"); } else { logActivity(state.live.activityLog, "Regler sjekket, ingen endringer funnet."); alert("Ingen endringer å lagre."); } closeTournamentModal(); } else { console.log("Validation failed. Changes not saved."); alert("Kunne ikke lagre. Rett feilene i skjemaet."); } }
+    // === TOURNAMENT SETTINGS MODAL LOGIC END ===
+
+
     // === EDIT PLAYER MODAL LOGIC START ===
     function openEditPlayerModal(playerId) { if (!state) return; console.log("Attempting to open edit modal for player ID:", playerId); const player = state.live.players.find(p => p.id === playerId) || state.live.eliminatedPlayers.find(p => p.id === playerId); if (!player) { console.error("Player not found for editing:", playerId); alert("Fant ikke spilleren som skal redigeres."); return; } if (!editPlayerModal || !editPlayerIdInput || !editPlayerNameDisplay || !editPlayerNameInput || !editPlayerRebuysInput || !editPlayerAddonCheckbox) { console.error("Edit Player Modal DOM elements not found!"); alert("En feil oppstod ved åpning av redigeringsvinduet."); return; } editPlayerIdInput.value = player.id; editPlayerNameDisplay.textContent = player.name; editPlayerNameInput.value = player.name; editPlayerRebuysInput.value = player.rebuys || 0; editPlayerAddonCheckbox.checked = player.addon || false; editPlayerAddonCheckbox.disabled = state.config.type !== 'rebuy'; editPlayerAddonCheckbox.parentElement.title = state.config.type !== 'rebuy' ? "Kun for Rebuy-turneringer." : ""; editPlayerRebuysInput.disabled = (state.config.type !== 'rebuy'); editPlayerModal.classList.remove('hidden'); currentOpenModal = editPlayerModal; isModalOpen = true; console.log("Edit Player Modal opened for:", player.name); }
     function closeEditPlayerModal() { if (editPlayerModal) editPlayerModal.classList.add('hidden'); currentOpenModal = null; isModalOpen = false; console.log("Edit Player Modal closed."); }
@@ -326,11 +250,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnEditUiSettings?.addEventListener('click', openUiModal);
     btnManageAddons?.addEventListener('click', openAddonModal);
     draggableElements.forEach(el => { if (el) { el.addEventListener('mousedown', (e) => startDrag(e, el)); } });
-    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { console.log("Clicked outside modal content."); if (currentOpenModal === editPlayerModal) closeEditPlayerModal(); else if (currentOpenModal === uiSettingsModal) closeUiModal(true); } });
+    window.addEventListener('click', (e) => { if (isModalOpen && currentOpenModal && e.target === currentOpenModal) { console.log("Clicked outside modal content."); if (currentOpenModal === editPlayerModal) closeEditPlayerModal(); else if (currentOpenModal === uiSettingsModal) closeUiModal(true); else if (currentOpenModal === tournamentSettingsModal) closeTournamentModal(); } });
+    // Edit Player Modal Buttons
     btnSavePlayerChanges?.addEventListener('click', handleSavePlayerChanges);
     btnCancelPlayerEdit?.addEventListener('click', closeEditPlayerModal);
     closeEditPlayerModalButton?.addEventListener('click', closeEditPlayerModal);
-    // UI Modal knapp-listeners legges nå til/fjernes dynamisk
+    // UI Modal Buttons - legges til/fjernes dynamisk
+    // Tournament Settings Modal Buttons
+    closeTournamentSettingsModalButton?.addEventListener('click', closeTournamentModal);
+    btnCancelTournamentSettings?.addEventListener('click', closeTournamentModal);
+    btnSaveTournamentSettings?.addEventListener('click', handleSaveTournamentSettings);
+    // Interne knapper i Tournament Settings legges til i openTournamentModal
+
     function setupPlayerActionDelegation() { const handleActions = (event) => { if (!state) return; const button = event.target.closest('button'); if (!button) return; const action = Array.from(button.classList).find(cls => cls.startsWith('btn-')); if (!action) return; const playerId = Number(button.dataset.playerId); if (action === 'btn-edit-player') { if (!playerId || isNaN(playerId)) { console.warn("Invalid player ID for edit action", button); return; } console.log(`Delegated action: ${action} for player ID: ${playerId}`); openEditPlayerModal(playerId); } else { if (!playerId || isNaN(playerId)) { console.warn("Invalid player ID for action", action, button); return; } console.log(`Delegated action: ${action} for player ID: ${playerId}`); switch (action) { case 'btn-rebuy': handleRebuy(event, state, currentTournamentId, mainCallbacks); break; case 'btn-eliminate': handleEliminate(event, state, currentTournamentId, mainCallbacks); break; case 'btn-restore': handleRestore(event, state, currentTournamentId, mainCallbacks); break; } } }; playerListUl?.addEventListener('click', handleActions); eliminatedPlayerListUl?.addEventListener('click', handleActions); console.log("Player action delegation listeners added."); }
     setupPlayerActionDelegation();
     // === EVENT LISTENER ATTACHMENT END ===
