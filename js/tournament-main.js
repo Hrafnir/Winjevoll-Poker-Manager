@@ -5,7 +5,7 @@
 import {
     getActiveTournamentId,
     loadTournamentState,
-    saveTournamentState,
+    saveTournamentState,        // Brukes for å lagre hele state-objektet
     clearActiveTournamentId,
     loadSoundPreference,
     saveSoundPreference,
@@ -13,9 +13,9 @@ import {
     loadThemeTextColor,
     loadElementLayouts,
     loadLogoBlob,
-    DEFAULT_THEME_TEXT, // Importer default tekstfarge
-    saveObject, // Trengs for å lagre endringer fra edit player
-    TOURNAMENT_COLLECTION_KEY // Trengs for å lagre endringer fra edit player
+    DEFAULT_THEME_TEXT         // Brukes som fallback for UI
+    // Ingen grunn til å importere saveObject eller storage keys her,
+    // da saveTournamentState håndterer lagringsdetaljene.
 } from './storage.js';
 
 // --- UI & FORMATTING ---
@@ -24,9 +24,6 @@ import {
     updateMainLogoImage,
     updateSoundToggleVisuals,
     updateUI, // Hoved UI-oppdaterer
-    // renderPlayerList, // updateUI kaller denne internt
-    // displayPrizes, // updateUI kaller denne internt
-    // renderActivityLog, // updateUI kaller denne internt
     formatBlindsHTML,
     formatTime,
     formatNextBlindsText,
