@@ -12,18 +12,16 @@ import {
     loadThemeBgColor,
     loadThemeTextColor,
     loadElementLayouts,
-    loadLogoBlob,
+    loadLogoBlob,               // ENDRET: Beholdt kun én instans av denne
     DEFAULT_THEME_TEXT,         // Brukes som fallback for UI
     parseRgbString,             // Trengs for UI modal color controls
     loadSoundVolume,            // Trengs for UI modal sound control (hvis funksjon finnes)
     saveSoundVolume,            // Trengs for UI modal sound control (hvis funksjon finnes)
-    loadLogoBlob,               // Trengs for UI modal logo preview
+    // loadLogoBlob,            // ENDRET: Fjernet duplikat
     saveLogoBlob,               // Trengs for UI modal logo save
     clearLogoBlob,              // Trengs for UI modal logo clear
     DEFAULT_ELEMENT_LAYOUTS,    // Trengs for UI modal reset
     DEFAULT_THEME_BG            // Trengs for UI modal reset
-    // Ingen grunn til å importere saveObject eller storage keys her,
-    // da saveTournamentState håndterer lagringsdetaljene.
 } from './storage.js';
 
 // --- UI & FORMATTING ---
@@ -472,22 +470,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             const controls = layoutControls[elementId];
             const layout = currentLayouts[elementId] || DEFAULT_ELEMENT_LAYOUTS[elementId] || {}; // Bruk original, fallback til default
 
+            if (!controls) {
+                console.warn(`Layout controls object for '${elementId}' is missing.`);
+                continue;
+            }
+
             if (controls.container) { // Vis/skjul hele gruppen?
                  // controls.container.style.display = ???;
             }
             if (controls.visible) controls.visible.checked = layout.isVisible ?? true;
-            if (controls.x) controls.x.value = layout.x ?? 0;
-            if (controls.xValue) controls.xValue.textContent = controls.x.value;
-            if (controls.y) controls.y.value = layout.y ?? 0;
-            if (controls.yValue) controls.yValue.textContent = controls.y.value;
-            if (controls.width) controls.width.value = layout.width ?? 50;
-            if (controls.widthValue) controls.widthValue.textContent = controls.width.value;
-            if (controls.height) controls.height.value = layout.height ?? 30; // Gjelder mest logo
-            if (controls.heightValue) controls.heightValue.textContent = controls.height.value;
-            if (controls.fontSize) controls.fontSize.value = layout.fontSize ?? 1; // Gjelder ikke logo
-            if (controls.fontSizeValue) controls.fontSizeValue.textContent = controls.fontSize.value;
+            if (controls.x && controls.xValue) {
+                controls.x.value = layout.x ?? 0;
+                controls.xValue.textContent = parseFloat(controls.x.value).toFixed(1); // Vis med en desimal
+            }
+            if (controls.y && controls.yValue) {
+                controls.y.value = layout.y ?? 0;
+                controls.yValue.textContent = parseFloat(controls.y.value).toFixed(1);
+            }
+            if (controls.width && controls.widthValue) {
+                controls.width.value = layout.width ?? 50;
+                controls.widthValue.textContent = controls.width.value;
+            }
+            // Spesialhåndtering for høyde (bare logo)
+            if (elementId === 'logo' && controls.height && controls.heightValue) {
+                controls.height.value = layout.height ?? 30;
+                controls.heightValue.textContent = controls.height.value;
+            } else if (controls.height) { // Skjul høydekontroll for andre
+                controls.height.parentElement.style.display = 'none';
+            }
+            // Spesialhåndtering for font-size (ikke logo)
+             if (elementId !== 'logo' && controls.fontSize && controls.fontSizeValue) {
+                 controls.fontSize.value = layout.fontSize ?? 1;
+                 controls.fontSizeValue.textContent = parseFloat(controls.fontSize.value).toFixed(1);
+             } else if (controls.fontSize) { // Skjul fontkontroll for logo
+                 controls.fontSize.parentElement.style.display = 'none';
+             }
 
-            // Info box spesifikke
+
+            // Info box spesifikke toggles
              if (elementId === 'info' && currentLayouts.info) {
                  if(controls.showNextBlinds) controls.showNextBlinds.checked = currentLayouts.info.showNextBlinds ?? true;
                  if(controls.showAvgStack) controls.showAvgStack.checked = currentLayouts.info.showAvgStack ?? true;
@@ -534,9 +554,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Populate med nåværende (originale) verdier FØR den vises
         await populateUiSettingsModal();
 
-        // TODO: Legg til event listeners for controls INNE i modalen her
-        // f.eks. for sliders, color inputs, toggles, save/cancel/reset/logo/favorites buttons
-        addUiModalListeners(); // Kall funksjon for å legge til listeners
+        // Legg til event listeners for controls INNE i modalen
+        addUiModalListeners();
 
         uiSettingsModal.classList.remove('hidden');
         currentOpenModal = uiSettingsModal;
@@ -550,7 +569,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         isModalOpen = false;
 
         // Fjern listeners
-        removeUiModalListeners(); // Kall funksjon for å fjerne listeners
+        removeUiModalListeners();
 
         revokeObjectUrl(modalPreviewLogoUrl); // Rydd opp preview URL
         modalPreviewLogoUrl = null;
@@ -560,7 +579,8 @@ document.addEventListener('DOMContentLoaded', async () => {
              console.log("Reverting live preview to original settings...");
              // Apply original settings back to the main page
              applyThemeAndLayout(originalSettings.bgColor, originalSettings.textColor, originalSettings.layouts, draggableElements);
-             // Trenger ikke oppdatere logo her, siden den ikke ble endret live
+             // Oppdater hovedsidens logo også
+             updateMainLogoImage(originalSettings.logo, logoImg);
         }
 
         console.log("UI Settings Modal closed.");
@@ -584,10 +604,15 @@ document.addEventListener('DOMContentLoaded', async () => {
              applyModalChangesToLiveView();
         }
 
-        // Oppdater eventuelle tilknyttede value-span
-        const valueSpan = document.getElementById(`${id}-value`);
+        // Oppdater eventuelle tilknyttede value-span for sliders
+        const valueSpanId = `${id}-value`; // Antatt navngivning
+        const valueSpan = document.getElementById(valueSpanId);
         if (valueSpan && target.type === 'range') {
-             valueSpan.textContent = value;
+            if (id.includes('-fontsize') || id.includes('-x') || id.includes('-y')) {
+                 valueSpan.textContent = parseFloat(value).toFixed(1); // Vis med en desimal for font/pos
+            } else {
+                 valueSpan.textContent = value; // Vis heltal for bredde/høyde
+            }
         }
          if (id === 'sound-volume-slider' && soundVolumeValue) {
              soundVolumeValue.textContent = Math.round(value * 100);
@@ -620,34 +645,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         else { // Generell layout-kontroll
              const parts = controlId.split('-'); // f.eks. ['title', 'x', 'slider'] eller ['title', 'visible', 'toggle']
              const elementId = parts[0];
-             const property = parts[1]; // 'x', 'y', 'width', 'height', 'fontSize', 'visible'
-             const controlType = parts[2]; // 'slider', 'toggle' etc.
+             const propertyOrAction = parts[1]; // 'x', 'y', 'width', 'height', 'fontsize', 'visible', 'toggle'
+             const controlType = parts.slice(2).join('-'); // 'slider', 'toggle', 'nextblinds', 'avgstack' etc.
 
-             if (modalLayouts[elementId]) {
-                 if (property === 'visible') {
-                     modalLayouts[elementId].isVisible = value; // boolean fra checkbox
-                 } else if (['x', 'y', 'width', 'height'].includes(property)) {
-                     modalLayouts[elementId][property] = parseFloat(value); // Posisjon/størrelse
-                 } else if (property === 'fontsize') {
-                      modalLayouts[elementId].fontSize = parseFloat(value);
-                 }
-                 // Info box spesifikke toggles
-                  else if (elementId === 'info' && property.startsWith('show')) {
-                      const infoProp = property; // 'showNextBlinds' etc.
-                      if (!modalLayouts.info) modalLayouts.info = {};
-                      modalLayouts.info[infoProp] = value; // boolean fra checkbox
-                  }
-             } else {
-                 console.warn(`Element layout section for '${elementId}' not found in modalLayouts.`);
+             if (!modalLayouts[elementId]) { // Opprett objekt hvis det ikke finnes
+                  modalLayouts[elementId] = {};
              }
-        }
+
+             if (propertyOrAction === 'visible') {
+                  modalLayouts[elementId].isVisible = value; // boolean fra checkbox
+             } else if (['x', 'y', 'width', 'height'].includes(propertyOrAction)) {
+                  modalLayouts[elementId][propertyOrAction] = parseFloat(value); // Posisjon/størrelse
+             } else if (propertyOrAction === 'fontsize') {
+                  modalLayouts[elementId].fontSize = parseFloat(value);
+             }
+             // Info box spesifikke toggles (har format 'info-toggle-PROPERTY')
+              else if (elementId === 'info' && propertyOrAction === 'toggle') {
+                  const infoProp = controlType.startsWith('show') ? controlType : `show${controlType.charAt(0).toUpperCase() + controlType.slice(1)}`; // Bygg showProperty
+                  modalLayouts.info[infoProp] = value; // boolean fra checkbox
+              }
+         }
     }
 
     function applyModalChangesToLiveView() {
          // Bruk modalBgColor, modalTextColor, modalLayouts for å oppdatere live view
          console.log("Applying modal changes to live view (preview)...");
          applyThemeAndLayout(modalBgColor, modalTextColor, modalLayouts, draggableElements);
-         // Logo oppdateres separat via handleLogoUpload
+         // Logo oppdateres separat via handleLogoUpload hvis live preview for den aktiveres
+         // updateMainLogoImage(modalLogoBlob || originalSettings.logo, logoImg); // Viser ny eller original
     }
 
     async function handleLogoUpload(event) {
@@ -674,9 +699,9 @@ document.addEventListener('DOMContentLoaded', async () => {
          if (btnClearLogo) btnClearLogo.disabled = false;
 
         // Oppdater live preview umiddelbart? (Valgfritt)
-        // if (livePreviewEnabled) {
-        //      updateMainLogoImage(modalLogoBlob, logoImg);
-        // }
+        if (livePreviewEnabled) {
+             updateMainLogoImage(modalLogoBlob, logoImg);
+        }
     }
 
     async function handleClearLogo() {
@@ -694,9 +719,9 @@ document.addEventListener('DOMContentLoaded', async () => {
          if (logoUploadInput) logoUploadInput.value = ''; // Clear file input
 
         // Oppdater live preview?
-        // if (livePreviewEnabled) {
-        //     updateMainLogoImage(null, logoImg); // Vis placeholder
-        // }
+        if (livePreviewEnabled) {
+            updateMainLogoImage(null, logoImg); // Vis placeholder
+        }
         console.log("Logo marked for clearing.");
     }
 
@@ -725,7 +750,7 @@ document.addEventListener('DOMContentLoaded', async () => {
              logActivity(state?.live?.activityLog, "Utseende-innstillinger lagret."); // Logg hvis state finnes
              alert("Innstillinger lagret!");
              closeUiModal(false); // Lukk uten å tilbakestille live preview
-             // Oppdater hovedsidens UI med de lagrede innstillingene (selv om live preview var på)
+             // Sørg for at hovedsiden viser de *lagrede* innstillingene
              applyThemeAndLayout(modalBgColor, modalTextColor, modalLayouts, draggableElements);
              updateMainLogoImage(currentLogoBlob, logoImg);
          } catch (error) {
@@ -742,28 +767,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalBgColor = DEFAULT_THEME_BG;
         modalTextColor = DEFAULT_THEME_TEXT;
         modalLayouts = JSON.parse(JSON.stringify(DEFAULT_ELEMENT_LAYOUTS)); // Deep copy
-        modalSoundVolume = DEFAULT_SOUND_VOLUME; // Antatt konstant finnes
+        modalSoundVolume = loadSoundVolume(); // Bruk funksjon i tilfelle den finnes
         modalLogoBlob = null; // Marker for sletting
 
-        // Oppdater kontroller i modalen
-        populateUiSettingsModal(); // Bruk denne for å sette kontrollene basert på modal state
+        // Oppdater kontroller i modalen basert på *nye* modal state
+        populateUiSettingsModal(); // Re-populer med defaults
 
         // Oppdater live preview
         if (livePreviewEnabled) {
              applyModalChangesToLiveView();
              updateMainLogoImage(null, logoImg); // Vis placeholder live
         }
-        console.log("Modal state reset to defaults.");
+        console.log("Modal state reset to defaults and controls updated.");
     }
 
 
     // Funksjoner for å legge til/fjerne listeners for modal-kontroller
     function addUiModalListeners() {
         console.log("Adding UI modal listeners...");
+        // Bruk event delegation på modal content for input-endringer
         uiSettingsModalContent?.addEventListener('input', handleUiModalInputChange);
         logoUploadInput?.addEventListener('change', handleLogoUpload);
         btnClearLogo?.addEventListener('click', handleClearLogo);
-        // TODO: Add listeners for theme favorites buttons etc.
+        // TODO: Add listeners for theme favorites buttons etc. if they exist
     }
     function removeUiModalListeners() {
         console.log("Removing UI modal listeners...");
