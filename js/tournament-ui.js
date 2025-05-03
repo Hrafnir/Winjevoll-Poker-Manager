@@ -158,8 +158,11 @@ export function renderPlayerList(state, /* fjernet ubrukte callbacks her */) {
         return (a.seat || 0) - (b.seat || 0);
     });
 
-    // Sorter eliminerte spillere etter plassering (høyeste tall først)
-    state.live.eliminatedPlayers.sort((a, b) => (b.place ?? 0) - (a.place ?? 0)); // Sorterer synkende etter plassering
+    // Sorter eliminerte spillere etter plassering (høyeste tall først -> Laveste plassering først)
+    // state.live.eliminatedPlayers.sort((a, b) => (b.place ?? 0) - (a.place ?? 0)); // Sorterer synkende etter plassering
+    // ENDRET: Sorter stigende etter plassering (1. plass øverst)
+    state.live.eliminatedPlayers.sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity));
+
 
     if (state.live.players.length === 0) { activeList.innerHTML = '<li>Ingen aktive spillere.</li>'; }
     else { state.live.players.forEach(p => activeList.appendChild(createPlayerHTML(p, state.config, state, false))); }
@@ -178,14 +181,44 @@ export function displayPrizes(state) {
           return;
      }
     const prizeDisplay = document.getElementById('prize-display-live');
-    const totalPotSpan = document.getElementById('total-pot');
-    if (!prizeDisplay || !totalPotSpan) { console.error("Prize display elements not found!"); return; }
+    // --- ENDRET: Hent totalPotSpan *inni* funksjonen etter potensielle innerHTML endringer ---
+    // const totalPotSpan = document.getElementById('total-pot'); // Fjernet herfra
+
+    // --- ENDRET: Mer spesifikk sjekk ---
+    if (!prizeDisplay) {
+        console.error("Prize display ERROR: Container element '#prize-display-live' not found!");
+        return; // Avslutt hvis container mangler
+    }
+
+    // Hent totalPotSpan *før* vi evt. overskriver den med innerHTML
+    let totalPotSpan = prizeDisplay.querySelector('#total-pot');
+    let initialTotalPotValue = totalPotSpan ? totalPotSpan.textContent : (state.live.totalPot || 0); // Hent gammel verdi eller state
+
+    if (!totalPotSpan) {
+        // Logg feil hvis den ikke fantes i utgangspunktet
+        console.warn("Prize display WARNING: Span element '#total-pot' not found inside '#prize-display-live' initially!");
+    }
 
     const prizes = calculatePrizes(state);
     const totalPrizePot = prizes.reduce((sum, p) => sum + p.amount, 0); // Kalkuler faktisk premiepott
-    totalPotSpan.textContent = state.live.totalPot || 0; // Vis HELE potten her
+    // totalPotSpan.textContent = state.live.totalPot || 0; // Oppdateres nedenfor etter innerHTML
 
-     prizeDisplay.innerHTML = `<h3>Premiefordeling (Premiepott: ${totalPrizePot} kr)</h3>`; // Vis premiepotten
+     // --- ENDRET: Bygger HTML mer forsiktig for å beholde #total-pot ---
+     // Lag H3-elementet
+     const h3 = document.createElement('h3');
+     h3.innerHTML = `Premiefordeling (Premiepott: ${totalPrizePot} kr)<br>(Total pott: <span id="total-pot">${initialTotalPotValue}</span> kr)`; // Bruk hentet/state verdi
+
+     // Tøm kun innholdet under H3 hvis H3 finnes, ellers hele div
+     if (prizeDisplay.firstChild && prizeDisplay.firstChild.nodeName === 'H3') {
+        while (prizeDisplay.firstChild.nextSibling) {
+             prizeDisplay.removeChild(prizeDisplay.firstChild.nextSibling);
+        }
+        prizeDisplay.replaceChild(h3, prizeDisplay.firstChild); // Erstatt gammel H3 med ny
+     } else {
+        prizeDisplay.innerHTML = ''; // Tøm alt hvis H3 ikke var først
+        prizeDisplay.appendChild(h3); // Legg til ny H3
+     }
+     // Nå skal #total-pot eksistere innenfor H3
 
     if (prizes.length > 0) {
         const ol = document.createElement('ol');
@@ -194,22 +227,32 @@ export function displayPrizes(state) {
              li.textContent = `${p.place}. plass: ${p.amount} kr (${p.percentage}%)`;
              ol.appendChild(li);
         });
-        prizeDisplay.appendChild(ol);
+        prizeDisplay.appendChild(ol); // Legg til listen etter H3
         prizeDisplay.classList.remove('hidden');
     } else {
-        prizeDisplay.innerHTML += '<p>Ingen premiefordeling definert eller pott er 0.</p>';
-        // Vurder om den skal skjules helt hvis ingen premier?
-        // prizeDisplay.classList.add('hidden');
+        const p = document.createElement('p');
+        p.textContent = 'Ingen premiefordeling definert eller pott er 0.';
+        prizeDisplay.appendChild(p); // Legg til meldingen etter H3
         prizeDisplay.classList.remove('hidden'); // Vis uansett med melding
     }
 
      // Vis knockout-info hvis relevant
      if (state.config.type === 'knockout' && state.config.bountyAmount > 0) {
-         const p = document.createElement('p');
-         p.innerHTML = `<small>(${state.config.bountyAmount} kr per knockout ikke inkludert i premiepotten ovenfor)</small>`;
-         prizeDisplay.appendChild(p);
+         const pKO = document.createElement('p'); // Nytt navn for å unngå konflikt
+         pKO.innerHTML = `<small>(${state.config.bountyAmount} kr per knockout ikke inkludert i premiepotten ovenfor)</small>`;
+         prizeDisplay.appendChild(pKO); // Legg til sist
      }
+
+     // Oppdater #total-pot som nå skal finnes inne i H3
+     totalPotSpan = prizeDisplay.querySelector('#total-pot'); // Finn den på nytt
+     if (totalPotSpan) {
+         totalPotSpan.textContent = state.live.totalPot || 0;
+     } else {
+          console.error("Prize display ERROR: Could not find #total-pot span after rebuilding HTML!");
+     }
+     // --- Slutt på endret HTML-bygging ---
 }
+
 
 export function renderActivityLog(state) {
      if (!state || !state.live) {
